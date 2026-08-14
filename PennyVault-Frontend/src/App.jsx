@@ -33,7 +33,7 @@ function App() {
         <Route path="/goals" element={<Goals />} />
         <Route path="/recurring" element={<Recurring />} />
         <Route path="/bills" element={<Bills />} />
-        <Route path="/memberAccess" element={<PeopleAccess />} />
+        <Route path="/peopleAccess" element={<PeopleAccess />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/preferences" element={<Preferences />} />
         <Route path="/security" element={<Security />} />

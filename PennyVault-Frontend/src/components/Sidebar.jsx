@@ -38,7 +38,7 @@ const manageItems = [
     { label: "Goals", icon: IconTarget, path: "/goals",},
     { label: "Recurring", icon: IconRefresh, path: "/recurring",},
     { label: "Bills", icon: IconReceipt, path: "/bills",},
-    { label: "People & Access", icon: IconUsers, path: "/memberAccess",},   
+    { label: "People & Access", icon: IconUsers, path: "/peopleAccess",},   
 ];
 
 const bottomItems = [
