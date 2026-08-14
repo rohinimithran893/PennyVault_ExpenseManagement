@@ -29,23 +29,23 @@ const menuItems = [
 const financeItems = [
     { label: "Transactions", icon: IconArrowsExchange, path: "/transactions", badge: "12",},
     { label: "Budgets", icon: IconWallet, path: "/budget-categories", },
-    { label: "Reports", icon: IconReportAnalytics, path: "/reports"},
-    { label: "Messages", icon: IconMail, path: "/messages", badge: 4},
+    { label: "Reports", icon: IconReportAnalytics, path: "/reports",},
+    { label: "Messages", icon: IconMail, path: "/messages", badge: 4,},
 ];
 
 const manageItems = [
-    { label: "Accounts", icon: IconCreditCard, path: "/accounts"},
-    { label: "Goals", icon: IconTarget, path: "/goals"},
-    { label: "Recurring", icon: IconRefresh, path: "/recurring"},
-    { label: "Bills", icon: IconReceipt, path: "/bills"},
-    { label: "People & Access", icon: IconUsers, path: "/members"},   
-]
+    { label: "Accounts", icon: IconCreditCard, path: "/accounts",},
+    { label: "Goals", icon: IconTarget, path: "/goals",},
+    { label: "Recurring", icon: IconRefresh, path: "/recurring",},
+    { label: "Bills", icon: IconReceipt, path: "/bills",},
+    { label: "People & Access", icon: IconUsers, path: "/memberAccess",},   
+];
 
 const bottomItems = [
   { label: "Notifications", icon: IconBell, path: "/notifications", dot:true},
-  { label: "Preferences", icon: IconSettings, path: "/preferences" },
-  { label: "Security", icon: IconShieldLock , path: "/security" },
-  { label: "Help & Support", icon: IconHelpCircle, path: "/help" },
+  { label: "Preferences", icon: IconSettings, path: "/preferences", },
+  { label: "Security", icon: IconShieldLock , path: "/security", },
+  { label: "Help & Support", icon: IconHelpCircle, path: "/helpAndSupport", },
 ];
 
 function NavSection({ title, items, collapsed, className = "" }) {
