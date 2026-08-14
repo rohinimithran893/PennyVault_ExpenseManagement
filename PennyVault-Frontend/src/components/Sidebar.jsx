@@ -27,8 +27,8 @@ const menuItems = [
 ];
 
 const financeItems = [
-    { label: "Transactions", icon: IconArrowsExchange, path: "/transactions", badge: "12"},
-    { label: "Budgets", icon: IconWallet, path: "/budgets" },
+    { label: "Transactions", icon: IconArrowsExchange, path: "/transactions", badge: "12",},
+    { label: "Budgets", icon: IconWallet, path: "/budget-categories", },
     { label: "Reports", icon: IconReportAnalytics, path: "/reports"},
     { label: "Messages", icon: IconMail, path: "/messages", badge: 4},
 ];
