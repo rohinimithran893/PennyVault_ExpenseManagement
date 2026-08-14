@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 
-function MainLayout({ children }) {
+function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -12,7 +13,7 @@ function MainLayout({ children }) {
       />
 
       <main className={`main-content ${collapsed ? "expanded" : ""}`}>
-        {children}
+        <Outlet/>
       </main>
     </div>
   );

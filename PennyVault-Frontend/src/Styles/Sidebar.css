@@ -106,8 +106,8 @@
   display: flex;
   flex-direction: column;
   padding: 8px 12px 12px;
-  /*overflow-y: auto;*/
-  overscroll-behavior: contain;
+  overflow-y: auto;
+  /*overscroll-behavior: contain;*/
   min-height: 0;
 }
 
@@ -144,7 +144,7 @@
 
 /* Navigation item */
 .nav-item {
-  height: 30px;
+  height: 35px;
   padding: 0 13px;
   display: flex;
   align-items: center;
@@ -213,8 +213,8 @@
 
 /* Profile */
 .sidebar-profile {
-  margin: 12px;
-  padding: 12px;
+  margin: 9px;
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -10,14 +10,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <MainLayout>
-              <DashboardPage />
-            </MainLayout>
-          }
-        />
+        <Route element={<MainLayout />}>
+        <Route path="/" element={<DashboardPage />}/>
+        </Route>     
       </Routes>
     </BrowserRouter>
   );
