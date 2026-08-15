@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import MainLayout from "./layouts/MainLayout";
 import DashboardPage from "./pages/DashboardPage";
-import Transactions from "./pages/Transactions";
+import Transaction from "./pages/Transaction";
 import BudgetCategories from "./pages/BudgetCategories";
 import Reports from "./pages/ReportPages";
 import Messages from "./pages/Messages";
@@ -25,7 +25,7 @@ function App() {
       <Routes>
         <Route element={<MainLayout />}>
         <Route path="/" element={<DashboardPage />}/>
-        <Route path="/transactions" element={ <Transactions />} />
+        <Route path="/transactions" element={ <Transaction />} />
         <Route path="/budget-categories" element={<BudgetCategories />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/messages" element={<Messages />} />
