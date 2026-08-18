@@ -1,12 +1,8 @@
 import React from "react";
+import Budgets from "../components/Budgets";
 
 function BudgetCategories() {
-  return (
-    <div>
-      <h1>Budget Categories</h1>
-      <p>Budget Categories page</p>
-    </div>
-  );
+  return <Budgets />;
 }
 
 export default BudgetCategories;
