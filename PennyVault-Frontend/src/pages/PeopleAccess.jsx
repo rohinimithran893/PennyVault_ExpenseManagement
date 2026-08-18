@@ -1,12 +1,8 @@
 import React from "react";
+import MemberAccess from "../components/MemberAccess.jsx";
 
 function PeopleAccess() {
-  return (
-    <div>
-      <h1>People Access</h1>
-      <p>People Access page</p>
-    </div>
-  );
+  return <MemberAccess />;
 }
 
 export default PeopleAccess;
