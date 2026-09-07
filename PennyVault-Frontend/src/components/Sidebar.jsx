@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../Styles/Sidebar.css";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { logout, getUser } from "../utils/auth";
 import {
   IconLayoutDashboard,
   IconReceipt,
   IconWallet,
-  IconChartPie,
   IconUsers,
   IconSettings,
   IconChevronsLeft,
@@ -13,6 +13,8 @@ import {
   IconBell,
   IconHelpCircle,
   IconMail,
+  IconKey,
+  IconLogout,
   IconCreditCard,
   IconTarget,
   IconRefresh,
@@ -47,6 +49,7 @@ const bottomItems = [
   { label: "Security", icon: IconShieldLock , path: "/security", },
   { label: "Help & Support", icon: IconHelpCircle, path: "/helpAndSupport", },
 ];
+
 
 function NavSection({ title, items, collapsed, className = "" }) {
   return (
@@ -85,6 +88,34 @@ function NavSection({ title, items, collapsed, className = "" }) {
 }
 
 function Sidebar({ collapsed, setCollapsed }) {
+  const navigate = useNavigate();
+  const user = getUser();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const menuRef = useRef(null);
+  const menuButtonRef = useRef(null);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        !menuButtonRef.current.contains(event.target)
+      ) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""}`}>
       <div className="sidebar-top">
@@ -121,23 +152,86 @@ function Sidebar({ collapsed, setCollapsed }) {
 
       <div className="sidebar-profile">
         <div className="profile-left">
-        <div className="profile-avatar">R</div>
+        <div className="profile-avatar">{user?.fullName?.charAt(0) || "U"}</div>
 
         {!collapsed && (
             <div className="profile-info">
-              <span className="profile-name">Rohini</span>
-              <span className="profile-role">Administrator</span>
+              <span className="profile-name">{user?.fullName || "User"}</span>
+              <span className="profile-role">{user?.role || "Member"}</span>
             </div>
           )}
         </div>
 
         {!collapsed && (
-           <button className="profile-menu-btn" aria-label="Profile options">
-            <IconDotsVertical size={18} />
-          </button>
+          <div className="profile-menu-wrapper">
+            <button
+              ref={menuButtonRef}
+              className="profile-menu-btn"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <IconDotsVertical size={18} />
+            </button>
+
+            {menuOpen && (
+              <div ref={menuRef} className="profile-dropdown">
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate("/preferences");
+                  }}
+                >
+                  <IconUsers size={16} />
+                  Profile
+                </button>
+
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    navigate("/security");
+                  }}
+                >
+                  <IconKey size={16} />
+                  Change Password
+                </button>
+
+                <button
+                  className="logout-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setShowLogoutModal(true);
+                  }}
+                >
+                  <IconLogout size={16} />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
+      {showLogoutModal && (
+        <div className="logout-modal-overlay">
+          <div className="logout-modal">
+            <div className="logout-icon">
+              <IconLogout size={28}/>
+            </div>
+            <h3>Logout from PennyVault?</h3>
+            <p>
+              You'll need to sign in again to access your household finances.
+            </p>
+            <div className="logout-actions">
+              <button className="cancel-btn" onClick={() => setShowLogoutModal(false)}>
+                Cancel
+              </button>
+              <button className="confirm-logout-btn" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
+
 export default Sidebar;
