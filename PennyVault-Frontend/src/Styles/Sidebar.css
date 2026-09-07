@@ -299,3 +299,151 @@
 .main-content.expanded {
   margin-left: 76px;
 }
+
+/* ---------- Profile 3-dot Menu ---------- */
+
+.profile-menu-wrapper {
+  position: relative;
+}
+
+.profile-menu-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: #d6d3ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.profile-menu-btn:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.profile-dropdown {
+  position: absolute;
+  bottom: 42px;
+  right: 0;
+  width: 180px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 14px 30px rgba(0,0,0,.18);
+  overflow: hidden;
+  z-index: 999;
+}
+
+.profile-dropdown button {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.profile-dropdown button:hover {
+  background: #f5f3ff;
+}
+
+.logout-item {
+  color: #dc2626 !important;
+}
+
+/* ================= Logout Modal ================= */
+
+.logout-modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(17,24,39,.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+  backdrop-filter:blur(3px);
+}
+
+.logout-modal{
+  width:360px;
+  background:#fff;
+  border-radius:20px;
+  padding:28px;
+  text-align:center;
+  animation:modalFade .2s ease;
+}
+
+.logout-icon{
+  width:58px;
+  height:58px;
+  margin:0 auto 16px;
+  border-radius:16px;
+  background:#fef2f2;
+  color:#dc2626;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.logout-modal h3{
+  margin:0;
+  color:#111827;
+  font-size:22px;
+}
+
+.logout-modal p{
+  margin:12px 0 24px;
+  color:#6b7280;
+  line-height:1.6;
+  font-size:14px;
+}
+
+.logout-actions{
+  display:flex;
+  gap:12px;
+}
+
+.cancel-btn,
+.confirm-logout-btn{
+  flex:1;
+  padding:12px;
+  border-radius:12px;
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.cancel-btn{
+  background:#f3f4f6;
+  color:#374151;
+}
+
+.cancel-btn:hover{
+  background:#e5e7eb;
+}
+
+.confirm-logout-btn{
+  background:#dc2626;
+  color:#fff;
+}
+
+.confirm-logout-btn:hover{
+  background:#b91c1c;
+}
+
+@keyframes modalFade{
+  from{
+    opacity:0;
+    transform:translateY(8px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}

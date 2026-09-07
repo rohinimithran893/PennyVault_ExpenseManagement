@@ -1,6 +1,8 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { isAuthenticated } from "./utils/auth";
 
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import MainLayout from "./layouts/MainLayout";
 import DashboardPage from "./pages/DashboardPage";
 import Transaction from "./pages/Transaction";
@@ -19,25 +21,38 @@ import HelpAndSupport from "./pages/HelpAndSupport";
 
 import "./App.css";
 
+const ProtectedRoute = ({ children }) => {
+  return isAuthenticated() ? children : <Navigate to="/login" replace />;
+};  
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<MainLayout />}>
-        <Route path="/" element={<DashboardPage />}/>
-        <Route path="/transactions" element={ <Transaction />} />
-        <Route path="/budget-categories" element={<BudgetCategories />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/accounts" element={<Accounts />} />
-        <Route path="/goals" element={<Goals />} />
-        <Route path="/recurring" element={<Recurring />} />
-        <Route path="/bills" element={<Bills />} />
-        <Route path="/peopleAccess" element={<PeopleAccess />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/preferences" element={<Preferences />} />
-        <Route path="/security" element={<Security />} />
-        <Route path="/helpAndSupport" element={<HelpAndSupport />} />
+        {/* Login page (NO Sidebar) */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        {/* Protected Pages */}
+        <Route element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }>
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/transactions" element={ <Transaction/>} />
+          <Route path="/budget-categories" element={<BudgetCategories />} />
+          <Route path="/reports" element={<Reports /> } />
+          <Route path="/messages" element={<Messages /> } />
+          <Route path="/accounts" element={<Accounts /> } />
+          <Route path="/goals" element={ <Goals /> } />
+          <Route path="/recurring" element={<Recurring /> } />
+          <Route path="/bills" element={<Bills/> } />
+          <Route path="/peopleAccess" element={ <PeopleAccess /> } />
+          <Route path="/notifications" element={ <Notifications /> } />
+          <Route path="/preferences" element={ <Preferences /> } />
+          <Route path="/security" element={ <Security /> } />
+          <Route path="/helpAndSupport" element={<HelpAndSupport/> } />
         </Route>     
       </Routes>
     </BrowserRouter>
