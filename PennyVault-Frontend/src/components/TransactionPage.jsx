@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getToken } from "../utils/auth";
+import "../Styles/Transactions.css";
 import {
   IconCalendar,
   IconChevronDown,
@@ -6,6 +8,7 @@ import {
   IconDownload,
   IconPlus,
   IconPencil,
+  IconTrash,
   IconUsers,
   IconUser,
   IconArrowDown,
@@ -17,63 +20,606 @@ import {
   IconChartDonut,
 } from "@tabler/icons-react";
 
-import "../Styles/Transactions.css";
+const getCategoryClass = (category) => {
+  if (!category) return "";
+
+  const categoryName = category.toLowerCase();
+
+  if (categoryName.includes("food")) return "food";
+  if (categoryName.includes("home")) return "utilities";
+  if (categoryName.includes("transport")) return "transport";
+  if (categoryName.includes("health")) return "health";
+  if (categoryName.includes("education")) return "education";
+  if (categoryName.includes("finance")) return "finance";
+  if (categoryName.includes("travel")) return "travel";
+  if (categoryName.includes("gift")) return "gifts";
+  if (categoryName.includes("income")) return "income";
+  if (categoryName.includes("shopping")) return "shopping";
+  if (categoryName.includes("personal")) return "personal";
+  if (categoryName.includes("entertainment")) return "entertainment";
+  if (categoryName.includes("work")) return "work";
+  if (categoryName.includes("subscription")) return "subscriptions";
+  if (categoryName.includes("pets")) return "pets";
+  if (categoryName.includes("tax")) return "taxes";
+  if (categoryName.includes("transfer")) return "transfers";
+
+  return "miscellaneous";
+};
 
 function TransactionPage() {
   const [transactionType, setTransactionType] = useState("debit");
+  const [accountId, setAccountId] = useState("");
+  const [accounts, setAccounts] = useState([]);
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [subcategories, setSubcategories] = useState([]);
+  const [transactionDate, setTransactionDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState(""); 
+  const [transactions, setTransactions] = useState([]);
+  const [listSearchTerm, setListSearchTerm] = useState("");
+  const [filterSearchTerm, setFilterSearchTerm] = useState("");
+  const [transactionFilter, setTransactionFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("thisMonth");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [editingTransactionId, setEditingTransactionId] = useState(null);
+  const itemsPerPage = 5;
 
-  const transactions = [
-    {
-      date: "15 Aug 2026",
-      description: "Swiggy order",
-      category: "Food & Groceries",
-      categoryClass: "food",
-      subcategory: "Groceries",
-      paidBy: "R",
-      amount: "₹293",
-      type: "Debit",
-    },
-    {
-      date: "14 Aug 2026",
-      description: "Electricity Bill",
-      category: "Utilities",
-      categoryClass: "utilities",
-      subcategory: "Electricity",
-      paidBy: "R",
-      amount: "₹2,500",
-      type: "Debit",
-    },
-    {
-      date: "13 Aug 2026",
-      description: "Salary Received",
-      category: "Income",
-      categoryClass: "income",
-      subcategory: "Salary",
-      paidBy: "R",
-      amount: "₹75,000",
-      type: "Credit",
-    },
-    {
-      date: "12 Aug 2026",
-      description: "Amazon Purchase",
-      category: "Shopping",
-      categoryClass: "shopping",
-      subcategory: "Household",
-      paidBy: "R",
-      amount: "₹1,299",
-      type: "Debit",
-    },
-    {
-      date: "11 Aug 2026",
-      description: "Fuel - Office",
-      category: "Transport",
-      categoryClass: "transport",
-      subcategory: "Fuel",
-      paidBy: "R",
-      amount: "₹800",
-      type: "Debit",
-    },
-  ];
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        const token = getToken();
+        const response = await fetch("http://localhost:8080/api/accounts", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to load accounts");
+        }
+        const data = await response.json();
+        setAccounts(data);
+      } catch (error) {
+        console.error("Error loading accounts:", error);
+      }
+    };
+    loadAccounts();
+  }, []);
+
+  useEffect(() => {
+  const loadCategories = async () => {
+    try {
+      const token = getToken();
+      const response = await fetch("http://localhost:8080/api/categories", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load categories");
+      }
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error loading categories:", error);
+    }
+  };
+
+  loadCategories();
+}, []);
+
+useEffect(() => {
+  const loadSubcategories = async () => {
+
+    if (!categoryId) {
+      setSubcategories([]);
+      setSubcategoryId("");
+      return;
+    }
+
+    try {
+      const token = getToken();
+
+      const response = await fetch(
+        `http://localhost:8080/api/subcategories/category/${categoryId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load subcategories");
+      }
+
+      const data = await response.json();
+      setSubcategories(data);
+    } catch (error) {
+      console.error("Error loading subcategories:", error);
+      setSubcategories([]);
+      setSubcategoryId("");
+    }
+  };
+
+  loadSubcategories();
+}, [categoryId]);
+
+useEffect(() => {
+  const loadTransactions = async () => {
+    try {
+      const token = getToken();
+
+      const response = await fetch(
+        "http://localhost:8080/api/transactions",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load transactions");
+      }
+
+      const data = await response.json();
+
+      const formattedTransactions = data.map((transaction) => ({
+        id: transaction.id,
+        date: transaction.transactionDate,
+        description: transaction.description,
+        category: transaction.category,
+        categoryClass: getCategoryClass(transaction.category),
+        subcategory: transaction.subcategory,
+        paidBy: "R",
+        amount: `₹${Number(transaction.amount).toLocaleString("en-IN")}`,
+        type:
+          transaction.transactionType?.toLowerCase() === "income"
+            ? "Credit"
+            : "Debit",
+      }));
+
+      setTransactions(formattedTransactions);
+    } catch (error) {
+      console.error("Error loading transactions:", error);
+    }
+  };
+
+  loadTransactions();
+}, []);
+
+const saveTransaction = async () => {
+  if (
+    !accountId ||
+    !categoryId ||
+    !subcategoryId ||
+    !description.trim() ||
+    !amount ||
+    !transactionDate
+  ) {
+    alert("Please fill in all transaction details.");
+    return;
+  }
+
+  try {
+    const token = getToken();
+    const transactionData = {
+      accountId: Number(accountId),
+      categoryId: Number(categoryId),
+      subcategoryId: Number(subcategoryId),
+      description: description.trim(),
+      amount: Number(amount),
+      transactionType:
+        transactionType === "debit" ? "EXPENSE" : "INCOME",
+      transactionDate,
+    };
+    const isEditing = editingTransactionId !== null;
+    const url = isEditing
+      ? `http://localhost:8080/api/transactions/${editingTransactionId}`
+      : "http://localhost:8080/api/transactions";
+
+    const method = isEditing ? "PUT" : "POST";
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(transactionData),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Transaction save/update failed:", data);
+      alert(data.message || "Failed to save transaction.");
+      return;
+    }
+
+    console.log(
+      isEditing
+        ? "Transaction updated successfully:"
+        : "Transaction created successfully:",
+      data
+    );
+
+    if (isEditing) {
+      alert("Transaction updated successfully.");
+    } else {
+      alert("Transaction saved successfully.");
+    }
+
+    setEditingTransactionId(null);
+    clearForm();
+
+    // Reload transactions from backend
+    const transactionsResponse = await fetch(
+      "http://localhost:8080/api/transactions",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (transactionsResponse.ok) {
+      const transactionsData = await transactionsResponse.json();
+
+      const formattedTransactions = transactionsData.map(
+        (transaction) => ({
+          id: transaction.id,
+          date: transaction.transactionDate,
+          description: transaction.description,
+          category: transaction.category,
+          categoryClass: getCategoryClass(transaction.category),
+          subcategory: transaction.subcategory,
+          paidBy: "R",
+          amount: `₹${Number(transaction.amount).toLocaleString(
+            "en-IN"
+          )}`,
+          type:
+            transaction.transactionType?.toLowerCase() === "income"
+              ? "Credit"
+              : "Debit",
+        })
+      );
+
+      setTransactions(formattedTransactions);
+    }
+  } catch (error) {
+    console.error("Error saving/updating transaction:", error);
+    alert("Something went wrong while saving the transaction.");
+  }
+};
+
+const clearForm = () => {
+  setEditingTransactionId(null);
+  setAccountId("");
+  setCategoryId("");
+  setSubcategoryId("");
+  setSubcategories([]);
+  setDescription("");
+  setAmount("");
+  setTransactionType("debit");
+  setTransactionDate(new Date().toISOString().split("T")[0]);
+};
+
+const cancelEdit = () => {
+  clearForm();
+};
+
+const handleEditTransaction = async (transactionId) => {
+  try {
+    const token = getToken();
+
+    const response = await fetch(
+      `http://localhost:8080/api/transactions/${transactionId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        errorText || "Failed to load transaction"
+      );
+    }
+
+    const transaction = await response.json();
+    console.log("Transaction to edit:", transaction);
+
+    // Find account ID from account name
+    const selectedAccount = accounts.find(
+      (account) =>
+        account.accountName === transaction.account
+    );
+
+    // Find category ID from category name
+    const selectedCategory = categories.find(
+      (category) =>
+        category.name === transaction.category
+    );
+
+    if (!selectedAccount) {
+      throw new Error("Account not found");
+    }
+
+    if (!selectedCategory) {
+      throw new Error("Category not found");
+    }
+
+    // Set basic transaction fields
+    setEditingTransactionId(transactionId);
+    setAccountId(String(selectedAccount.id));
+    setCategoryId(String(selectedCategory.id));
+    setDescription(transaction.description || "");
+
+    setAmount(
+      transaction.amount !== null &&
+      transaction.amount !== undefined
+        ? String(transaction.amount)
+        : ""
+    );
+
+    setTransactionType(
+      transaction.transactionType?.toLowerCase() === "income"
+        ? "credit"
+        : "debit"
+    );
+
+    setTransactionDate(
+      transaction.transactionDate || ""
+    );
+
+    // Load subcategories for selected category
+    const subcategoryResponse = await fetch(
+      `http://localhost:8080/api/subcategories/category/${selectedCategory.id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!subcategoryResponse.ok) {
+      throw new Error("Failed to load subcategories");
+    }
+
+    const subcategoryData =
+      await subcategoryResponse.json();
+
+    setSubcategories(subcategoryData);
+
+    // Find selected subcategory
+    const selectedSubcategory = subcategoryData.find(
+      (subcategory) =>
+        subcategory.name === transaction.subcategory
+    );
+
+    if (selectedSubcategory) {
+      setSubcategoryId(String(selectedSubcategory.id));
+    } else {
+      setSubcategoryId("");
+    }
+
+  } catch (error) {
+    console.error(
+      "Error loading transaction for edit:",
+      error
+    );
+
+    alert(
+      `Failed to load transaction: ${error.message}`
+    );
+  }
+};
+
+const handleDeleteTransaction = async (transactionId) => {
+  const confirmed = window.confirm(
+    "Are you sure you want to delete this transaction?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const token = getToken();
+
+    const response = await fetch(
+      `http://localhost:8080/api/transactions/${transactionId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage = "Failed to delete transaction.";
+
+      try {
+        const data = await response.json();
+        errorMessage = data.message || errorMessage;
+      } catch (error) {
+        // Response may not contain JSON
+      }
+
+      console.error("Transaction delete failed:", errorMessage);
+      alert(errorMessage);
+      return;
+    }
+
+    setTransactions((currentTransactions) =>
+      currentTransactions.filter(
+        (transaction) => transaction.id !== transactionId
+      )
+    );
+
+    alert("Transaction deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting transaction:", error);
+    alert("Something went wrong while deleting the transaction.");
+  }
+};
+
+const filteredTransactions = transactions.filter((transaction) => {
+  const filterSearch = filterSearchTerm.toLowerCase().trim();
+  const listSearch = listSearchTerm.toLowerCase().trim();
+
+  const matchesType = transactionFilter === "all" || transaction.type?.toLowerCase() === transactionFilter;
+  const matchesCategory = !categoryFilter || transaction.category === categoryFilter;
+  const matchesDate = (() => {
+    if (dateFilter === "all") {
+      return true;
+    }
+  const today = new Date();
+  const [year, month, day] = transaction.date.split("-").map(Number);
+  const transactionDate = new Date(year, month - 1, day);
+
+  if (dateFilter === "today") {
+    return (
+      transactionDate.getFullYear() === today.getFullYear() &&
+      transactionDate.getMonth() === today.getMonth() &&
+      transactionDate.getDate() === today.getDate()
+    );
+  }
+  if (dateFilter === "thisWeek") {
+    const startOfWeek = new Date(today);
+    const dayOfWeek = today.getDay();
+
+    startOfWeek.setDate(today.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    return transactionDate >= startOfWeek && transactionDate <= endOfWeek;
+  }
+  if (dateFilter === "thisMonth") {
+    return (
+      transactionDate.getFullYear() === today.getFullYear() &&
+      transactionDate.getMonth() === today.getMonth()
+    );
+  }
+  if (dateFilter === "lastMonth") {
+    const lastMonthStart = new Date(
+      today.getFullYear(),
+      today.getMonth() - 1,
+      1
+    );
+    const lastMonthEnd = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      0
+    );
+    lastMonthEnd.setHours(23, 59, 59, 999);
+    return transactionDate >= lastMonthStart && transactionDate <= lastMonthEnd;
+  }
+  if (dateFilter === "last3Months") {
+    const threeMonthsAgo = new Date(
+      today.getFullYear(),
+      today.getMonth() - 2,
+      1
+    );
+    const endOfCurrentMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    );
+    endOfCurrentMonth.setHours(23, 59, 59, 999);
+    return transactionDate >= threeMonthsAgo && transactionDate <= endOfCurrentMonth;
+  }
+  if (dateFilter === "thisYear") {
+    return transactionDate.getFullYear() === today.getFullYear();
+  }
+  if (dateFilter === "custom") {
+    const startDate = customStartDate ? new Date(`${customStartDate}T00:00:00`) : null;
+    const endDate = customEndDate ? new Date(`${customEndDate}T23:59:59.999`) : null;
+    if (startDate && endDate) {
+      return transactionDate >= startDate && transactionDate <= endDate;
+    }
+    if (startDate) {
+      return transactionDate >= startDate;
+    }
+    if (endDate) {
+      return transactionDate <= endDate;
+    }
+    return true;
+  }
+  return true;
+})();
+
+  const matchesFilterSearch = !filterSearch ||
+    transaction.description?.toLowerCase().includes(filterSearch) ||
+    transaction.category?.toLowerCase().includes(filterSearch) ||
+    transaction.subcategory?.toLowerCase().includes(filterSearch);
+
+  const matchesListSearch = !listSearch ||
+    transaction.description?.toLowerCase().includes(listSearch) ||
+    transaction.category?.toLowerCase().includes(listSearch) ||
+    transaction.subcategory?.toLowerCase().includes(listSearch);
+
+  const matchesSearch = matchesFilterSearch && matchesListSearch;
+  return matchesType && matchesCategory && matchesDate && matchesSearch;
+});
+
+const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+const startIndex = (currentPage - 1) * itemsPerPage;
+const paginatedTransactions = filteredTransactions.slice(
+  startIndex,
+  startIndex + itemsPerPage
+);
+
+const clearFilters = () => {
+  setDateFilter("thisMonth");
+  setCustomStartDate("");
+  setCustomEndDate("");
+  setCategoryFilter("");
+  setTransactionFilter("all");
+  setFilterSearchTerm("");
+  setListSearchTerm("");
+  setCurrentPage(1);
+  setIsDateFilterOpen(false);
+};
+
+useEffect(() => {
+  if (totalPages > 0 && currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+}, [currentPage, totalPages]);
+
+useEffect(() => {
+  setCurrentPage(1);
+}, [
+  filterSearchTerm,
+  listSearchTerm,
+  transactionFilter,
+  categoryFilter,
+  dateFilter,
+  customStartDate,
+  customEndDate
+]);
 
   return (
     <div className="transactions-page">
@@ -104,26 +650,85 @@ function TransactionPage() {
       {/* FILTER BAR */}
       <div className="transaction-filter-bar">
 
-        <button className="filter-select">
+      <div className="date-filter-container">
+        <button className="filter-select" type="button"
+          onClick={() => setIsDateFilterOpen((current) => !current)}>
           <IconCalendar size={18} />
-          <span>This month</span>
+          <span>{dateFilter === "today" ? "Today" : dateFilter === "thisWeek"
+                                        ? "This week" : dateFilter === "thisMonth"
+                                        ? "This month" : dateFilter === "lastMonth"
+                                        ? "Last month" : dateFilter === "last3Months"
+                                        ? "Last 3 months" : dateFilter === "thisYear"
+                                        ? "This year" : dateFilter === "custom"
+                                        ? "Custom range" : "Date range"}</span>
           <IconChevronDown size={17} />
         </button>
 
-        <button className="filter-select">
-          <span>All categories</span>
-          <IconChevronDown size={17} />
-        </button>
+        {isDateFilterOpen && ( 
+          <div className="date-filter-dropdown">
+            <button type="button" 
+              onClick={() => {setDateFilter("today"); setIsDateFilterOpen(false);}}>Today</button>
+            <button type="button"
+              onClick={() => {setDateFilter("thisWeek"); setIsDateFilterOpen(false);}}>This week</button>
+            <button type="button"
+              onClick={() => {setDateFilter("thisMonth"); setIsDateFilterOpen(false);}}>This month</button>
+            <button type="button"
+              onClick={() => {setDateFilter("lastMonth"); setIsDateFilterOpen(false);}}>Last month</button>
+            <button type="button"
+              onClick={() => {setDateFilter("last3Months"); setIsDateFilterOpen(false);}}>Last 3 months</button>
+            <button type="button"
+              onClick={() => {setDateFilter("thisYear"); setIsDateFilterOpen(false);}}>This year</button>
+            <div className="date-filter-divider"/>
+              <button type="button"
+                onClick={() => {setDateFilter("custom"); setIsDateFilterOpen(false);}}>Custom range...</button>
+            </div>
+          )}
+        {dateFilter === "custom" && (
+          <div className="custom-date-range">
+            <div className="custom-date-field">
+              <label>From</label>
+              <input type="date" value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}/>
+            </div>
+            <div className="custom-date-field">
+              <label>To</label>
+              <input type="date" value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}/>
+            </div>
+             <button type="button" className="apply-date-button"
+              onClick={() => setIsDateFilterOpen(false)}> Apply
+            </button>
+          </div>
+        )}
+      </div>
 
-        <button className="filter-select">
-          <span>All types</span>
-          <IconChevronDown size={17} />
-        </button>
+        <select className="filter-select"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}>
+          <option value="">All categories</option>
+          
+          {categories.map((category) => (
+            <option key={category.id} value={category.name}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+
+        <select className="filter-select"
+          value={transactionFilter}
+          onChange={(e) => setTransactionFilter(e.target.value)}>
+            <option value="all">All types</option>
+            <option value="debit">Debit</option>
+            <option value="credit">Credit</option>
+        </select>
 
         <div className="filter-search">
           <IconSearch size={18} />
-          <input placeholder="Search..." />
+          <input type="text" placeholder="Search..." value={filterSearchTerm}
+                onChange={(e) => setFilterSearchTerm(e.target.value)}/>
         </div>
+
+        <button type="button" className="clear-filters-button" onClick={clearFilters}> Clear </button>
 
         <div className="filter-actions">
           <button className="secondary-button">
@@ -147,7 +752,7 @@ function TransactionPage() {
               <IconPencil size={20} />
             </div>
 
-            <h2>Add new transaction</h2>
+            <h2>{editingTransactionId ? "Edit transaction" : "Add new transaction"}</h2>
           </div>
 
           <div className="paid-options">
@@ -171,12 +776,26 @@ function TransactionPage() {
 
             <div className="input-with-icon">
               <input
-                type="text"
-                value="15/08/2026"
-                readOnly
+                type="date"
+                value={transactionDate}
+                onChange={(e) => setTransactionDate(e.target.value)}
               />
-              <IconCalendar size={18} />
+
             </div>
+          </div>
+
+          {/* ACCOUNT */}
+          <div className="form-field">
+            <label>Account</label>
+            <select value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}>
+              <option value="">Select account</option>
+               {accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.accountName}
+                </option>
+            ))}
+            </select>
           </div>
 
           {/* DESCRIPTION */}
@@ -186,6 +805,8 @@ function TransactionPage() {
             <input
               type="text"
               placeholder="e.g. Swiggy order"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
@@ -193,20 +814,39 @@ function TransactionPage() {
           <div className="form-field">
             <label>Category</label>
 
-            <div className="select-input">
-              <span>Select category</span>
-              <IconChevronDown size={18} />
-            </div>
+            <select value={categoryId}
+              onChange={(e) => {
+                setCategoryId(e.target.value);
+                setSubcategoryId("");
+              }}>
+              <option value="">Select category</option>
+
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+            </select>
           </div>
 
           {/* SUBCATEGORY */}
           <div className="form-field">
             <label>Subcategory</label>
 
-            <div className="select-input">
-              <span>Select subcategory</span>
-              <IconChevronDown size={18} />
-            </div>
+             <select value={subcategoryId}
+              onChange={(e) => setSubcategoryId(e.target.value)}
+              disabled={!categoryId}>
+    
+              <option value=""> 
+                  {categoryId ? "Select subcategory" : "Select category first"}
+              </option>
+
+              {subcategories.map((subcategory) => (
+              <option key={subcategory.id} value={subcategory.id}>
+                {subcategory.name}
+              </option>
+              ))}
+            </select>
           </div>
 
           {/* AMOUNT */}
@@ -216,6 +856,10 @@ function TransactionPage() {
             <input
               type="text"
               placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              min="0"
+              step="0.01"
             />
           </div>
 
@@ -253,13 +897,21 @@ function TransactionPage() {
           </div>
 
           <div className="form-actions">
-            <button className="clear-button">
+            <button type="button" className="clear-button" onClick={clearForm}>
               Clear
             </button>
 
-            <button className="save-button">
-              Save transaction
+          <div className="transaction-form-actions">
+            <button className="save-button"
+              onClick={saveTransaction}>
+              {editingTransactionId ? "Update transaction" : "Save transaction"}
             </button>
+            {editingTransactionId && (<button type="button" className="transaction-cancel-button"
+              onClick={cancelEdit}>
+             Cancel
+          </button>
+          )}
+          </div>
           </div>
 
         </div>
@@ -275,15 +927,24 @@ function TransactionPage() {
             <h2>Transactions list</h2>
 
             <div className="transaction-tabs">
-              <button className="transaction-tab active">
+              <button className={`transaction-tab ${
+                  transactionFilter === "all" ? "active" : ""
+              }`}
+              onClick={() => setTransactionFilter("all")}>
                 All
               </button>
 
-              <button className="transaction-tab">
+              <button className={`transaction-tab ${
+                  transactionFilter === "debit" ? "active" : ""
+              }`}
+              onClick={() => setTransactionFilter("debit")}>
                 Debit
               </button>
 
-              <button className="transaction-tab">
+              <button className={`transaction-tab ${
+                  transactionFilter === "credit" ? "active" : ""
+              }`}
+              onClick={() => setTransactionFilter("credit")}>
                 Credit
               </button>
             </div>
@@ -293,7 +954,8 @@ function TransactionPage() {
 
             <div className="list-search">
               <IconSearch size={18} />
-              <input placeholder="Search in transactions..." />
+              <input type="text"  placeholder="Search in transactions..."
+                 value={listSearchTerm} onChange={(e) => setListSearchTerm(e.target.value)}/>
             </div>
 
             <div className="view-toggle">
@@ -335,38 +997,26 @@ function TransactionPage() {
             </thead>
 
             <tbody>
-
-              {transactions.map((transaction, index) => (
-                <tr key={index}>
-
-                  <td>
-                    <input type="checkbox" />
+              {paginatedTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="transactions-empty-state">
+                    No transactions found.
                   </td>
-
-                  <td className="date-cell">
-                    {transaction.date}
-                  </td>
-
-                  <td className="description-cell">
-                    <div className="transaction-description">
-                      <div className={`transaction-symbol ${transaction.categoryClass}`}>
-                        {transaction.type === "Credit" ? (
-                          <IconArrowUp size={17} />
-                        ) : (
-                          <IconArrowDown size={17} />
-                        )}
+                </tr>
+              ) : (
+                paginatedTransactions.map((transaction, index) => (
+                  <tr key={index}>
+                    <td> <input type="checkbox" /> </td>
+                    <td className="date-cell"> {transaction.date} </td>
+                    <td className="description-cell">
+                      <div className="transaction-description">
+                        <div className={`transaction-symbol ${transaction.categoryClass}`}>
+                          {transaction.type === "Credit" ? (<IconArrowUp size={17} />) : (<IconArrowDown size={17} /> )}
+                        </div>
+                        <span> {transaction.description} </span>
                       </div>
-
-                      <span>
-                        {transaction.description}
-                      </span>
-                    </div>
-                  </td>
-
-                  <td>
-                    <span
-                      className={`category-tag ${transaction.categoryClass}`}
-                    >
+                    </td>
+                    <td> <span className={`category-tag ${transaction.categoryClass}`}>
                       <span className="category-dot"></span>
                       {transaction.category}
                     </span>
@@ -408,14 +1058,23 @@ function TransactionPage() {
                   </td>
 
                   <td>
-                    <button className="row-action">
-                      <IconDotsVertical size={19} />
-                    </button>
+                    <div className="transaction-actions">
+                      <button type="button" className="row-action"
+                        onClick={() => handleEditTransaction(transaction.id)}
+                        title="Edit transaction">
+                        <IconPencil size={19} />
+                      </button>
+
+                      <button type="button" className="row-action"
+                        onClick={() => handleDeleteTransaction(transaction.id)}
+                        title="Delete transaction">
+                        <IconTrash size={19} />
+                      </button>
+                    </div>
                   </td>
-
                 </tr>
-              ))}
-
+              ))
+            )}
             </tbody>
 
           </table>
@@ -425,27 +1084,32 @@ function TransactionPage() {
         <div className="transactions-pagination">
 
           <span>
-            Showing 1 to 5 of 42 transactions
+            Showing{" "}
+            {filteredTransactions.length === 0 ? 0 : startIndex + 1}{" "}
+            to{" "}
+            {Math.min(startIndex + itemsPerPage, filteredTransactions.length)}{" "}
+            of {filteredTransactions.length} transactions
           </span>
 
           <div className="pagination-buttons">
 
-            <button>
+            <button
+              onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+              disabled={currentPage === 1}>
               <IconChevronLeft size={18} />
             </button>
 
-            <button className="current-page">
-              1
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+              (page) => (
+                <button key={page} className={currentPage === page ? "current-page" : ""}
+                onClick={() => setCurrentPage(page)}>
+              {page}
             </button>
+            )
+          )}
 
-            <button>2</button>
-            <button>3</button>
-
-            <span>...</span>
-
-            <button>9</button>
-
-            <button>
+          <button onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+              disabled={currentPage === totalPages || totalPages === 0}>
               <IconChevronRight size={18} />
             </button>
 

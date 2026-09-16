@@ -4,6 +4,7 @@ import com.pennyvault.dto.request.TransactionRequest;
 import com.pennyvault.dto.response.TransactionResponse;
 import com.pennyvault.service.TransactionService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<TransactionResponse> createTransaction(@RequestBody TransactionRequest request,
+    public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody TransactionRequest request,
             Authentication authentication) {
 
         String userEmail = authentication.getName();
@@ -48,12 +49,22 @@ public class TransactionController {
             Authentication authentication) {
 
         String userEmail = authentication.getName();
-        TransactionResponse transaction =
-                transactionService.getTransactionById(
-                        id,
-                        userEmail
-                );
-
+        TransactionResponse transaction = transactionService.getTransactionById(id, userEmail);
         return ResponseEntity.ok(transaction);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TransactionResponse> updateTransaction(@PathVariable Long id,
+            @Valid @RequestBody TransactionRequest request, Authentication authentication) {
+
+        String userEmail = authentication.getName();
+        TransactionResponse response = transactionService.updateTransaction(id, request, userEmail);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteTransaction(@PathVariable Long id, Authentication authentication) {
+        String userEmail = authentication.getName();
+        transactionService.deleteTransaction(id, userEmail);
     }
 }

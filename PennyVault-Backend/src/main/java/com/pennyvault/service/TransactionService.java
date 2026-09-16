@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -79,7 +80,10 @@ private final UserRepository userRepository;
             );
         }
 
-        // Step 7: Create transaction
+        // Step 7: Validate transaction type
+        validateTransactionType(request.getTransactionType());
+
+        // Step 8: Create transaction
         Transaction transaction = Transaction.builder()
             .account(account)
             .category(category)
@@ -90,12 +94,17 @@ private final UserRepository userRepository;
             .transactionDate(request.getTransactionDate())
             .build();
 
-        // Step 8: Save transaction
-        Transaction savedTransaction =
-            transactionRepository.save(transaction);
+        // Step 9: Save transaction
+        Transaction savedTransaction = transactionRepository.save(transaction);
 
-        // Step 9: Convert to response DTO
+        // Step 10: Convert to response DTO
         return mapToResponse(savedTransaction);
+    }
+
+    private void validateTransactionType(String transactionType) {
+        if (!"INCOME".equalsIgnoreCase(transactionType) && !"EXPENSE".equalsIgnoreCase(transactionType)) {
+            throw new RuntimeException("Transaction type must be INCOME or EXPENSE");
+        }
     }
 
     private TransactionResponse mapToResponse( Transaction transaction) {
@@ -147,6 +156,85 @@ private final UserRepository userRepository;
         throw new RuntimeException("You do not have permission to access this transaction");
     }
     return mapToResponse(transaction);
+    }
+
+    public TransactionResponse updateTransaction(Long transactionId, TransactionRequest request, String userEmail) {
+
+        // Step 1: Find logged-in user
+        User user = userRepository
+                .findByEmail(userEmail)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        // Step 2: Find transaction
+        Transaction transaction = transactionRepository
+                .findById(transactionId)
+                .orElseThrow(() ->
+                        new RuntimeException("Transaction not found"));
+
+        // Step 3: Verify transaction belongs to logged-in user
+        if (!transaction.getAccount().getUser().getId().equals(user.getId())) {
+            throw new RuntimeException(
+                    "You do not have permission to update this transaction");
+        }
+
+        // Step 4: Find account
+        Account account = accountRepository
+                .findById(request.getAccountId())
+                .orElseThrow(() ->
+                        new RuntimeException("Account not found"));
+
+        // Step 5: Verify account belongs to logged-in user
+        if (!account.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException(
+                    "You do not have permission to use this account");
+        }
+
+        // Step 6: Find category
+        Category category = categoryRepository
+                .findById(request.getCategoryId())
+                .orElseThrow(() ->
+                        new RuntimeException("Category not found"));
+
+        // Step 7: Find subcategory
+        Subcategory subcategory = subcategoryRepository
+                .findById(request.getSubcategoryId())
+                .orElseThrow(() ->
+                        new RuntimeException("Subcategory not found"));
+
+        // Step 8: Verify subcategory belongs to category
+        if (!subcategory.getCategory().getId().equals(category.getId())) {
+            throw new RuntimeException(
+                    "Selected subcategory does not belong to the selected category");
+        }
+
+        // Step 9: Validate transaction type
+        validateTransactionType(request.getTransactionType());
+
+        // Step 10: Update transaction
+        transaction.setAccount(account);
+        transaction.setCategory(category);
+        transaction.setSubcategory(subcategory);
+        transaction.setDescription(request.getDescription());
+        transaction.setAmount(request.getAmount());
+        transaction.setTransactionType(request.getTransactionType());
+        transaction.setTransactionDate(request.getTransactionDate());
+
+        // Step 11: Save updated transaction
+        Transaction updatedTransaction = transactionRepository.save(transaction);
+
+        // Step 12: Convert to response DTO
+        return mapToResponse(updatedTransaction);
+    }
+
+    @Transactional
+    public void deleteTransaction(Long transactionId, String userEmail) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+            .orElseThrow(() -> new RuntimeException("Transaction not found"));
+        if (!transaction.getAccount().getUser().getEmail().equals(userEmail)) {
+            throw new RuntimeException("You are not authorized to delete this transaction");
+        }
+        transactionRepository.delete(transaction);
     }
 
 }

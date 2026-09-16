@@ -33,9 +33,7 @@ public class GlobalExceptionHandler {
                 .errors(errors)
                 .build();
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
@@ -67,4 +65,18 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(response);
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiErrorResponse> handleRuntimeException(RuntimeException exception) {
+
+    ApiErrorResponse response = ApiErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .message(exception.getMessage())
+            .build();
+
+    return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(response);
+}
 }

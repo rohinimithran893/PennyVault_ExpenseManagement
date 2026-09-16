@@ -885,3 +885,121 @@
     padding: 15px;
   }
 }
+
+.transaction-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.transaction-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.transaction-cancel-button {
+  padding: 10px 20px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  color: #374151 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+
+.transaction-cancel-button:hover {
+  background: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+}
+
+.transactions-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #777;
+  font-size: 14px;
+}
+
+.date-filter-container {
+  position: relative;
+  display: inline-block;
+}
+
+.date-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 180px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  padding: 6px 0;
+  z-index: 1000;
+}
+
+.date-filter-dropdown button {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.date-filter-dropdown button:hover {
+  background: #f5f5f5;
+}
+
+.date-filter-divider {
+  height: 1px;
+  background: #eeeeee;
+  margin: 6px 0;
+}
+
+.custom-date-range {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 240px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  padding: 14px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.custom-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.custom-date-field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+}
+
+.custom-date-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+}
+
+.custom-date-field input:focus {
+  border-color: #7c65f0;
+}
