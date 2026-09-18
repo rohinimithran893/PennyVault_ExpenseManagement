@@ -1,0 +1,20 @@
+INSERT INTO categories (name, icon, color)
+VALUES
+    ('Home & Utilities', 'ti-home', '#7c65f0'),
+    ('Food & Groceries', 'ti-shopping-cart', '#27a06a'),
+    ('Transport', 'ti-car', '#378add'),
+    ('Health & Wellness', 'ti-heart', '#e05a7a'),
+    ('Education & Kids', 'ti-school', '#f0a500'),
+    ('Finance & Investments', 'ti-wallet', '#1d9e75'),
+    ('Travel', 'ti-plane-departure', '#2f7ac9'),
+    ('Gifts & Donations', 'ti-gift', '#d18a1f'),
+    ('Income', 'ti-wallet', '#2ecc71'),
+    ('Shopping', 'ti-shopping-cart', '#3498db'),
+    ('Personal Care', 'ti-user-heart', '#e74c3c'),
+    ('Entertainment', 'ti-device-tv', '#534ab7'),
+    ('Work & Business', 'ti-briefcase', '#3498db'),
+    ('Subscriptions', 'ti-credit-card', '#9b59b6'),
+    ('Pets', 'ti-paw', '#e67e22'),
+    ('Taxes & Government', 'ti-building-bank', '#c0392b'),
+    ('Transfers', 'ti-arrows-exchange', '#2980b9'),
+    ('Miscellaneous', 'ti-dots', '#7f8c8d');
