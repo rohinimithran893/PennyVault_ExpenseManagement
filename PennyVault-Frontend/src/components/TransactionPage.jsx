@@ -70,6 +70,7 @@ function TransactionPage() {
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingTransactionId, setEditingTransactionId] = useState(null);
+  const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -86,6 +87,8 @@ function TransactionPage() {
           throw new Error("Failed to load accounts");
         }
         const data = await response.json();
+        console.log("accounts working");
+        console.log("Accounts API:", data);
         setAccounts(data);
       } catch (error) {
         console.error("Error loading accounts:", error);
@@ -264,6 +267,7 @@ const saveTransaction = async () => {
 
     setEditingTransactionId(null);
     clearForm();
+    setIsAddTransactionOpen(false);
 
     // Reload transactions from backend
     const transactionsResponse = await fetch(
@@ -319,6 +323,7 @@ const clearForm = () => {
 
 const cancelEdit = () => {
   clearForm();
+  setIsAddTransactionOpen(false);
 };
 
 const handleEditTransaction = async (transactionId) => {
@@ -345,52 +350,21 @@ const handleEditTransaction = async (transactionId) => {
     const transaction = await response.json();
     console.log("Transaction to edit:", transaction);
 
-    // Find account ID from account name
-    const selectedAccount = accounts.find(
-      (account) =>
-        account.accountName === transaction.account
-    );
-
-    // Find category ID from category name
-    const selectedCategory = categories.find(
-      (category) =>
-        category.name === transaction.category
-    );
-
-    if (!selectedAccount) {
-      throw new Error("Account not found");
-    }
-
-    if (!selectedCategory) {
-      throw new Error("Category not found");
-    }
-
     // Set basic transaction fields
+    setAccountId(String(transaction.accountId));
+    setCategoryId(String(transaction.categoryId));
+    setSubcategoryId(transaction.subcategoryId ? String(transaction.subcategoryId) : "");
     setEditingTransactionId(transactionId);
-    setAccountId(String(selectedAccount.id));
-    setCategoryId(String(selectedCategory.id));
     setDescription(transaction.description || "");
-
-    setAmount(
-      transaction.amount !== null &&
-      transaction.amount !== undefined
-        ? String(transaction.amount)
-        : ""
-    );
-
-    setTransactionType(
-      transaction.transactionType?.toLowerCase() === "income"
-        ? "credit"
-        : "debit"
-    );
-
-    setTransactionDate(
-      transaction.transactionDate || ""
-    );
+    setAmount(transaction.amount.toString());
+    setTransactionType(transaction.transactionType);
+    setTransactionDate(transaction.transactionDate || "");
+    // Open the Add/Edit transaction panel
+    setIsAddTransactionOpen(true);
 
     // Load subcategories for selected category
     const subcategoryResponse = await fetch(
-      `http://localhost:8080/api/subcategories/category/${selectedCategory.id}`,
+      `http://localhost:8080/api/subcategories/category/${transaction.categoryId}`,
       {
         method: "GET",
         headers: {
@@ -403,8 +377,7 @@ const handleEditTransaction = async (transactionId) => {
       throw new Error("Failed to load subcategories");
     }
 
-    const subcategoryData =
-      await subcategoryResponse.json();
+    const subcategoryData = await subcategoryResponse.json();
 
     setSubcategories(subcategoryData);
 
@@ -728,7 +701,9 @@ useEffect(() => {
                 onChange={(e) => setFilterSearchTerm(e.target.value)}/>
         </div>
 
-        <button type="button" className="clear-filters-button" onClick={clearFilters}> Clear </button>
+        <button type="button" className="clear-filters-button" 
+            onClick={clearFilters}> Clear 
+        </button>
 
         <div className="filter-actions">
           <button className="secondary-button">
@@ -736,7 +711,11 @@ useEffect(() => {
             Export
           </button>
 
-          <button className="primary-button">
+          <button type="button" className="primary-button"
+            onClick={() => {
+              clearForm();
+              setIsAddTransactionOpen(true);  
+            }}>
             <IconPlus size={19} />
             Add transaction
           </button>
@@ -744,23 +723,20 @@ useEffect(() => {
       </div>
 
       {/* ADD TRANSACTION */}
+      {isAddTransactionOpen && (
       <div className="add-transaction-card">
-
         <div className="add-transaction-header">
           <div className="add-title">
             <div className="add-icon">
               <IconPencil size={20} />
             </div>
-
             <h2>{editingTransactionId ? "Edit transaction" : "Add new transaction"}</h2>
           </div>
-
           <div className="paid-options">
             <button className="paid-option active">
               <IconUsers size={18} />
               One member
             </button>
-
             <button className="paid-option">
               <IconUsers size={18} />
               Split equally
@@ -769,18 +745,15 @@ useEffect(() => {
         </div>
 
         <div className="transaction-form">
-
           {/* DATE */}
           <div className="form-field">
             <label>Date</label>
-
             <div className="input-with-icon">
               <input
                 type="date"
                 value={transactionDate}
                 onChange={(e) => setTransactionDate(e.target.value)}
               />
-
             </div>
           </div>
 
@@ -916,6 +889,7 @@ useEffect(() => {
 
         </div>
       </div>
+      )}
 
       {/* TRANSACTIONS LIST */}
       <div className="transactions-list-card">

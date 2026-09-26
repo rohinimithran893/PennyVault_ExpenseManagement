@@ -12,6 +12,18 @@ public class TransactionResponse {
 
     private Long id;
 
+    private Long accountId;
+
+    private Long categoryId;
+
+    private Long subcategoryId;
+
+    private String account;
+
+    private String category;
+
+    private String subcategory;
+
     private String description;
 
     private BigDecimal amount;
@@ -20,9 +32,7 @@ public class TransactionResponse {
 
     private LocalDate transactionDate;
 
-    private String category;
+    
 
-    private String subcategory;
-
-    private String account;
+   
 }

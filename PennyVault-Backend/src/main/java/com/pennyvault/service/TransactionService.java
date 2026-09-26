@@ -110,6 +110,9 @@ private final UserRepository userRepository;
     private TransactionResponse mapToResponse( Transaction transaction) {
         return TransactionResponse.builder()
             .id(transaction.getId())
+            .accountId(transaction.getAccount().getId())
+            .categoryId(transaction.getCategory().getId())
+            .subcategoryId(transaction.getSubcategory() != null ? transaction.getSubcategory().getId() : null)
             .account(transaction.getAccount().getAccountName())
             .category(transaction.getCategory().getName())
             .subcategory(transaction.getSubcategory() != null

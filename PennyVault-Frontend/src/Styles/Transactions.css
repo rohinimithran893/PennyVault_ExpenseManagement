@@ -144,7 +144,8 @@
 }
 
 .secondary-button,
-.primary-button {
+.primary-button,
+.clear-filters-button {
   height: 43px;
   padding: 0 17px;
   display: flex;
@@ -161,6 +162,24 @@
   border: 1px solid #e2e0eb;
   background: #ffffff;
   color: #555265;
+}
+
+.clear-filters-button {
+  border: 1px solid #e2e0eb;
+  background: #ffffff;
+  color: #555265;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-button:hover {
+  border-color: #7443ec;
+  color: #7443ec;
+  background: #faf8ff;
+}
+
+.clear-filters-button:active {
+  transform: translateY(1px);
 }
 
 .primary-button {
