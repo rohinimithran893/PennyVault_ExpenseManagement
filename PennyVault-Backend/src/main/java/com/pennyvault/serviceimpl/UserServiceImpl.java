@@ -9,6 +9,7 @@ import com.pennyvault.exception.EmailAlreadyExistsException;
 import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.repository.UserRepository;
 import com.pennyvault.security.JwtService;
+import com.pennyvault.service.AccountService;
 import com.pennyvault.service.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +25,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AccountService accountService;
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -43,6 +45,7 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        accountService.createDefaultAccounts(savedUser);
         return mapToResponse(savedUser);
     }
 
