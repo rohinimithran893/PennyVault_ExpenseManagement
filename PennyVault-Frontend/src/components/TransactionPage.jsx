@@ -792,6 +792,51 @@ function TransactionPage() {
     startIndex + itemsPerPage
   );
 
+  const getPaginationItems = () => {
+    if (totalPages <= 7) {
+      return Array.from(
+        { length: totalPages },
+        (_, index) => index + 1
+      );
+    }
+
+    if (currentPage <= 4) {
+      return [
+        1,
+        2,
+        3,
+        4,
+        5,
+        "ellipsis-right",
+        totalPages,
+      ];
+    }
+
+    if (currentPage >= totalPages - 3) {
+      return [
+        1,
+        "ellipsis-left",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "ellipsis-left",
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+      "ellipsis-right",
+      totalPages,
+    ];
+  };
+
+  const paginationItems = getPaginationItems();
+
   const clearFilters = () => {
     setDateFilter("thisMonth");
     setCustomStartDate("");
@@ -1850,41 +1895,80 @@ function TransactionPage() {
         </div>
 
         {/* PAGINATION */}
-        <div className="transactions-pagination">
+        {totalPages > 1 && (
+          <div className="transactions-pagination">
+            <span className="pagination-summary">
+              Showing{" "}
+              {filteredTransactions.length === 0 ? 0 : startIndex + 1}{" "}
+              to{" "}
+              {Math.min(
+                startIndex + itemsPerPage,
+                filteredTransactions.length
+              )}{" "}
+              of {filteredTransactions.length} transactions
+            </span>
+            <div className="pagination-buttons">
+              <button
+                type="button"
+                className="pagination-nav-button"
+                onClick={() =>
+                  setCurrentPage((page) => Math.max(page - 1, 1))
+                }
+                disabled={currentPage === 1}
+                aria-label="Previous page"
+              >
+                <IconChevronLeft size={18} />
+              </button>
 
-          <span>
-            Showing{" "}
-            {filteredTransactions.length === 0 ? 0 : startIndex + 1}{" "}
-            to{" "}
-            {Math.min(startIndex + itemsPerPage, filteredTransactions.length)}{" "}
-            of {filteredTransactions.length} transactions
-          </span>
+              {paginationItems.map((item, index) => {
+                if (typeof item === "string") {
+                  return (
+                    <span
+                      key={`${item}-${index}`}
+                      className="pagination-ellipsis"
+                      aria-hidden="true"
+                    >
+                      ...
+                    </span>
+                  );
+                }
 
-          <div className="pagination-buttons">
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    className={
+                      currentPage === item ? "current-page" : ""
+                    }
+                    onClick={() => setCurrentPage(item)}
+                    aria-label={`Go to page ${item}`}
+                    aria-current={
+                      currentPage === item ? "page" : undefined
+                    }
+                  >
+                    {item}
+                  </button>
+                );
+              })}
 
-            <button
-              onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
-              disabled={currentPage === 1}>
-              <IconChevronLeft size={18} />
-            </button>
+              <button
+                type="button"
+                className="pagination-nav-button"
+                onClick={() =>
+                  setCurrentPage((page) =>
+                    Math.min(page + 1, totalPages)
+                  )
+                }
+                disabled={currentPage === totalPages}
+                aria-label="Next page"
+              >
+                <IconChevronRight size={18} />
+              </button>
 
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-              (page) => (
-                <button key={page} className={currentPage === page ? "current-page" : ""}
-                  onClick={() => setCurrentPage(page)}>
-                  {page}
-                </button>
-              )
-            )}
-
-            <button onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
-              disabled={currentPage === totalPages || totalPages === 0}>
-              <IconChevronRight size={18} />
-            </button>
+            </div>
 
           </div>
-
-        </div>
+        )}
 
       </div>
 
