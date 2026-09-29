@@ -78,6 +78,10 @@ function TransactionPage() {
   const [customEndDate, setCustomEndDate] = useState("");
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: null,
+  });
   const [editingTransactionId, setEditingTransactionId] = useState(null);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const [viewingTransaction, setViewingTransaction] = useState(null);
@@ -255,6 +259,30 @@ function TransactionPage() {
     loadTransactions();
   }, []);
 
+  const handleSort = (key) => {
+    setCurrentPage(1);
+
+    setSortConfig((currentSort) => {
+      if (currentSort.key !== key) {
+        return {
+          key,
+          direction: "asc",
+        };
+      }
+
+      if (currentSort.direction === "asc") {
+        return {
+          key,
+          direction: "desc",
+        };
+      }
+
+      return {
+        key: null,
+        direction: null,
+      };
+    });
+  };
   const validateTransactionForm = () => {
     const errors = {};
     if (!transactionDate) {
@@ -695,9 +723,71 @@ function TransactionPage() {
     return matchesType && matchesCategory && matchesDate && matchesSearch;
   });
 
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+    if (!sortConfig.key || !sortConfig.direction) {
+      return 0;
+    }
+
+    let comparison = 0;
+
+    switch (sortConfig.key) {
+      case "date":
+        comparison = String(a.date || "").localeCompare(
+          String(b.date || "")
+        );
+        break;
+
+      case "description":
+        comparison = String(a.description || "").localeCompare(
+          String(b.description || ""),
+          undefined,
+          { sensitivity: "base" }
+        );
+        break;
+
+      case "category":
+        comparison = String(a.category || "").localeCompare(
+          String(b.category || ""),
+          undefined,
+          { sensitivity: "base" }
+        );
+        break;
+
+      case "amount": {
+        const amountA = Number(
+          String(a.amount || "").replace(/[₹,\s]/g, "")
+        );
+
+        const amountB = Number(
+          String(b.amount || "").replace(/[₹,\s]/g, "")
+        );
+
+        comparison = amountA - amountB;
+        break;
+      }
+
+      case "type":
+        comparison = String(a.type || "").localeCompare(
+          String(b.type || ""),
+          undefined,
+          { sensitivity: "base" }
+        );
+        break;
+
+      default:
+        comparison = 0;
+    }
+
+    return sortConfig.direction === "asc"
+      ? comparison
+      : -comparison;
+  });
+
+  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedTransactions = filteredTransactions.slice(
+
+  const paginatedTransactions = sortedTransactions.slice(
     startIndex,
     startIndex + itemsPerPage
   );
@@ -1095,16 +1185,16 @@ function TransactionPage() {
               <label>Subcategory</label>
 
               <select value={subcategoryId}
-              className={formErrors.subcategoryId ? "input-error" : ""}
+                className={formErrors.subcategoryId ? "input-error" : ""}
                 onChange={(e) => {
-                    setSubcategoryId(e.target.value);
-                    if (formErrors.subcategoryId) {
-                          setFormErrors((currentErrors) => ({
-                            ...currentErrors,
-                            subcategoryId: "",
-                          }));
-                        }
-                      }}
+                  setSubcategoryId(e.target.value);
+                  if (formErrors.subcategoryId) {
+                    setFormErrors((currentErrors) => ({
+                      ...currentErrors,
+                      subcategoryId: "",
+                    }));
+                  }
+                }}
                 disabled={!categoryId}>
 
                 <option value="">
@@ -1134,20 +1224,20 @@ function TransactionPage() {
                 value={amount}
                 className={formErrors.amount ? "input-error" : ""}
                 onChange={(e) => {
-                    const value = e.target.value;
-                        // Allow only digits and one decimal point.
-                        if (!/^\d*\.?\d*$/.test(value)) {
-                          return;
-                        }
-                     setAmount(value);
+                  const value = e.target.value;
+                  // Allow only digits and one decimal point.
+                  if (!/^\d*\.?\d*$/.test(value)) {
+                    return;
+                  }
+                  setAmount(value);
 
-                        if (formErrors.amount) {
-                          setFormErrors((currentErrors) => ({
-                            ...currentErrors,
-                            amount: "",
-                          }));
-                        }
-                      }}
+                  if (formErrors.amount) {
+                    setFormErrors((currentErrors) => ({
+                      ...currentErrors,
+                      amount: "",
+                    }));
+                  }
+                }}
 
               />
             </div>
@@ -1249,9 +1339,9 @@ function TransactionPage() {
 
               <div
                 className={`transaction-detail-amount ${viewingTransaction.transactionType
-                    ?.toLowerCase() === "income"
-                    ? "credit-amount"
-                    : "debit-amount"
+                  ?.toLowerCase() === "income"
+                  ? "credit-amount"
+                  : "debit-amount"
                   }`}
               >
                 {viewingTransaction.transactionType
@@ -1310,9 +1400,9 @@ function TransactionPage() {
 
                 <span
                   className={`transaction-type ${viewingTransaction.transactionType
-                      ?.toLowerCase() === "income"
-                      ? "credit"
-                      : "debit"
+                    ?.toLowerCase() === "income"
+                    ? "credit"
+                    : "debit"
                     }`}
                 >
                   {viewingTransaction.transactionType
@@ -1495,13 +1585,98 @@ function TransactionPage() {
                   <input type="checkbox" />
                 </th>
 
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
+                <th><button
+                  type="button"
+                  className={`transaction-sort-button ${sortConfig.key === "date" ? "active" : ""
+                    }`}
+                  onClick={() => handleSort("date")}
+                >
+                  <span>Date</span>
+
+                  {sortConfig.key === "date" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={14} />
+                    ) : (
+                      <IconArrowDown size={14} />
+                    )
+                  ) : (
+                    <IconChevronDown size={14} />
+                  )}
+                </button></th>
+                <th><button
+                  type="button"
+                  className={`transaction-sort-button ${sortConfig.key === "description" ? "active" : ""
+                    }`}
+                  onClick={() => handleSort("description")}
+                >
+                  <span>Description</span>
+
+                  {sortConfig.key === "description" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={14} />
+                    ) : (
+                      <IconArrowDown size={14} />
+                    )
+                  ) : (
+                    <IconChevronDown size={14} />
+                  )}
+                </button></th>
+                <th><button
+                  type="button"
+                  className={`transaction-sort-button ${sortConfig.key === "category" ? "active" : ""
+                    }`}
+                  onClick={() => handleSort("category")}
+                >
+                  <span>Category</span>
+
+                  {sortConfig.key === "category" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={14} />
+                    ) : (
+                      <IconArrowDown size={14} />
+                    )
+                  ) : (
+                    <IconChevronDown size={14} />
+                  )}
+                </button></th>
                 <th>Subcategory</th>
                 <th>Paid by</th>
-                <th>Amount</th>
-                <th>Type</th>
+                <th><button
+                  type="button"
+                  className={`transaction-sort-button ${sortConfig.key === "amount" ? "active" : ""
+                    }`}
+                  onClick={() => handleSort("amount")}
+                >
+                  <span>Amount</span>
+
+                  {sortConfig.key === "amount" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={14} />
+                    ) : (
+                      <IconArrowDown size={14} />
+                    )
+                  ) : (
+                    <IconChevronDown size={14} />
+                  )}
+                </button></th>
+                <th><button
+                  type="button"
+                  className={`transaction-sort-button ${sortConfig.key === "type" ? "active" : ""
+                    }`}
+                  onClick={() => handleSort("type")}
+                >
+                  <span>Type</span>
+
+                  {sortConfig.key === "type" ? (
+                    sortConfig.direction === "asc" ? (
+                      <IconArrowUp size={14} />
+                    ) : (
+                      <IconArrowDown size={14} />
+                    )
+                  ) : (
+                    <IconChevronDown size={14} />
+                  )}
+                </button></th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -1627,8 +1802,8 @@ function TransactionPage() {
                     <td>
                       <span
                         className={`amount ${transaction.type === "Credit"
-                            ? "credit-amount"
-                            : "debit-amount"
+                          ? "credit-amount"
+                          : "debit-amount"
                           }`}
                       >
                         {transaction.type === "Credit" ? "+" : "-"}

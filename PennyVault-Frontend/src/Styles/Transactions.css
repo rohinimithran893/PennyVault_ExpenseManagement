@@ -1823,3 +1823,28 @@
   border-color: #e44444 !important;
   box-shadow: 0 0 0 2px rgba(228, 68, 68, 0.10);
 }
+
+.transaction-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.transaction-sort-button:hover {
+  color: #6c4ce8;
+}
+
+.transaction-sort-button.active {
+  color: #6c4ce8;
+}
+
+.transaction-sort-button svg {
+  flex-shrink: 0;
+}
