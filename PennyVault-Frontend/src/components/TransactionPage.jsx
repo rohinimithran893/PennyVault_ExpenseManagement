@@ -49,8 +49,44 @@ const getCategoryClass = (category) => {
   if (categoryName.includes("pets")) return "pets";
   if (categoryName.includes("tax")) return "taxes";
   if (categoryName.includes("transfer")) return "transfers";
-
   return "miscellaneous";
+};
+
+const formatTransactionAmount = (amount) => {
+  const numericAmount = Number(amount);
+
+  if (!Number.isFinite(numericAmount)) {
+    return "₹0.00";
+  }
+
+  return `₹${numericAmount.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const formatTransactionDate = (date) => {
+  if (!date) {
+    return "-";
+  }
+
+  const [year, month, day] = String(date).split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return date;
+  }
+
+  const formattedDate = new Date(year, month - 1, day);
+
+  if (Number.isNaN(formattedDate.getTime())) {
+    return date;
+  }
+
+  return formattedDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
 function TransactionPage() {
@@ -73,15 +109,24 @@ function TransactionPage() {
   const [filterSearchTerm, setFilterSearchTerm] = useState("");
   const [transactionFilter, setTransactionFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
   const [dateFilter, setDateFilter] = useState("thisMonth");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
-  const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: null,
   });
+  const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
+  const [draftTransactionFilter, setDraftTransactionFilter] = useState("all");
+  const [draftCategoryFilter, setDraftCategoryFilter] = useState("");
+  const [draftDateFilter, setDraftDateFilter] = useState("thisMonth");
+  const [draftCustomStartDate, setDraftCustomStartDate] = useState("");
+  const [draftCustomEndDate, setDraftCustomEndDate] = useState("");
+  const [draftMinAmount, setDraftMinAmount] = useState("");
+  const [draftMaxAmount, setDraftMaxAmount] = useState("");
   const [editingTransactionId, setEditingTransactionId] = useState(null);
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const [viewingTransaction, setViewingTransaction] = useState(null);
@@ -92,6 +137,33 @@ function TransactionPage() {
   const toastTimerRef = useRef(null);
 
   const itemsPerPage = 5;
+
+  const openAdvancedFilters = () => {
+    setDraftTransactionFilter(transactionFilter);
+    setDraftCategoryFilter(categoryFilter);
+    setDraftDateFilter(dateFilter);
+    setDraftCustomStartDate(customStartDate);
+    setDraftCustomEndDate(customEndDate);
+    setDraftMinAmount(minAmount);
+    setDraftMaxAmount(maxAmount);
+    setIsAdvancedFilterOpen(true);
+  };
+
+  const applyAdvancedFilters = () => {
+    setTransactionFilter(draftTransactionFilter);
+    setCategoryFilter(draftCategoryFilter);
+    setDateFilter(draftDateFilter);
+    setCustomStartDate(draftCustomStartDate);
+    setCustomEndDate(draftCustomEndDate);
+    setMinAmount(draftMinAmount);
+    setMaxAmount(draftMaxAmount);
+    setCurrentPage(1);
+    setIsAdvancedFilterOpen(false);
+  };
+
+  const cancelAdvancedFilters = () => {
+    setIsAdvancedFilterOpen(false);
+  };
 
   const showToast = (message, type = "success") => {
     if (toastTimerRef.current) {
@@ -239,7 +311,7 @@ function TransactionPage() {
         categoryClass: getCategoryClass(transaction.category),
         subcategory: transaction.subcategory,
         paidBy: "R",
-        amount: `₹${Number(transaction.amount).toLocaleString("en-IN")}`,
+        amount: Number(transaction.amount),
         type:
           transaction.transactionType?.toLowerCase() === "income"
             ? "Credit"
@@ -408,9 +480,7 @@ function TransactionPage() {
             categoryClass: getCategoryClass(transaction.category),
             subcategory: transaction.subcategory,
             paidBy: "R",
-            amount: `₹${Number(transaction.amount).toLocaleString(
-              "en-IN"
-            )}`,
+            amount: Number(transaction.amount),
             type:
               transaction.transactionType?.toLowerCase() === "income"
                 ? "Credit"
@@ -627,6 +697,9 @@ function TransactionPage() {
 
     const matchesType = transactionFilter === "all" || transaction.type?.toLowerCase() === transactionFilter;
     const matchesCategory = !categoryFilter || transaction.category === categoryFilter;
+    const transactionAmount = Number(transaction.amount);
+    const matchesAmount = (!minAmount || (Number.isFinite(transactionAmount) && transactionAmount >= Number(minAmount))) &&
+      (!maxAmount || (Number.isFinite(transactionAmount) && transactionAmount <= Number(maxAmount)));
     const matchesDate = (() => {
       if (dateFilter === "all") {
         return true;
@@ -720,7 +793,7 @@ function TransactionPage() {
       transaction.subcategory?.toLowerCase().includes(listSearch);
 
     const matchesSearch = matchesFilterSearch && matchesListSearch;
-    return matchesType && matchesCategory && matchesDate && matchesSearch;
+    return matchesType && matchesCategory && matchesDate && matchesAmount && matchesSearch;
   });
 
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
@@ -842,11 +915,12 @@ function TransactionPage() {
     setCustomStartDate("");
     setCustomEndDate("");
     setCategoryFilter("");
+    setMinAmount("");
+    setMaxAmount("");
     setTransactionFilter("all");
     setFilterSearchTerm("");
     setListSearchTerm("");
     setCurrentPage(1);
-    setIsDateFilterOpen(false);
   };
 
   const clearSearch = () => {
@@ -864,7 +938,9 @@ function TransactionPage() {
     Boolean(categoryFilter) ||
     dateFilter !== "thisMonth" ||
     Boolean(customStartDate) ||
-    Boolean(customEndDate);
+    Boolean(customEndDate) ||
+    Boolean(minAmount) ||
+    Boolean(maxAmount);
 
   const getEmptyState = () => {
     // 1. User genuinely has no transactions
@@ -937,7 +1013,9 @@ function TransactionPage() {
     categoryFilter,
     dateFilter,
     customStartDate,
-    customEndDate
+    customEndDate,
+    minAmount,
+    maxAmount
   ]);
 
   return (
@@ -978,592 +1056,950 @@ function TransactionPage() {
         </div>
       )}
 
-      {/* PAGE HEADER */}
-      <div className="transactions-header">
-        <div>
-          <h1>Transactions</h1>
-          <p>View, add and manage all your transactions</p>
-        </div>
+      {isAdvancedFilterOpen && (
+        <div
+          className="advanced-filter-overlay"
+          onClick={cancelAdvancedFilters}
+        >
+          <div
+            className="advanced-filter-panel"
+            onClick={(event) => event.stopPropagation()}
+          >
 
-        <div className="transactions-header-actions">
-          <div className="transaction-search">
-            <IconSearch size={19} />
-            <input placeholder="Search transactions..." />
-          </div>
+            <div className="advanced-filter-header">
 
-          <button className="icon-button">
-            <IconCalendar size={20} />
-          </button>
-
-          <button className="icon-button">
-            <IconDotsVertical size={20} />
-          </button>
-        </div>
-      </div>
-
-      {/* FILTER BAR */}
-      <div className="transaction-filter-bar">
-
-        <div className="date-filter-container">
-          <button className="filter-select" type="button"
-            onClick={() => setIsDateFilterOpen((current) => !current)}>
-            <IconCalendar size={18} />
-            <span>{dateFilter === "today" ? "Today" : dateFilter === "thisWeek"
-              ? "This week" : dateFilter === "thisMonth"
-                ? "This month" : dateFilter === "lastMonth"
-                  ? "Last month" : dateFilter === "last3Months"
-                    ? "Last 3 months" : dateFilter === "thisYear"
-                      ? "This year" : dateFilter === "custom"
-                        ? "Custom range" : "Date range"}</span>
-            <IconChevronDown size={17} />
-          </button>
-
-          {isDateFilterOpen && (
-            <div className="date-filter-dropdown">
-              <button type="button"
-                onClick={() => { setDateFilter("today"); setIsDateFilterOpen(false); }}>Today</button>
-              <button type="button"
-                onClick={() => { setDateFilter("thisWeek"); setIsDateFilterOpen(false); }}>This week</button>
-              <button type="button"
-                onClick={() => { setDateFilter("thisMonth"); setIsDateFilterOpen(false); }}>This month</button>
-              <button type="button"
-                onClick={() => { setDateFilter("lastMonth"); setIsDateFilterOpen(false); }}>Last month</button>
-              <button type="button"
-                onClick={() => { setDateFilter("last3Months"); setIsDateFilterOpen(false); }}>Last 3 months</button>
-              <button type="button"
-                onClick={() => { setDateFilter("thisYear"); setIsDateFilterOpen(false); }}>This year</button>
-              <div className="date-filter-divider" />
-              <button type="button"
-                onClick={() => { setDateFilter("custom"); setIsDateFilterOpen(false); }}>Custom range...</button>
-            </div>
-          )}
-          {dateFilter === "custom" && (
-            <div className="custom-date-range">
-              <div className="custom-date-field">
-                <label>From</label>
-                <input type="date" value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)} />
+              <div>
+                <h3>Filters</h3>
+                <p>Refine your transactions</p>
               </div>
-              <div className="custom-date-field">
-                <label>To</label>
-                <input type="date" value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)} />
+
+              <button
+                type="button"
+                className="advanced-filter-close"
+                onClick={cancelAdvancedFilters}
+                aria-label="Close filters"
+              >
+                <IconX size={18} />
+              </button>
+
+            </div>
+
+            <div className="advanced-filter-body">
+
+              {/* TRANSACTION TYPE */}
+              <div className="advanced-filter-section">
+
+                <label>Transaction type</label>
+
+                <div className="filter-choice-group">
+
+                  <button
+                    type="button"
+                    className={
+                      draftTransactionFilter === "all"
+                        ? "selected"
+                        : ""
+                    }
+                    onClick={() =>
+                      setDraftTransactionFilter("all")
+                    }
+                  >
+                    All
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      draftTransactionFilter === "debit"
+                        ? "selected"
+                        : ""
+                    }
+                    onClick={() =>
+                      setDraftTransactionFilter("debit")
+                    }
+                  >
+                    Debit
+                  </button>
+
+                  <button
+                    type="button"
+                    className={
+                      draftTransactionFilter === "credit"
+                        ? "selected"
+                        : ""
+                    }
+                    onClick={() =>
+                      setDraftTransactionFilter("credit")
+                    }
+                  >
+                    Credit
+                  </button>
+
+                </div>
+
               </div>
-              <button type="button" className="apply-date-button"
-                onClick={() => setIsDateFilterOpen(false)}> Apply
-              </button>
-            </div>
-          )}
-        </div>
 
-        <select className="filter-select"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}>
-          <option value="">All categories</option>
+              {/* CATEGORY */}
+              <div className="advanced-filter-section">
 
-          {categories.map((category) => (
-            <option key={category.id} value={category.name}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+                <label htmlFor="advanced-category">
+                  Category
+                </label>
 
-        <select className="filter-select"
-          value={transactionFilter}
-          onChange={(e) => setTransactionFilter(e.target.value)}>
-          <option value="all">All types</option>
-          <option value="debit">Debit</option>
-          <option value="credit">Credit</option>
-        </select>
+                <select
+                  id="advanced-category"
+                  value={draftCategoryFilter}
+                  onChange={(event) =>
+                    setDraftCategoryFilter(
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="">
+                    All categories
+                  </option>
 
-        <div className="filter-search">
-          <IconSearch size={18} />
-          <input type="text" placeholder="Search..." value={filterSearchTerm}
-            onChange={(e) => setFilterSearchTerm(e.target.value)} />
-        </div>
+                  {categories.map((category) => (
+                    <option
+                      key={category.id}
+                      value={category.name}
+                    >
+                      {category.name}
+                    </option>
+                  ))}
 
-        <button type="button" className="clear-filters-button"
-          onClick={clearFilters}> Clear
-        </button>
+                </select>
 
-        <div className="filter-actions">
-          <button className="secondary-button">
-            <IconDownload size={18} />
-            Export
-          </button>
-
-          <button type="button" className="primary-button"
-            onClick={() => {
-              clearForm();
-              setViewingTransaction(null);
-              setIsAddTransactionOpen(true);
-            }}>
-            <IconPlus size={19} />
-            Add transaction
-          </button>
-        </div>
-      </div>
-
-      {/* ADD TRANSACTION */}
-      {isAddTransactionOpen && (
-        <div className="add-transaction-card">
-          <div className="add-transaction-header">
-            <div className="add-title">
-              <div className="add-icon">
-                <IconPencil size={20} />
               </div>
-              <h2>{editingTransactionId ? "Edit transaction" : "Add new transaction"}</h2>
-            </div>
-            <div className="paid-options">
-              <button className="paid-option active">
-                <IconUsers size={18} />
-                One member
-              </button>
-              <button className="paid-option">
-                <IconUsers size={18} />
-                Split equally
-              </button>
-            </div>
-          </div>
 
-          <div className="transaction-form">
-            {/* DATE */}
-            <div className="form-field">
-              <label>Date</label>
-              <div className="input-with-icon">
+              {/* DATE */}
+              <div className="advanced-filter-section">
+
+                <label htmlFor="advanced-date">
+                  Date
+                </label>
+
+                <select
+                  id="advanced-date"
+                  value={draftDateFilter}
+                  onChange={(event) =>
+                    setDraftDateFilter(
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="all">
+                    All time
+                  </option>
+
+                  <option value="today">
+                    Today
+                  </option>
+
+                  <option value="thisWeek">
+                    This week
+                  </option>
+
+                  <option value="thisMonth">
+                    This month
+                  </option>
+
+                  <option value="lastMonth">
+                    Last month
+                  </option>
+
+                  <option value="last3Months">
+                    Last 3 months
+                  </option>
+
+                  <option value="thisYear">
+                    This year
+                  </option>
+
+                  <option value="custom">
+                    Custom range
+                  </option>
+
+                </select>
+
+              </div>
+
+              {/* CUSTOM DATE */}
+              {draftDateFilter === "custom" && (
+                <div className="advanced-filter-date-row">
+
+                  <div className="advanced-filter-section">
+
+                    <label htmlFor="advanced-start-date">
+                      Start date
+                    </label>
+
+                    <input
+                      id="advanced-start-date"
+                      type="date"
+                      value={draftCustomStartDate}
+                      onChange={(event) =>
+                        setDraftCustomStartDate(
+                          event.target.value
+                        )
+                      }
+                    />
+
+                  </div>
+
+                  <div className="advanced-filter-section">
+
+                    <label htmlFor="advanced-end-date">
+                      End date
+                    </label>
+
+                    <input
+                      id="advanced-end-date"
+                      type="date"
+                      value={draftCustomEndDate}
+                      onChange={(event) =>
+                        setDraftCustomEndDate(
+                          event.target.value
+                        )
+                      }
+                    />
+
+                  </div>
+
+                </div>
+              )}
+
+              {/* AMOUNT */}
+              <div className="advanced-filter-section">
+
+                <label>Amount range</label>
+
+                <div className="advanced-filter-amount-row">
+
+                  <div className="amount-input-wrapper">
+
+                    <span>₹</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Minimum"
+                      value={draftMinAmount}
+                      onChange={(event) =>
+                        setDraftMinAmount(
+                          event.target.value
+                        )
+                      }
+                    />
+
+                  </div>
+
+                  <span className="amount-range-separator">
+                    —
+                  </span>
+
+                  <div className="amount-input-wrapper">
+                    <span>₹</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Maximum"
+                      value={draftMaxAmount}
+                      onChange={(event) =>
+                        setDraftMaxAmount(
+                          event.target.value
+                        )
+                      }
+                    />
+
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* FOOTER */}
+            <div className="advanced-filter-footer">
+
+              <button
+                type="button"
+                className="advanced-filter-clear"
+                onClick={() => {
+                  setDraftTransactionFilter("all");
+                  setDraftCategoryFilter("");
+                  setDraftDateFilter("thisMonth");
+                  setDraftCustomStartDate("");
+                  setDraftCustomEndDate("");
+                  setDraftMinAmount("");
+                  setDraftMaxAmount("");
+                }}
+              >
+                Clear all
+              </button>
+
+              <div className="advanced-filter-footer-actions">
+
+                <button
+                  type="button"
+                  className="advanced-filter-cancel"
+                  onClick={cancelAdvancedFilters}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="advanced-filter-apply"
+                  onClick={applyAdvancedFilters}
+                >
+                  Apply filters
+                </button>
+              </div>
+            </div>
+            </div>
+            </div>
+      )}
+  
+
+            {/* PAGE HEADER */}
+            <div className="transactions-header">
+              <div>
+                <h1>Transactions</h1>
+                <p>View, add and manage all your transactions</p>
+              </div>
+
+              <div className="transactions-header-actions">
+                <div className="transaction-search">
+                  <IconSearch size={19} />
+                  <input placeholder="Search transactions..." />
+                </div>
+
+                <button className="icon-button">
+                  <IconCalendar size={20} />
+                </button>
+
+                <button className="icon-button">
+                  <IconDotsVertical size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* FILTER BAR */}
+            <div className="transaction-filter-bar">
+
+              <div className="filter-search">
+                <IconSearch size={18} />
+
                 <input
-                  type="date"
-                  value={transactionDate}
-                  className={formErrors.transactionDate ? "input-error" : ""}
+                  type="text"
+                  placeholder="Search..."
+                  value={filterSearchTerm}
+                  onChange={(e) =>
+                    setFilterSearchTerm(e.target.value)
+                  }
+                />
+              </div>
+
+              <button
+                type="button"
+                className={`advanced-filter-button ${hasActiveFilters ? "active" : ""
+                  }`}
+                onClick={openAdvancedFilters}
+              >
+                <IconFilter size={17} />
+
+                <span>Filters</span>
+
+                {hasActiveFilters && (
+                  <span className="advanced-filter-count">
+                    {
+                      [
+                        transactionFilter !== "all",
+                        Boolean(categoryFilter),
+                        dateFilter !== "thisMonth",
+                        Boolean(customStartDate),
+                        Boolean(customEndDate),
+                        Boolean(minAmount),
+                        Boolean(maxAmount),
+                      ].filter(Boolean).length
+                    }
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                className="clear-filters-button"
+                onClick={clearFilters}
+              >
+                Clear
+              </button>
+
+              <div className="filter-actions">
+
+                <button className="secondary-button">
+                  <IconDownload size={18} />
+                  Export
+                </button>
+
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => {
+                    clearForm();
+                    setViewingTransaction(null);
+                    setIsAddTransactionOpen(true);
+                  }}
+                >
+                  <IconPlus size={19} />
+                  Add transaction
+                </button>
+
+              </div>
+            </div>
+
+          <select className="filter-select"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}>
+            <option value="">All categories</option>
+
+            {categories.map((category) => (
+              <option key={category.id} value={category.name}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+
+          <select className="filter-select"
+            value={transactionFilter}
+            onChange={(e) => setTransactionFilter(e.target.value)}>
+            <option value="all">All types</option>
+            <option value="debit">Debit</option>
+            <option value="credit">Credit</option>
+          </select>
+
+          <div className="filter-search">
+            <IconSearch size={18} />
+            <input type="text" placeholder="Search..." value={filterSearchTerm}
+              onChange={(e) => setFilterSearchTerm(e.target.value)} />
+          </div>
+
+          {hasActiveFilters && (
+              <span className="active-filter-count">
+                {[
+                  transactionFilter !== "all",
+                  Boolean(categoryFilter),
+                  dateFilter !== "thisMonth",
+                  Boolean(customStartDate),
+                  Boolean(customEndDate),
+                  Boolean(minAmount),
+                  Boolean(maxAmount),
+                ].filter(Boolean).length}{" "}
+                filter
+                {[
+                  transactionFilter !== "all",
+                  Boolean(categoryFilter),
+                  dateFilter !== "thisMonth",
+                  Boolean(customStartDate),
+                  Boolean(customEndDate),
+                  Boolean(minAmount),
+                  Boolean(maxAmount),
+                ].filter(Boolean).length !== 1
+                  ? "s"
+                  : ""}{" "}
+                active
+              </span>
+            )
+          }
+
+          <button type="button" className="clear-filters-button"
+            onClick={clearFilters}> Clear
+          </button>
+
+          <div className="filter-actions">
+            <button className="secondary-button">
+              <IconDownload size={18} />
+              Export
+            </button>
+
+            <button type="button" className="primary-button"
+              onClick={() => {
+                clearForm();
+                setViewingTransaction(null);
+                setIsAddTransactionOpen(true);
+              }}>
+              <IconPlus size={19} />
+              Add transaction
+            </button>
+          </div>
+        </div >
+
+       {/* ADD TRANSACTION */}
+        {isAddTransactionOpen && (
+          <div className="add-transaction-card">
+            <div className="add-transaction-header">
+              <div className="add-title">
+                <div className="add-icon">
+                  <IconPencil size={20} />
+                </div>
+                <h2>{editingTransactionId ? "Edit transaction" : "Add new transaction"}</h2>
+              </div>
+              <div className="paid-options">
+                <button className="paid-option active">
+                  <IconUsers size={18} />
+                  One member
+                </button>
+                <button className="paid-option">
+                  <IconUsers size={18} />
+                  Split equally
+                </button>
+              </div>
+            </div>
+
+            <div className="transaction-form">
+              {/* DATE */}
+              <div className="form-field">
+                <label>Date</label>
+                <div className="input-with-icon">
+                  <input
+                    type="date"
+                    value={transactionDate}
+                    className={formErrors.transactionDate ? "input-error" : ""}
+                    onChange={(e) => {
+                      setTransactionDate(e.target.value);
+                      if (formErrors.transactionDate) {
+                        setFormErrors((currentErrors) => ({
+                          ...currentErrors, transactionDate: "",
+                        }));
+                      }
+                    }}
+                  />
+                  {formErrors.transactionDate && (<span className="field-error">
+                    {formErrors.transactionDate} </span>)}
+                </div>
+              </div>
+
+              {/* ACCOUNT */}
+              <div className="form-field">
+                <label>Account</label>
+                <select value={accountId}
+                  className={formErrors.accountId ? "input-error" : ""}
                   onChange={(e) => {
-                    setTransactionDate(e.target.value);
-                    if (formErrors.transactionDate) {
+                    setAccountId(e.target.value);
+                    if (formErrors.accountId) {
                       setFormErrors((currentErrors) => ({
-                        ...currentErrors, transactionDate: "",
+                        ...currentErrors,
+                        accountId: "",
+                      }));
+                    }
+                  }}>
+                  <option value="">Select account</option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.accountName}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.accountId && (<span className="field-error"> {formErrors.accountId} </span>)}
+              </div>
+
+              {/* DESCRIPTION */}
+              <div className="form-field">
+                <label>Description</label>
+
+                <input
+                  type="text"
+                  placeholder="e.g. Swiggy order"
+                  value={description}
+                  className={formErrors.description ? "input-error" : ""}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    if (formErrors.description) {
+                      setFormErrors((currentErrors) => ({
+                        ...currentErrors,
+                        description: "",
                       }));
                     }
                   }}
                 />
-                {formErrors.transactionDate && (<span className="field-error">
-                  {formErrors.transactionDate} </span>)}
+                {formErrors.description && (<span className="field-error">{formErrors.description}</span>)}
               </div>
-            </div>
 
-            {/* ACCOUNT */}
-            <div className="form-field">
-              <label>Account</label>
-              <select value={accountId}
-                className={formErrors.accountId ? "input-error" : ""}
-                onChange={(e) => {
-                  setAccountId(e.target.value);
-                  if (formErrors.accountId) {
+              {/* CATEGORY */}
+              <div className="form-field">
+                <label>Category</label>
+
+                <select value={categoryId}
+                  className={formErrors.categoryId ? "input-error" : ""}
+                  onChange={(e) => {
+                    setCategoryId(e.target.value);
+                    setSubcategoryId("");
                     setFormErrors((currentErrors) => ({
                       ...currentErrors,
-                      accountId: "",
-                    }));
-                  }
-                }}>
-                <option value="">Select account</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.accountName}
-                  </option>
-                ))}
-              </select>
-              {formErrors.accountId && (<span className="field-error"> {formErrors.accountId} </span>)}
-            </div>
-
-            {/* DESCRIPTION */}
-            <div className="form-field">
-              <label>Description</label>
-
-              <input
-                type="text"
-                placeholder="e.g. Swiggy order"
-                value={description}
-                className={formErrors.description ? "input-error" : ""}
-                onChange={(e) => {
-                  setDescription(e.target.value);
-                  if (formErrors.description) {
-                    setFormErrors((currentErrors) => ({
-                      ...currentErrors,
-                      description: "",
-                    }));
-                  }
-                }}
-              />
-              {formErrors.description && (<span className="field-error">{formErrors.description}</span>)}
-            </div>
-
-            {/* CATEGORY */}
-            <div className="form-field">
-              <label>Category</label>
-
-              <select value={categoryId}
-                className={formErrors.categoryId ? "input-error" : ""}
-                onChange={(e) => {
-                  setCategoryId(e.target.value);
-                  setSubcategoryId("");
-                  setFormErrors((currentErrors) => ({
-                    ...currentErrors,
-                    categoryId: "",
-                    subcategoryId: "",
-                  }));
-                }}>
-                <option value="">Select category</option>
-
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              {formErrors.categoryId && (
-                <span className="field-error">
-                  {formErrors.categoryId}
-                </span>
-              )}
-            </div>
-
-            {/* SUBCATEGORY */}
-            <div className="form-field">
-              <label>Subcategory</label>
-
-              <select value={subcategoryId}
-                className={formErrors.subcategoryId ? "input-error" : ""}
-                onChange={(e) => {
-                  setSubcategoryId(e.target.value);
-                  if (formErrors.subcategoryId) {
-                    setFormErrors((currentErrors) => ({
-                      ...currentErrors,
+                      categoryId: "",
                       subcategoryId: "",
                     }));
-                  }
-                }}
-                disabled={!categoryId}>
+                  }}>
+                  <option value="">Select category</option>
 
-                <option value="">
-                  {categoryId ? "Select subcategory" : "Select category first"}
-                </option>
-
-                {subcategories.map((subcategory) => (
-                  <option key={subcategory.id} value={subcategory.id}>
-                    {subcategory.name}
-                  </option>
-                ))}
-              </select>
-              {formErrors.subcategoryId && (
-                <span className="field-error">
-                  {formErrors.subcategoryId}
-                </span>
-              )}
-            </div>
-
-            {/* AMOUNT */}
-            <div className="form-field">
-              <label>Amount (₹)</label>
-
-              <input
-                type="text"
-                placeholder="0.00"
-                value={amount}
-                className={formErrors.amount ? "input-error" : ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Allow only digits and one decimal point.
-                  if (!/^\d*\.?\d*$/.test(value)) {
-                    return;
-                  }
-                  setAmount(value);
-
-                  if (formErrors.amount) {
-                    setFormErrors((currentErrors) => ({
-                      ...currentErrors,
-                      amount: "",
-                    }));
-                  }
-                }}
-
-              />
-            </div>
-
-          </div>
-
-          {/* TYPE + ACTIONS */}
-          <div className="transaction-form-footer">
-
-            <div className="type-section">
-              <label>Type</label>
-
-              <div className="type-buttons">
-
-                <button
-                  className={`type-button ${transactionType === "debit" ? "selected debit" : ""
-                    }`}
-                  onClick={() => setTransactionType("debit")}
-                >
-                  <IconArrowDown size={18} />
-                  Debit
-                </button>
-
-                <button
-                  className={`type-button ${transactionType === "credit" ? "selected credit" : ""
-                    }`}
-                  onClick={() => setTransactionType("credit")}
-                >
-                  <IconArrowUp size={18} />
-                  Credit
-                </button>
-
-              </div>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" className="clear-button" onClick={clearForm}>
-                Clear
-              </button>
-
-              <div className="transaction-form-actions">
-                <button className="save-button"
-                  onClick={saveTransaction}>
-                  {editingTransactionId ? "Update transaction" : "Save transaction"}
-                </button>
-                {editingTransactionId && (<button type="button" className="transaction-cancel-button"
-                  onClick={cancelEdit}>
-                  Cancel
-                </button>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.categoryId && (
+                  <span className="field-error">
+                    {formErrors.categoryId}
+                  </span>
                 )}
               </div>
+
+              {/* SUBCATEGORY */}
+              <div className="form-field">
+                <label>Subcategory</label>
+
+                <select value={subcategoryId}
+                  className={formErrors.subcategoryId ? "input-error" : ""}
+                  onChange={(e) => {
+                    setSubcategoryId(e.target.value);
+                    if (formErrors.subcategoryId) {
+                      setFormErrors((currentErrors) => ({
+                        ...currentErrors,
+                        subcategoryId: "",
+                      }));
+                    }
+                  }}
+                  disabled={!categoryId}>
+
+                  <option value="">
+                    {categoryId ? "Select subcategory" : "Select category first"}
+                  </option>
+
+                  {subcategories.map((subcategory) => (
+                    <option key={subcategory.id} value={subcategory.id}>
+                      {subcategory.name}
+                    </option>
+                  ))}
+                </select>
+                {formErrors.subcategoryId && (
+                  <span className="field-error">
+                    {formErrors.subcategoryId}
+                  </span>
+                )}
+              </div>
+
+              {/* AMOUNT */}
+              <div className="form-field">
+                <label>Amount (₹)</label>
+
+                <input
+                  type="text"
+                  placeholder="0.00"
+                  value={amount}
+                  className={formErrors.amount ? "input-error" : ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only digits and one decimal point.
+                    if (!/^\d*\.?\d*$/.test(value)) {
+                      return;
+                    }
+                    setAmount(value);
+
+                    if (formErrors.amount) {
+                      setFormErrors((currentErrors) => ({
+                        ...currentErrors,
+                        amount: "",
+                      }));
+                    }
+                  }}
+
+                />
+              </div>
             </div>
 
+            {/* TYPE + ACTIONS */}
+            <div className="transaction-form-footer">
+
+              <div className="type-section">
+                <label>Type</label>
+
+                <div className="type-buttons">
+
+                  <button
+                    className={`type-button ${transactionType === "debit" ? "selected debit" : ""
+                      }`}
+                    onClick={() => setTransactionType("debit")}
+                  >
+                    <IconArrowDown size={18} />
+                    Debit
+                  </button>
+
+                  <button
+                    className={`type-button ${transactionType === "credit" ? "selected credit" : ""
+                      }`}
+                    onClick={() => setTransactionType("credit")}
+                  >
+                    <IconArrowUp size={18} />
+                    Credit
+                  </button>
+
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="clear-button" onClick={clearForm}>
+                  Clear
+                </button>
+
+                <div className="transaction-form-actions">
+                  <button className="save-button"
+                    onClick={saveTransaction}>
+                    {editingTransactionId ? "Update transaction" : "Save transaction"}
+                  </button>
+                  {editingTransactionId && (<button type="button" className="transaction-cancel-button"
+                    onClick={cancelEdit}>
+                    Cancel
+                  </button>
+                  )}
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* TRANSACTION DETAILS DRAWER */}
       {viewingTransaction && (
-        <div className="transaction-drawer-overlay" onClick={() => setViewingTransaction(null)}>
-          <aside className="transaction-details-drawer" onClick={(event) => event.stopPropagation()}>
-            <div className="transaction-drawer-header">
-              <div>
-                <h2>Transaction Details</h2>
-                <p>
-                  Complete information about this transaction.
-                </p>
+          <div className="transaction-drawer-overlay" onClick={() => setViewingTransaction(null)}>
+            <aside className="transaction-details-drawer" onClick={(event) => event.stopPropagation()}>
+              <div className="transaction-drawer-header">
+                <div>
+                  <h2>Transaction Details</h2>
+                  <p>
+                    Complete information about this transaction.
+                  </p>
+                </div>
+                <button type="button" className="drawer-close-button"
+                  onClick={() => setViewingTransaction(null)}
+                  title="Close"
+                >
+                  <IconX size={20} />
+                </button>
               </div>
-              <button type="button" className="drawer-close-button"
-                onClick={() => setViewingTransaction(null)}
-                title="Close"
-              >
-                <IconX size={20} />
-              </button>
-            </div>
-            <div className="transaction-detail-summary">
-              <div className={`transaction-detail-symbol ${getCategoryClass(viewingTransaction.category)
-                }`}
-              >
-                {viewingTransaction.transactionType
-                  ?.toLowerCase() === "income" ? (
-                  <IconArrowUp size={21} />
-                ) : (
-                  <IconArrowDown size={21} />
-                )}
-              </div>
-
-              <div className="transaction-detail-summary-text">
-                <strong>
-                  {viewingTransaction.description ||
-                    "Untitled transaction"}
-                </strong>
-
-                <span>
-                  {viewingTransaction.category ||
-                    "Uncategorized"}
-                </span>
-              </div>
-
-              <div
-                className={`transaction-detail-amount ${viewingTransaction.transactionType
-                  ?.toLowerCase() === "income"
-                  ? "credit-amount"
-                  : "debit-amount"
+              <div className="transaction-detail-summary">
+                <div className={`transaction-detail-symbol ${getCategoryClass(viewingTransaction.category)
                   }`}
-              >
-                {viewingTransaction.transactionType
-                  ?.toLowerCase() === "income"
-                  ? "+"
-                  : "-"}
+                >
+                  {viewingTransaction.transactionType
+                    ?.toLowerCase() === "income" ? (
+                    <IconArrowUp size={21} />
+                  ) : (
+                    <IconArrowDown size={21} />
+                  )}
+                </div>
 
-                ₹
-                {Number(
-                  viewingTransaction.amount || 0
-                ).toLocaleString("en-IN")}
-              </div>
+                <div className="transaction-detail-summary-text">
+                  <strong>
+                    {viewingTransaction.description ||
+                      "Untitled transaction"}
+                  </strong>
 
-            </div>
+                  <span>
+                    {viewingTransaction.category ||
+                      "Uncategorized"}
+                  </span>
+                </div>
 
-            <div className="transaction-details-list">
-
-              <div className="transaction-detail-row">
-                <span>Date</span>
-                <strong>
-                  {viewingTransaction.transactionDate || "-"}
-                </strong>
-              </div>
-
-              <div className="transaction-detail-row">
-                <span>Account</span>
-                <strong>
-                  {accounts.find(
-                    (account) =>
-                      String(account.id) ===
-                      String(
-                        viewingTransaction.accountId
-                      )
-                  )?.accountName ||
-                    viewingTransaction.account ||
-                    "-"}
-                </strong>
-              </div>
-
-              <div className="transaction-detail-row">
-                <span>Category</span>
-                <strong>
-                  {viewingTransaction.category || "-"}
-                </strong>
-              </div>
-
-              <div className="transaction-detail-row">
-                <span>Subcategory</span>
-                <strong>
-                  {viewingTransaction.subcategory || "-"}
-                </strong>
-              </div>
-
-              <div className="transaction-detail-row">
-                <span>Transaction type</span>
-
-                <span
-                  className={`transaction-type ${viewingTransaction.transactionType
+                <div
+                  className={`transaction-detail-amount ${viewingTransaction.transactionType
                     ?.toLowerCase() === "income"
-                    ? "credit"
-                    : "debit"
+                    ? "credit-amount"
+                    : "debit-amount"
                     }`}
                 >
                   {viewingTransaction.transactionType
                     ?.toLowerCase() === "income"
-                    ? "Credit"
-                    : "Debit"}
-                </span>
-              </div>
+                    ? "+"
+                    : "-"}
 
-              <div className="transaction-detail-row">
-                <span>Amount</span>
-                <strong>
                   ₹
                   {Number(
                     viewingTransaction.amount || 0
                   ).toLocaleString("en-IN")}
-                </strong>
+                </div>
+
               </div>
 
-              <div className="transaction-detail-row">
-                <span>Description</span>
-                <strong>
-                  {viewingTransaction.description || "-"}
-                </strong>
+              <div className="transaction-details-list">
+
+                <div className="transaction-detail-row">
+                  <span>Date</span>
+                  <strong>
+                    {formatTransactionDate(
+                      viewingTransaction.transactionDate
+                    )}
+                  </strong>
+                </div>
+
+                <div className="transaction-detail-row">
+                  <span>Account</span>
+                  <strong>
+                    {accounts.find(
+                      (account) =>
+                        String(account.id) ===
+                        String(
+                          viewingTransaction.accountId
+                        )
+                    )?.accountName ||
+                      viewingTransaction.account ||
+                      "-"}
+                  </strong>
+                </div>
+
+                <div className="transaction-detail-row">
+                  <span>Category</span>
+                  <strong>
+                    {viewingTransaction.category || "-"}
+                  </strong>
+                </div>
+
+                <div className="transaction-detail-row">
+                  <span>Subcategory</span>
+                  <strong>
+                    {viewingTransaction.subcategory || "-"}
+                  </strong>
+                </div>
+
+                <div className="transaction-detail-row">
+                  <span>Transaction type</span>
+
+                  <span
+                    className={`transaction-type ${viewingTransaction.transactionType
+                      ?.toLowerCase() === "income"
+                      ? "credit"
+                      : "debit"
+                      }`}
+                  >
+                    {viewingTransaction.transactionType
+                      ?.toLowerCase() === "income"
+                      ? "Credit"
+                      : "Debit"}
+                  </span>
+                </div>
+
+                <div className="transaction-detail-row">
+                  <span>Amount</span>
+                  <strong>
+                    ₹
+                    {Number(
+                      viewingTransaction.amount || 0
+                    ).toLocaleString("en-IN")}
+                  </strong>
+                </div>
+
+                <div className="transaction-detail-row">
+                  <span>Description</span>
+                  <strong>
+                    {viewingTransaction.description || "-"}
+                  </strong>
+                </div>
+
               </div>
 
-            </div>
+              <div className="transaction-drawer-actions">
 
-            <div className="transaction-drawer-actions">
+                <button
+                  type="button"
+                  className="drawer-secondary-button"
+                  onClick={() =>
+                    setViewingTransaction(null)
+                  }
+                >
+                  Close
+                </button>
 
-              <button
-                type="button"
-                className="drawer-secondary-button"
-                onClick={() =>
-                  setViewingTransaction(null)
-                }
-              >
-                Close
-              </button>
+                <button
+                  type="button"
+                  className="drawer-primary-button"
+                  onClick={() =>
+                    handleEditTransaction(
+                      viewingTransaction.id
+                    )
+                  }
+                >
+                  <IconPencil size={17} />
+                  Edit transaction
+                </button>
 
-              <button
-                type="button"
-                className="drawer-primary-button"
-                onClick={() =>
-                  handleEditTransaction(
-                    viewingTransaction.id
-                  )
-                }
-              >
-                <IconPencil size={17} />
-                Edit transaction
-              </button>
+              </div>
 
-            </div>
-
-          </aside>
-        </div>
-      )}
+            </aside>
+          </div>
+        )
+      }
 
       {/* DELETE CONFIRMATION */}
-      {deleteTarget && (
-        <div
-          className="delete-dialog-overlay"
-          onClick={() => setDeleteTarget(null)}
-        >
+      {
+        deleteTarget && (
           <div
-            className="delete-dialog"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            className="delete-dialog-overlay"
+            onClick={() => setDeleteTarget(null)}
           >
+            <div
+              className="delete-dialog"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            >
 
-            <div className="delete-dialog-icon">
-              <IconAlertTriangle size={24} />
+              <div className="delete-dialog-icon">
+                <IconAlertTriangle size={24} />
+              </div>
+
+              <h2>Delete transaction?</h2>
+
+              <p>
+                Are you sure you want to delete{" "}
+                <strong>
+                  {deleteTarget.description ||
+                    "this transaction"}
+                </strong>
+                {deleteTarget.amount
+                  ? ` (₹${deleteTarget.amount.replace(
+                    "₹",
+                    ""
+                  )})`
+                  : ""}
+                ? This action cannot be undone.
+              </p>
+
+              <div className="delete-dialog-actions">
+
+                <button
+                  type="button"
+                  className="delete-cancel-button"
+                  onClick={() => setDeleteTarget(null)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="delete-confirm-button"
+                  onClick={confirmDeleteTransaction}
+                >
+                  Delete transaction
+                </button>
+
+              </div>
+
             </div>
-
-            <h2>Delete transaction?</h2>
-
-            <p>
-              Are you sure you want to delete{" "}
-              <strong>
-                {deleteTarget.description ||
-                  "this transaction"}
-              </strong>
-              {deleteTarget.amount
-                ? ` (₹${deleteTarget.amount.replace(
-                  "₹",
-                  ""
-                )})`
-                : ""}
-              ? This action cannot be undone.
-            </p>
-
-            <div className="delete-dialog-actions">
-
-              <button
-                type="button"
-                className="delete-cancel-button"
-                onClick={() => setDeleteTarget(null)}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                className="delete-confirm-button"
-                onClick={confirmDeleteTransaction}
-              >
-                Delete transaction
-              </button>
-
-            </div>
-
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* TRANSACTIONS LIST */}
       <div className="transactions-list-card">
@@ -1817,7 +2253,7 @@ function TransactionPage() {
                 paginatedTransactions.map((transaction, index) => (
                   <tr key={index}>
                     <td> <input type="checkbox" /> </td>
-                    <td className="date-cell"> {transaction.date} </td>
+                    <td className="date-cell"> {formatTransactionDate(transaction.date)} </td>
                     <td className="description-cell">
                       <div className="transaction-description">
                         <div className={`transaction-symbol ${transaction.categoryClass}`}>
@@ -1852,7 +2288,7 @@ function TransactionPage() {
                           }`}
                       >
                         {transaction.type === "Credit" ? "+" : "-"}
-                        {transaction.amount}
+                        {formatTransactionAmount(transaction.amount)}
                       </span>
                     </td>
 
@@ -1972,7 +2408,7 @@ function TransactionPage() {
 
       </div>
 
-    </div>
+    </div >
   );
 }
 
