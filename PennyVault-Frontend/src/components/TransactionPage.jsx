@@ -1362,7 +1362,6 @@ function TransactionPage() {
             </div>
       )}
   
-
             {/* PAGE HEADER */}
             <div className="transactions-header">
               <div>
@@ -1460,81 +1459,21 @@ function TransactionPage() {
               </div>
             </div>
 
-          <select className="filter-select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="">All categories</option>
 
-            {categories.map((category) => (
-              <option key={category.id} value={category.name}>
-                {category.name}
-              </option>
-            ))}
-          </select>
 
-          <select className="filter-select"
-            value={transactionFilter}
-            onChange={(e) => setTransactionFilter(e.target.value)}>
-            <option value="all">All types</option>
-            <option value="debit">Debit</option>
-            <option value="credit">Credit</option>
-          </select>
 
-          <div className="filter-search">
-            <IconSearch size={18} />
-            <input type="text" placeholder="Search..." value={filterSearchTerm}
-              onChange={(e) => setFilterSearchTerm(e.target.value)} />
-          </div>
 
-          {hasActiveFilters && (
-              <span className="active-filter-count">
-                {[
-                  transactionFilter !== "all",
-                  Boolean(categoryFilter),
-                  dateFilter !== "thisMonth",
-                  Boolean(customStartDate),
-                  Boolean(customEndDate),
-                  Boolean(minAmount),
-                  Boolean(maxAmount),
-                ].filter(Boolean).length}{" "}
-                filter
-                {[
-                  transactionFilter !== "all",
-                  Boolean(categoryFilter),
-                  dateFilter !== "thisMonth",
-                  Boolean(customStartDate),
-                  Boolean(customEndDate),
-                  Boolean(minAmount),
-                  Boolean(maxAmount),
-                ].filter(Boolean).length !== 1
-                  ? "s"
-                  : ""}{" "}
-                active
-              </span>
-            )
-          }
 
-          <button type="button" className="clear-filters-button"
-            onClick={clearFilters}> Clear
-          </button>
+
+
+
+
 
           <div className="filter-actions">
-            <button className="secondary-button">
-              <IconDownload size={18} />
-              Export
-            </button>
 
-            <button type="button" className="primary-button"
-              onClick={() => {
-                clearForm();
-                setViewingTransaction(null);
-                setIsAddTransactionOpen(true);
-              }}>
-              <IconPlus size={19} />
-              Add transaction
-            </button>
+
+
           </div>
-        </div >
 
        {/* ADD TRANSACTION */}
         {isAddTransactionOpen && (
