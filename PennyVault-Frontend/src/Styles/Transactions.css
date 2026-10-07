@@ -1,6 +1,6 @@
 @import "./Transactions/TransactionsLayout.css";
-@import "./Transactions/TransactionsFilters.css";
-@import "./Transactions/TransactionsForm.css";
+@import "./Transactions/TransactionFilters.css";
+@import "./Transactions/TransactionForm.css";
 
 /* =========================
    TRANSACTION LIST
