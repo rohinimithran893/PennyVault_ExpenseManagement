@@ -1059,542 +1059,542 @@ function TransactionPage() {
       )}
 
       <AdvancedFilters
-  isOpen={isAdvancedFilterOpen}
-  draftTransactionFilter={draftTransactionFilter}
-  setDraftTransactionFilter={setDraftTransactionFilter}
-  draftCategoryFilter={draftCategoryFilter}
-  setDraftCategoryFilter={setDraftCategoryFilter}
-  categories={categories}
-  draftDateFilter={draftDateFilter}
-  setDraftDateFilter={setDraftDateFilter}
-  draftCustomStartDate={draftCustomStartDate}
-  setDraftCustomStartDate={setDraftCustomStartDate}
-  draftCustomEndDate={draftCustomEndDate}
-  setDraftCustomEndDate={setDraftCustomEndDate}
-  draftMinAmount={draftMinAmount}
-  setDraftMinAmount={setDraftMinAmount}
-  draftMaxAmount={draftMaxAmount}
-  setDraftMaxAmount={setDraftMaxAmount}
-  setIsAdvancedFilterOpen={setIsAdvancedFilterOpen}
-  applyAdvancedFilters={applyAdvancedFilters}
-/>
-  
-            {/* PAGE HEADER */}
-            <div className="transactions-header">
-              <div>
-                <h1>Transactions</h1>
-                <p>View, add and manage all your transactions</p>
+        isOpen={isAdvancedFilterOpen}
+        draftTransactionFilter={draftTransactionFilter}
+        setDraftTransactionFilter={setDraftTransactionFilter}
+        draftCategoryFilter={draftCategoryFilter}
+        setDraftCategoryFilter={setDraftCategoryFilter}
+        categories={categories}
+        draftDateFilter={draftDateFilter}
+        setDraftDateFilter={setDraftDateFilter}
+        draftCustomStartDate={draftCustomStartDate}
+        setDraftCustomStartDate={setDraftCustomStartDate}
+        draftCustomEndDate={draftCustomEndDate}
+        setDraftCustomEndDate={setDraftCustomEndDate}
+        draftMinAmount={draftMinAmount}
+        setDraftMinAmount={setDraftMinAmount}
+        draftMaxAmount={draftMaxAmount}
+        setDraftMaxAmount={setDraftMaxAmount}
+        setIsAdvancedFilterOpen={setIsAdvancedFilterOpen}
+        applyAdvancedFilters={applyAdvancedFilters}
+      />
+      
+      {/* PAGE HEADER */}
+      <div className="transactions-header">
+        <div>
+          <h1>Transactions</h1>
+          <p>View, add and manage all your transactions</p>
+        </div>
+
+        <div className="transactions-header-actions">
+          <div className="transaction-search">
+            <IconSearch size={19} />
+            <input placeholder="Search transactions..." />
+          </div>
+
+          <button className="icon-button">
+            <IconCalendar size={20} />
+          </button>
+
+          <button className="icon-button">
+            <IconDotsVertical size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* FILTER BAR */}
+      <div className="transaction-filter-bar">
+
+        <div className="filter-search">
+          <IconSearch size={18} />
+
+          <input
+            type="text"
+            placeholder="Search..."
+            value={filterSearchTerm}
+            onChange={(e) =>
+              setFilterSearchTerm(e.target.value)
+            }
+          />
+        </div>
+
+        <button
+          type="button"
+          className={`advanced-filter-button ${hasActiveFilters ? "active" : ""
+            }`}
+          onClick={openAdvancedFilters}
+        >
+          <IconFilter size={17} />
+
+          <span>Filters</span>
+
+          {hasActiveFilters && (
+            <span className="advanced-filter-count">
+              {
+                [
+                  transactionFilter !== "all",
+                  Boolean(categoryFilter),
+                  dateFilter !== "thisMonth",
+                  Boolean(customStartDate),
+                  Boolean(customEndDate),
+                  Boolean(minAmount),
+                  Boolean(maxAmount),
+                ].filter(Boolean).length
+              }
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          className="clear-filters-button"
+          onClick={clearFilters}
+        >
+          Clear
+        </button>
+
+        <div className="filter-actions">
+
+          <button className="secondary-button">
+            <IconDownload size={18} />
+            Export
+          </button>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => {
+              clearForm();
+              setViewingTransaction(null);
+              setIsAddTransactionOpen(true);
+            }}
+          >
+            <IconPlus size={19} />
+            Add transaction
+          </button>
+
+        </div>
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+      <div className="filter-actions">
+
+
+
+      </div>
+
+      {/* ADD TRANSACTION */}
+      {isAddTransactionOpen && (
+        <div className="add-transaction-card">
+          <div className="add-transaction-header">
+            <div className="add-title">
+              <div className="add-icon">
+                <IconPencil size={20} />
               </div>
+              <h2>{editingTransactionId ? "Edit transaction" : "Add new transaction"}</h2>
+            </div>
+            <div className="paid-options">
+              <button className="paid-option active">
+                <IconUsers size={18} />
+                One member
+              </button>
+              <button className="paid-option">
+                <IconUsers size={18} />
+                Split equally
+              </button>
+            </div>
+          </div>
 
-              <div className="transactions-header-actions">
-                <div className="transaction-search">
-                  <IconSearch size={19} />
-                  <input placeholder="Search transactions..." />
-                </div>
-
-                <button className="icon-button">
-                  <IconCalendar size={20} />
-                </button>
-
-                <button className="icon-button">
-                  <IconDotsVertical size={20} />
-                </button>
+          <div className="transaction-form">
+            {/* DATE */}
+            <div className="form-field">
+              <label>Date</label>
+              <div className="input-with-icon">
+                <input
+                  type="date"
+                  value={transactionDate}
+                  className={formErrors.transactionDate ? "input-error" : ""}
+                  onChange={(e) => {
+                    setTransactionDate(e.target.value);
+                    if (formErrors.transactionDate) {
+                      setFormErrors((currentErrors) => ({
+                        ...currentErrors, transactionDate: "",
+                      }));
+                    }
+                  }}
+                />
+                {formErrors.transactionDate && (<span className="field-error">
+                  {formErrors.transactionDate} </span>)}
               </div>
             </div>
 
-            {/* FILTER BAR */}
-            <div className="transaction-filter-bar">
-
-              <div className="filter-search">
-                <IconSearch size={18} />
-
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={filterSearchTerm}
-                  onChange={(e) =>
-                    setFilterSearchTerm(e.target.value)
+            {/* ACCOUNT */}
+            <div className="form-field">
+              <label>Account</label>
+              <select value={accountId}
+                className={formErrors.accountId ? "input-error" : ""}
+                onChange={(e) => {
+                  setAccountId(e.target.value);
+                  if (formErrors.accountId) {
+                    setFormErrors((currentErrors) => ({
+                      ...currentErrors,
+                      accountId: "",
+                    }));
                   }
-                />
-              </div>
+                }}>
+                <option value="">Select account</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.accountName}
+                  </option>
+                ))}
+              </select>
+              {formErrors.accountId && (<span className="field-error"> {formErrors.accountId} </span>)}
+            </div>
 
-              <button
-                type="button"
-                className={`advanced-filter-button ${hasActiveFilters ? "active" : ""
-                  }`}
-                onClick={openAdvancedFilters}
-              >
-                <IconFilter size={17} />
+            {/* DESCRIPTION */}
+            <div className="form-field">
+              <label>Description</label>
 
-                <span>Filters</span>
+              <input
+                type="text"
+                placeholder="e.g. Swiggy order"
+                value={description}
+                className={formErrors.description ? "input-error" : ""}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  if (formErrors.description) {
+                    setFormErrors((currentErrors) => ({
+                      ...currentErrors,
+                      description: "",
+                    }));
+                  }
+                }}
+              />
+              {formErrors.description && (<span className="field-error">{formErrors.description}</span>)}
+            </div>
 
-                {hasActiveFilters && (
-                  <span className="advanced-filter-count">
-                    {
-                      [
-                        transactionFilter !== "all",
-                        Boolean(categoryFilter),
-                        dateFilter !== "thisMonth",
-                        Boolean(customStartDate),
-                        Boolean(customEndDate),
-                        Boolean(minAmount),
-                        Boolean(maxAmount),
-                      ].filter(Boolean).length
-                    }
-                  </span>
-                )}
-              </button>
+            {/* CATEGORY */}
+            <div className="form-field">
+              <label>Category</label>
 
-              <button
-                type="button"
-                className="clear-filters-button"
-                onClick={clearFilters}
-              >
-                Clear
-              </button>
+              <select value={categoryId}
+                className={formErrors.categoryId ? "input-error" : ""}
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  setSubcategoryId("");
+                  setFormErrors((currentErrors) => ({
+                    ...currentErrors,
+                    categoryId: "",
+                    subcategoryId: "",
+                  }));
+                }}>
+                <option value="">Select category</option>
 
-              <div className="filter-actions">
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              {formErrors.categoryId && (
+                <span className="field-error">
+                  {formErrors.categoryId}
+                </span>
+              )}
+            </div>
 
-                <button className="secondary-button">
-                  <IconDownload size={18} />
-                  Export
+            {/* SUBCATEGORY */}
+            <div className="form-field">
+              <label>Subcategory</label>
+
+              <select value={subcategoryId}
+                className={formErrors.subcategoryId ? "input-error" : ""}
+                onChange={(e) => {
+                  setSubcategoryId(e.target.value);
+                  if (formErrors.subcategoryId) {
+                    setFormErrors((currentErrors) => ({
+                      ...currentErrors,
+                      subcategoryId: "",
+                    }));
+                  }
+                }}
+                disabled={!categoryId}>
+
+                <option value="">
+                  {categoryId ? "Select subcategory" : "Select category first"}
+                </option>
+
+                {subcategories.map((subcategory) => (
+                  <option key={subcategory.id} value={subcategory.id}>
+                    {subcategory.name}
+                  </option>
+                ))}
+              </select>
+              {formErrors.subcategoryId && (
+                <span className="field-error">
+                  {formErrors.subcategoryId}
+                </span>
+              )}
+            </div>
+
+            {/* AMOUNT */}
+            <div className="form-field">
+              <label>Amount (₹)</label>
+
+              <input
+                type="text"
+                placeholder="0.00"
+                value={amount}
+                className={formErrors.amount ? "input-error" : ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only digits and one decimal point.
+                  if (!/^\d*\.?\d*$/.test(value)) {
+                    return;
+                  }
+                  setAmount(value);
+
+                  if (formErrors.amount) {
+                    setFormErrors((currentErrors) => ({
+                      ...currentErrors,
+                      amount: "",
+                    }));
+                  }
+                }}
+
+              />
+            </div>
+          </div>
+
+          {/* TYPE + ACTIONS */}
+          <div className="transaction-form-footer">
+
+            <div className="type-section">
+              <label>Type</label>
+
+              <div className="type-buttons">
+
+                <button
+                  className={`type-button ${transactionType === "debit" ? "selected debit" : ""
+                    }`}
+                  onClick={() => setTransactionType("debit")}
+                >
+                  <IconArrowDown size={18} />
+                  Debit
                 </button>
 
                 <button
-                  type="button"
-                  className="primary-button"
-                  onClick={() => {
-                    clearForm();
-                    setViewingTransaction(null);
-                    setIsAddTransactionOpen(true);
-                  }}
+                  className={`type-button ${transactionType === "credit" ? "selected credit" : ""
+                    }`}
+                  onClick={() => setTransactionType("credit")}
                 >
-                  <IconPlus size={19} />
-                  Add transaction
+                  <IconArrowUp size={18} />
+                  Credit
                 </button>
 
               </div>
             </div>
 
+            <div className="form-actions">
+              <button type="button" className="clear-button" onClick={clearForm}>
+                Clear
+              </button>
 
-
-
-
-
-
-
-
-
-
-          <div className="filter-actions">
-
-
-
-          </div>
-
-       {/* ADD TRANSACTION */}
-        {isAddTransactionOpen && (
-          <div className="add-transaction-card">
-            <div className="add-transaction-header">
-              <div className="add-title">
-                <div className="add-icon">
-                  <IconPencil size={20} />
-                </div>
-                <h2>{editingTransactionId ? "Edit transaction" : "Add new transaction"}</h2>
-              </div>
-              <div className="paid-options">
-                <button className="paid-option active">
-                  <IconUsers size={18} />
-                  One member
+              <div className="transaction-form-actions">
+                <button className="save-button"
+                  onClick={saveTransaction}>
+                  {editingTransactionId ? "Update transaction" : "Save transaction"}
                 </button>
-                <button className="paid-option">
-                  <IconUsers size={18} />
-                  Split equally
+                {editingTransactionId && (<button type="button" className="transaction-cancel-button"
+                  onClick={cancelEdit}>
+                  Cancel
                 </button>
-              </div>
-            </div>
-
-            <div className="transaction-form">
-              {/* DATE */}
-              <div className="form-field">
-                <label>Date</label>
-                <div className="input-with-icon">
-                  <input
-                    type="date"
-                    value={transactionDate}
-                    className={formErrors.transactionDate ? "input-error" : ""}
-                    onChange={(e) => {
-                      setTransactionDate(e.target.value);
-                      if (formErrors.transactionDate) {
-                        setFormErrors((currentErrors) => ({
-                          ...currentErrors, transactionDate: "",
-                        }));
-                      }
-                    }}
-                  />
-                  {formErrors.transactionDate && (<span className="field-error">
-                    {formErrors.transactionDate} </span>)}
-                </div>
-              </div>
-
-              {/* ACCOUNT */}
-              <div className="form-field">
-                <label>Account</label>
-                <select value={accountId}
-                  className={formErrors.accountId ? "input-error" : ""}
-                  onChange={(e) => {
-                    setAccountId(e.target.value);
-                    if (formErrors.accountId) {
-                      setFormErrors((currentErrors) => ({
-                        ...currentErrors,
-                        accountId: "",
-                      }));
-                    }
-                  }}>
-                  <option value="">Select account</option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.accountName}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.accountId && (<span className="field-error"> {formErrors.accountId} </span>)}
-              </div>
-
-              {/* DESCRIPTION */}
-              <div className="form-field">
-                <label>Description</label>
-
-                <input
-                  type="text"
-                  placeholder="e.g. Swiggy order"
-                  value={description}
-                  className={formErrors.description ? "input-error" : ""}
-                  onChange={(e) => {
-                    setDescription(e.target.value);
-                    if (formErrors.description) {
-                      setFormErrors((currentErrors) => ({
-                        ...currentErrors,
-                        description: "",
-                      }));
-                    }
-                  }}
-                />
-                {formErrors.description && (<span className="field-error">{formErrors.description}</span>)}
-              </div>
-
-              {/* CATEGORY */}
-              <div className="form-field">
-                <label>Category</label>
-
-                <select value={categoryId}
-                  className={formErrors.categoryId ? "input-error" : ""}
-                  onChange={(e) => {
-                    setCategoryId(e.target.value);
-                    setSubcategoryId("");
-                    setFormErrors((currentErrors) => ({
-                      ...currentErrors,
-                      categoryId: "",
-                      subcategoryId: "",
-                    }));
-                  }}>
-                  <option value="">Select category</option>
-
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.categoryId && (
-                  <span className="field-error">
-                    {formErrors.categoryId}
-                  </span>
                 )}
               </div>
-
-              {/* SUBCATEGORY */}
-              <div className="form-field">
-                <label>Subcategory</label>
-
-                <select value={subcategoryId}
-                  className={formErrors.subcategoryId ? "input-error" : ""}
-                  onChange={(e) => {
-                    setSubcategoryId(e.target.value);
-                    if (formErrors.subcategoryId) {
-                      setFormErrors((currentErrors) => ({
-                        ...currentErrors,
-                        subcategoryId: "",
-                      }));
-                    }
-                  }}
-                  disabled={!categoryId}>
-
-                  <option value="">
-                    {categoryId ? "Select subcategory" : "Select category first"}
-                  </option>
-
-                  {subcategories.map((subcategory) => (
-                    <option key={subcategory.id} value={subcategory.id}>
-                      {subcategory.name}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.subcategoryId && (
-                  <span className="field-error">
-                    {formErrors.subcategoryId}
-                  </span>
-                )}
-              </div>
-
-              {/* AMOUNT */}
-              <div className="form-field">
-                <label>Amount (₹)</label>
-
-                <input
-                  type="text"
-                  placeholder="0.00"
-                  value={amount}
-                  className={formErrors.amount ? "input-error" : ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow only digits and one decimal point.
-                    if (!/^\d*\.?\d*$/.test(value)) {
-                      return;
-                    }
-                    setAmount(value);
-
-                    if (formErrors.amount) {
-                      setFormErrors((currentErrors) => ({
-                        ...currentErrors,
-                        amount: "",
-                      }));
-                    }
-                  }}
-
-                />
-              </div>
             </div>
 
-            {/* TYPE + ACTIONS */}
-            <div className="transaction-form-footer">
-
-              <div className="type-section">
-                <label>Type</label>
-
-                <div className="type-buttons">
-
-                  <button
-                    className={`type-button ${transactionType === "debit" ? "selected debit" : ""
-                      }`}
-                    onClick={() => setTransactionType("debit")}
-                  >
-                    <IconArrowDown size={18} />
-                    Debit
-                  </button>
-
-                  <button
-                    className={`type-button ${transactionType === "credit" ? "selected credit" : ""
-                      }`}
-                    onClick={() => setTransactionType("credit")}
-                  >
-                    <IconArrowUp size={18} />
-                    Credit
-                  </button>
-
-                </div>
-              </div>
-
-              <div className="form-actions">
-                <button type="button" className="clear-button" onClick={clearForm}>
-                  Clear
-                </button>
-
-                <div className="transaction-form-actions">
-                  <button className="save-button"
-                    onClick={saveTransaction}>
-                    {editingTransactionId ? "Update transaction" : "Save transaction"}
-                  </button>
-                  {editingTransactionId && (<button type="button" className="transaction-cancel-button"
-                    onClick={cancelEdit}>
-                    Cancel
-                  </button>
-                  )}
-                </div>
-              </div>
-
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
       {/* TRANSACTION DETAILS DRAWER */}
       {viewingTransaction && (
-          <div className="transaction-drawer-overlay" onClick={() => setViewingTransaction(null)}>
-            <aside className="transaction-details-drawer" onClick={(event) => event.stopPropagation()}>
-              <div className="transaction-drawer-header">
-                <div>
-                  <h2>Transaction Details</h2>
-                  <p>
-                    Complete information about this transaction.
-                  </p>
-                </div>
-                <button type="button" className="drawer-close-button"
-                  onClick={() => setViewingTransaction(null)}
-                  title="Close"
-                >
-                  <IconX size={20} />
-                </button>
+        <div className="transaction-drawer-overlay" onClick={() => setViewingTransaction(null)}>
+          <aside className="transaction-details-drawer" onClick={(event) => event.stopPropagation()}>
+            <div className="transaction-drawer-header">
+              <div>
+                <h2>Transaction Details</h2>
+                <p>
+                  Complete information about this transaction.
+                </p>
               </div>
-              <div className="transaction-detail-summary">
-                <div className={`transaction-detail-symbol ${getCategoryClass(viewingTransaction.category)
+              <button type="button" className="drawer-close-button"
+                onClick={() => setViewingTransaction(null)}
+                title="Close"
+              >
+                <IconX size={20} />
+              </button>
+            </div>
+            <div className="transaction-detail-summary">
+              <div className={`transaction-detail-symbol ${getCategoryClass(viewingTransaction.category)
+                }`}
+              >
+                {viewingTransaction.transactionType
+                  ?.toLowerCase() === "income" ? (
+                  <IconArrowUp size={21} />
+                ) : (
+                  <IconArrowDown size={21} />
+                )}
+              </div>
+
+              <div className="transaction-detail-summary-text">
+                <strong>
+                  {viewingTransaction.description ||
+                    "Untitled transaction"}
+                </strong>
+
+                <span>
+                  {viewingTransaction.category ||
+                    "Uncategorized"}
+                </span>
+              </div>
+
+              <div
+                className={`transaction-detail-amount ${viewingTransaction.transactionType
+                  ?.toLowerCase() === "income"
+                  ? "credit-amount"
+                  : "debit-amount"
                   }`}
-                >
-                  {viewingTransaction.transactionType
-                    ?.toLowerCase() === "income" ? (
-                    <IconArrowUp size={21} />
-                  ) : (
-                    <IconArrowDown size={21} />
+              >
+                {viewingTransaction.transactionType
+                  ?.toLowerCase() === "income"
+                  ? "+"
+                  : "-"}
+
+                ₹
+                {Number(
+                  viewingTransaction.amount || 0
+                ).toLocaleString("en-IN")}
+              </div>
+
+            </div>
+
+            <div className="transaction-details-list">
+
+              <div className="transaction-detail-row">
+                <span>Date</span>
+                <strong>
+                  {formatTransactionDate(
+                    viewingTransaction.transactionDate
                   )}
-                </div>
+                </strong>
+              </div>
 
-                <div className="transaction-detail-summary-text">
-                  <strong>
-                    {viewingTransaction.description ||
-                      "Untitled transaction"}
-                  </strong>
+              <div className="transaction-detail-row">
+                <span>Account</span>
+                <strong>
+                  {accounts.find(
+                    (account) =>
+                      String(account.id) ===
+                      String(
+                        viewingTransaction.accountId
+                      )
+                  )?.accountName ||
+                    viewingTransaction.account ||
+                    "-"}
+                </strong>
+              </div>
 
-                  <span>
-                    {viewingTransaction.category ||
-                      "Uncategorized"}
-                  </span>
-                </div>
+              <div className="transaction-detail-row">
+                <span>Category</span>
+                <strong>
+                  {viewingTransaction.category || "-"}
+                </strong>
+              </div>
 
-                <div
-                  className={`transaction-detail-amount ${viewingTransaction.transactionType
+              <div className="transaction-detail-row">
+                <span>Subcategory</span>
+                <strong>
+                  {viewingTransaction.subcategory || "-"}
+                </strong>
+              </div>
+
+              <div className="transaction-detail-row">
+                <span>Transaction type</span>
+
+                <span
+                  className={`transaction-type ${viewingTransaction.transactionType
                     ?.toLowerCase() === "income"
-                    ? "credit-amount"
-                    : "debit-amount"
+                    ? "credit"
+                    : "debit"
                     }`}
                 >
                   {viewingTransaction.transactionType
                     ?.toLowerCase() === "income"
-                    ? "+"
-                    : "-"}
+                    ? "Credit"
+                    : "Debit"}
+                </span>
+              </div>
 
+              <div className="transaction-detail-row">
+                <span>Amount</span>
+                <strong>
                   ₹
                   {Number(
                     viewingTransaction.amount || 0
                   ).toLocaleString("en-IN")}
-                </div>
-
+                </strong>
               </div>
 
-              <div className="transaction-details-list">
-
-                <div className="transaction-detail-row">
-                  <span>Date</span>
-                  <strong>
-                    {formatTransactionDate(
-                      viewingTransaction.transactionDate
-                    )}
-                  </strong>
-                </div>
-
-                <div className="transaction-detail-row">
-                  <span>Account</span>
-                  <strong>
-                    {accounts.find(
-                      (account) =>
-                        String(account.id) ===
-                        String(
-                          viewingTransaction.accountId
-                        )
-                    )?.accountName ||
-                      viewingTransaction.account ||
-                      "-"}
-                  </strong>
-                </div>
-
-                <div className="transaction-detail-row">
-                  <span>Category</span>
-                  <strong>
-                    {viewingTransaction.category || "-"}
-                  </strong>
-                </div>
-
-                <div className="transaction-detail-row">
-                  <span>Subcategory</span>
-                  <strong>
-                    {viewingTransaction.subcategory || "-"}
-                  </strong>
-                </div>
-
-                <div className="transaction-detail-row">
-                  <span>Transaction type</span>
-
-                  <span
-                    className={`transaction-type ${viewingTransaction.transactionType
-                      ?.toLowerCase() === "income"
-                      ? "credit"
-                      : "debit"
-                      }`}
-                  >
-                    {viewingTransaction.transactionType
-                      ?.toLowerCase() === "income"
-                      ? "Credit"
-                      : "Debit"}
-                  </span>
-                </div>
-
-                <div className="transaction-detail-row">
-                  <span>Amount</span>
-                  <strong>
-                    ₹
-                    {Number(
-                      viewingTransaction.amount || 0
-                    ).toLocaleString("en-IN")}
-                  </strong>
-                </div>
-
-                <div className="transaction-detail-row">
-                  <span>Description</span>
-                  <strong>
-                    {viewingTransaction.description || "-"}
-                  </strong>
-                </div>
-
+              <div className="transaction-detail-row">
+                <span>Description</span>
+                <strong>
+                  {viewingTransaction.description || "-"}
+                </strong>
               </div>
 
-              <div className="transaction-drawer-actions">
+            </div>
 
-                <button
-                  type="button"
-                  className="drawer-secondary-button"
-                  onClick={() =>
-                    setViewingTransaction(null)
-                  }
-                >
-                  Close
-                </button>
+            <div className="transaction-drawer-actions">
 
-                <button
-                  type="button"
-                  className="drawer-primary-button"
-                  onClick={() =>
-                    handleEditTransaction(
-                      viewingTransaction.id
-                    )
-                  }
-                >
-                  <IconPencil size={17} />
-                  Edit transaction
-                </button>
+              <button
+                type="button"
+                className="drawer-secondary-button"
+                onClick={() =>
+                  setViewingTransaction(null)
+                }
+              >
+                Close
+              </button>
 
-              </div>
+              <button
+                type="button"
+                className="drawer-primary-button"
+                onClick={() =>
+                  handleEditTransaction(
+                    viewingTransaction.id
+                  )
+                }
+              >
+                <IconPencil size={17} />
+                Edit transaction
+              </button>
 
-            </aside>
-          </div>
-        )
+            </div>
+
+          </aside>
+        </div>
+      )
       }
 
       {/* DELETE CONFIRMATION */}
@@ -1658,36 +1658,36 @@ function TransactionPage() {
       }
 
       {/* TRANSACTIONS LIST */}
-<TransactionTable
-  transactionFilter={transactionFilter}
-  setTransactionFilter={setTransactionFilter}
-  listSearchTerm={listSearchTerm}
-  setListSearchTerm={setListSearchTerm}
-  sortConfig={sortConfig}
-  handleSort={handleSort}
-  isTransactionsLoading={isTransactionsLoading}
-  transactionsError={transactionsError}
-  paginatedTransactions={paginatedTransactions}
-  emptyState={emptyState}
-  clearForm={clearForm}
-  setEditingTransactionId={setEditingTransactionId}
-  setIsAddTransactionOpen={setIsAddTransactionOpen}
-  clearSearch={clearSearch}
-  clearFilters={clearFilters}
-  formatTransactionDate={formatTransactionDate}
-  formatTransactionAmount={formatTransactionAmount}
-  handleViewTransaction={handleViewTransaction}
-  handleEditTransaction={handleEditTransaction}
-  handleDeleteTransaction={handleDeleteTransaction}
-  filteredTransactions={filteredTransactions}
-  startIndex={startIndex}
-  itemsPerPage={itemsPerPage}
-  totalPages={totalPages}
-  paginationItems={paginationItems}
-  currentPage={currentPage}
-  setCurrentPage={setCurrentPage}
-  loadTransactions={loadTransactions}
-/>
+      <TransactionTable
+        transactionFilter={transactionFilter}
+        setTransactionFilter={setTransactionFilter}
+        listSearchTerm={listSearchTerm}
+        setListSearchTerm={setListSearchTerm}
+        sortConfig={sortConfig}
+        handleSort={handleSort}
+        isTransactionsLoading={isTransactionsLoading}
+        transactionsError={transactionsError}
+        paginatedTransactions={paginatedTransactions}
+        emptyState={emptyState}
+        clearForm={clearForm}
+        setEditingTransactionId={setEditingTransactionId}
+        setIsAddTransactionOpen={setIsAddTransactionOpen}
+        clearSearch={clearSearch}
+        clearFilters={clearFilters}
+        formatTransactionDate={formatTransactionDate}
+        formatTransactionAmount={formatTransactionAmount}
+        handleViewTransaction={handleViewTransaction}
+        handleEditTransaction={handleEditTransaction}
+        handleDeleteTransaction={handleDeleteTransaction}
+        filteredTransactions={filteredTransactions}
+        startIndex={startIndex}
+        itemsPerPage={itemsPerPage}
+        totalPages={totalPages}
+        paginationItems={paginationItems}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        loadTransactions={loadTransactions}
+      />
 
     </div >
   );
