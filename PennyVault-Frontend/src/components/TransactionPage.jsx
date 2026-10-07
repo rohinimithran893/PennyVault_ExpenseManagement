@@ -1620,15 +1620,11 @@ function TransactionPage() {
               <p>
                 Are you sure you want to delete{" "}
                 <strong>
-                  {deleteTarget.description ||
-                    "this transaction"}
+                  {deleteTarget.description || "this transaction"}
                 </strong>
-                {deleteTarget.amount
-                  ? ` (₹${deleteTarget.amount.replace(
-                    "₹",
-                    ""
-                  )})`
-                  : ""}
+                {deleteTarget.amount !== undefined && deleteTarget.amount !== null
+                  ? ` (₹${Number(deleteTarget.amount).toLocaleString("en-IN", {
+        minimumFractionDigits: 2, maximumFractionDigits: 2, })})`    : ""}
                 ? This action cannot be undone.
               </p>
 
