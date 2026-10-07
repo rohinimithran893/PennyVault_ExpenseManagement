@@ -3,6 +3,7 @@ import { getToken } from "../utils/auth";
 import "../Styles/Transactions.css";
 import AdvancedFilters from "./Transactions/AdvancedFilters";
 import TransactionTable from "./Transactions/TransactionTable";
+import TransactionForm from "./Transactions/TransactionForm";
 import {
   IconCalendar,
   IconChevronDown,
@@ -100,7 +101,7 @@ function TransactionPage() {
   const [subcategoryId, setSubcategoryId] = useState("");
   const [subcategories, setSubcategories] = useState([]);
   const [transactionDate, setTransactionDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -178,9 +179,12 @@ function TransactionPage() {
       type,
     });
 
-    toastTimerRef.current = setTimeout(() => {
-      setToast(null);
-    }, type === "error" ? 5000 : 3500);
+    toastTimerRef.current = setTimeout(
+      () => {
+        setToast(null);
+      },
+      type === "error" ? 5000 : 3500,
+    );
   };
 
   useEffect(() => {
@@ -224,8 +228,7 @@ function TransactionPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
-        );
+        });
 
         if (!response.ok) {
           throw new Error("Failed to load categories");
@@ -242,7 +245,6 @@ function TransactionPage() {
 
   useEffect(() => {
     const loadSubcategories = async () => {
-
       if (!categoryId) {
         setSubcategories([]);
         setSubcategoryId("");
@@ -259,7 +261,7 @@ function TransactionPage() {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -284,15 +286,12 @@ function TransactionPage() {
     try {
       const token = getToken();
 
-      const response = await fetch(
-        "http://localhost:8080/api/transactions",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch("http://localhost:8080/api/transactions", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         let errorMessage = "Failed to load transactions.";
         try {
@@ -323,7 +322,9 @@ function TransactionPage() {
       setTransactions(formattedTransactions);
     } catch (error) {
       console.error("Error loading transactions:", error);
-      setTransactionsError("We couldn't load your transactions right now. Please try again.");
+      setTransactionsError(
+        "We couldn't load your transactions right now. Please try again.",
+      );
     } finally {
       setIsTransactionsLoading(false);
     }
@@ -408,8 +409,7 @@ function TransactionPage() {
         subcategoryId: Number(subcategoryId),
         description: description.trim(),
         amount: Number(amount),
-        transactionType:
-          transactionType === "debit" ? "EXPENSE" : "INCOME",
+        transactionType: transactionType === "debit" ? "EXPENSE" : "INCOME",
         transactionDate,
       };
       const isEditing = editingTransactionId !== null;
@@ -430,10 +430,7 @@ function TransactionPage() {
 
       if (!response.ok) {
         console.error("Transaction save/update failed:", data);
-        showToast(
-          data.message || "Failed to save transaction.",
-          "error"
-        );
+        showToast(data.message || "Failed to save transaction.", "error");
         return;
       }
 
@@ -441,19 +438,13 @@ function TransactionPage() {
         isEditing
           ? "Transaction updated successfully:"
           : "Transaction created successfully:",
-        data
+        data,
       );
 
       if (isEditing) {
-        showToast(
-          "Transaction updated successfully.",
-          "success"
-        );
+        showToast("Transaction updated successfully.", "success");
       } else {
-        showToast(
-          "Transaction saved successfully.",
-          "success"
-        );
+        showToast("Transaction saved successfully.", "success");
       }
 
       setEditingTransactionId(null);
@@ -468,36 +459,31 @@ function TransactionPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (transactionsResponse.ok) {
         const transactionsData = await transactionsResponse.json();
 
-        const formattedTransactions = transactionsData.map(
-          (transaction) => ({
-            id: transaction.id,
-            date: transaction.transactionDate,
-            description: transaction.description,
-            category: transaction.category,
-            categoryClass: getCategoryClass(transaction.category),
-            subcategory: transaction.subcategory,
-            paidBy: "R",
-            amount: Number(transaction.amount),
-            type:
-              transaction.transactionType?.toLowerCase() === "income"
-                ? "Credit"
-                : "Debit",
-          })
-        );
+        const formattedTransactions = transactionsData.map((transaction) => ({
+          id: transaction.id,
+          date: transaction.transactionDate,
+          description: transaction.description,
+          category: transaction.category,
+          categoryClass: getCategoryClass(transaction.category),
+          subcategory: transaction.subcategory,
+          paidBy: "R",
+          amount: Number(transaction.amount),
+          type:
+            transaction.transactionType?.toLowerCase() === "income"
+              ? "Credit"
+              : "Debit",
+        }));
 
         setTransactions(formattedTransactions);
       }
     } catch (error) {
       console.error("Error saving/updating transaction:", error);
-      showToast(
-        "Something went wrong while saving the transaction.",
-        "error"
-      );
+      showToast("Something went wrong while saving the transaction.", "error");
     }
   };
 
@@ -529,25 +515,17 @@ function TransactionPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          errorText || "Failed to load transaction"
-        );
+        throw new Error(errorText || "Failed to load transaction");
       }
       const transaction = await response.json();
       setViewingTransaction(transaction);
     } catch (error) {
-      console.error(
-        "Error loading transaction details:",
-        error
-      );
-      showToast(
-        `Failed to load transaction: ${error.message}`,
-        "error"
-      );
+      console.error("Error loading transaction details:", error);
+      showToast(`Failed to load transaction: ${error.message}`, "error");
     }
   };
 
@@ -562,14 +540,12 @@ function TransactionPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          errorText || "Failed to load transaction"
-        );
+        throw new Error(errorText || "Failed to load transaction");
       }
 
       const transaction = await response.json();
@@ -578,11 +554,17 @@ function TransactionPage() {
       // Set basic transaction fields
       setAccountId(String(transaction.accountId));
       setCategoryId(String(transaction.categoryId));
-      setSubcategoryId(transaction.subcategoryId ? String(transaction.subcategoryId) : "");
+      setSubcategoryId(
+        transaction.subcategoryId ? String(transaction.subcategoryId) : "",
+      );
       setEditingTransactionId(transactionId);
       setDescription(transaction.description || "");
       setAmount(transaction.amount.toString());
-      setTransactionType(transaction.transactionType?.toLowerCase() === "income" ? "credit" : "debit");
+      setTransactionType(
+        transaction.transactionType?.toLowerCase() === "income"
+          ? "credit"
+          : "debit",
+      );
       setTransactionDate(transaction.transactionDate || "");
       setViewingTransaction(null);
       // Open the Add/Edit transaction panel
@@ -596,7 +578,7 @@ function TransactionPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!subcategoryResponse.ok) {
@@ -609,8 +591,7 @@ function TransactionPage() {
 
       // Find selected subcategory
       const selectedSubcategory = subcategoryData.find(
-        (subcategory) =>
-          subcategory.name === transaction.subcategory
+        (subcategory) => subcategory.name === transaction.subcategory,
       );
 
       if (selectedSubcategory) {
@@ -618,17 +599,10 @@ function TransactionPage() {
       } else {
         setSubcategoryId("");
       }
-
     } catch (error) {
-      console.error(
-        "Error loading transaction for edit:",
-        error
-      );
+      console.error("Error loading transaction for edit:", error);
 
-      showToast(
-        `Failed to load transaction: ${error.message}`,
-        "error"
-      );
+      showToast(`Failed to load transaction: ${error.message}`, "error");
     }
   };
 
@@ -650,7 +624,7 @@ function TransactionPage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (!response.ok) {
         let errorMessage = "Failed to delete transaction.";
@@ -661,34 +635,24 @@ function TransactionPage() {
           // Response may not contain JSON
         }
 
-        console.error(
-          "Transaction delete failed:",
-          errorMessage
-        );
+        console.error("Transaction delete failed:", errorMessage);
 
         showToast(errorMessage, "error");
         return;
       }
       setTransactions((currentTransactions) =>
         currentTransactions.filter(
-          (transactionItem) =>
-            transactionItem.id !== transactionId
-        )
+          (transactionItem) => transactionItem.id !== transactionId,
+        ),
       );
       setDeleteTarget(null);
-      showToast(
-        "Transaction deleted successfully.",
-        "success"
-      );
+      showToast("Transaction deleted successfully.", "success");
     } catch (error) {
-      console.error(
-        "Error deleting transaction:",
-        error
-      );
+      console.error("Error deleting transaction:", error);
 
       showToast(
         "Something went wrong while deleting the transaction.",
-        "error"
+        "error",
       );
     }
   };
@@ -697,11 +661,19 @@ function TransactionPage() {
     const filterSearch = filterSearchTerm.toLowerCase().trim();
     const listSearch = listSearchTerm.toLowerCase().trim();
 
-    const matchesType = transactionFilter === "all" || transaction.type?.toLowerCase() === transactionFilter;
-    const matchesCategory = !categoryFilter || transaction.category === categoryFilter;
+    const matchesType =
+      transactionFilter === "all" ||
+      transaction.type?.toLowerCase() === transactionFilter;
+    const matchesCategory =
+      !categoryFilter || transaction.category === categoryFilter;
     const transactionAmount = Number(transaction.amount);
-    const matchesAmount = (!minAmount || (Number.isFinite(transactionAmount) && transactionAmount >= Number(minAmount))) &&
-      (!maxAmount || (Number.isFinite(transactionAmount) && transactionAmount <= Number(maxAmount)));
+    const matchesAmount =
+      (!minAmount ||
+        (Number.isFinite(transactionAmount) &&
+          transactionAmount >= Number(minAmount))) &&
+      (!maxAmount ||
+        (Number.isFinite(transactionAmount) &&
+          transactionAmount <= Number(maxAmount)));
     const matchesDate = (() => {
       if (dateFilter === "all") {
         return true;
@@ -740,36 +712,41 @@ function TransactionPage() {
         const lastMonthStart = new Date(
           today.getFullYear(),
           today.getMonth() - 1,
-          1
+          1,
         );
-        const lastMonthEnd = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          0
-        );
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
         lastMonthEnd.setHours(23, 59, 59, 999);
-        return transactionDate >= lastMonthStart && transactionDate <= lastMonthEnd;
+        return (
+          transactionDate >= lastMonthStart && transactionDate <= lastMonthEnd
+        );
       }
       if (dateFilter === "last3Months") {
         const threeMonthsAgo = new Date(
           today.getFullYear(),
           today.getMonth() - 2,
-          1
+          1,
         );
         const endOfCurrentMonth = new Date(
           today.getFullYear(),
           today.getMonth() + 1,
-          0
+          0,
         );
         endOfCurrentMonth.setHours(23, 59, 59, 999);
-        return transactionDate >= threeMonthsAgo && transactionDate <= endOfCurrentMonth;
+        return (
+          transactionDate >= threeMonthsAgo &&
+          transactionDate <= endOfCurrentMonth
+        );
       }
       if (dateFilter === "thisYear") {
         return transactionDate.getFullYear() === today.getFullYear();
       }
       if (dateFilter === "custom") {
-        const startDate = customStartDate ? new Date(`${customStartDate}T00:00:00`) : null;
-        const endDate = customEndDate ? new Date(`${customEndDate}T23:59:59.999`) : null;
+        const startDate = customStartDate
+          ? new Date(`${customStartDate}T00:00:00`)
+          : null;
+        const endDate = customEndDate
+          ? new Date(`${customEndDate}T23:59:59.999`)
+          : null;
         if (startDate && endDate) {
           return transactionDate >= startDate && transactionDate <= endDate;
         }
@@ -784,18 +761,26 @@ function TransactionPage() {
       return true;
     })();
 
-    const matchesFilterSearch = !filterSearch ||
+    const matchesFilterSearch =
+      !filterSearch ||
       transaction.description?.toLowerCase().includes(filterSearch) ||
       transaction.category?.toLowerCase().includes(filterSearch) ||
       transaction.subcategory?.toLowerCase().includes(filterSearch);
 
-    const matchesListSearch = !listSearch ||
+    const matchesListSearch =
+      !listSearch ||
       transaction.description?.toLowerCase().includes(listSearch) ||
       transaction.category?.toLowerCase().includes(listSearch) ||
       transaction.subcategory?.toLowerCase().includes(listSearch);
 
     const matchesSearch = matchesFilterSearch && matchesListSearch;
-    return matchesType && matchesCategory && matchesDate && matchesAmount && matchesSearch;
+    return (
+      matchesType &&
+      matchesCategory &&
+      matchesDate &&
+      matchesAmount &&
+      matchesSearch
+    );
   });
 
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
@@ -807,16 +792,14 @@ function TransactionPage() {
 
     switch (sortConfig.key) {
       case "date":
-        comparison = String(a.date || "").localeCompare(
-          String(b.date || "")
-        );
+        comparison = String(a.date || "").localeCompare(String(b.date || ""));
         break;
 
       case "description":
         comparison = String(a.description || "").localeCompare(
           String(b.description || ""),
           undefined,
-          { sensitivity: "base" }
+          { sensitivity: "base" },
         );
         break;
 
@@ -824,18 +807,14 @@ function TransactionPage() {
         comparison = String(a.category || "").localeCompare(
           String(b.category || ""),
           undefined,
-          { sensitivity: "base" }
+          { sensitivity: "base" },
         );
         break;
 
       case "amount": {
-        const amountA = Number(
-          String(a.amount || "").replace(/[₹,\s]/g, "")
-        );
+        const amountA = Number(String(a.amount || "").replace(/[₹,\s]/g, ""));
 
-        const amountB = Number(
-          String(b.amount || "").replace(/[₹,\s]/g, "")
-        );
+        const amountB = Number(String(b.amount || "").replace(/[₹,\s]/g, ""));
 
         comparison = amountA - amountB;
         break;
@@ -845,7 +824,7 @@ function TransactionPage() {
         comparison = String(a.type || "").localeCompare(
           String(b.type || ""),
           undefined,
-          { sensitivity: "base" }
+          { sensitivity: "base" },
         );
         break;
 
@@ -853,9 +832,7 @@ function TransactionPage() {
         comparison = 0;
     }
 
-    return sortConfig.direction === "asc"
-      ? comparison
-      : -comparison;
+    return sortConfig.direction === "asc" ? comparison : -comparison;
   });
 
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
@@ -864,27 +841,16 @@ function TransactionPage() {
 
   const paginatedTransactions = sortedTransactions.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + itemsPerPage,
   );
 
   const getPaginationItems = () => {
     if (totalPages <= 7) {
-      return Array.from(
-        { length: totalPages },
-        (_, index) => index + 1
-      );
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
     }
 
     if (currentPage <= 4) {
-      return [
-        1,
-        2,
-        3,
-        4,
-        5,
-        "ellipsis-right",
-        totalPages,
-      ];
+      return [1, 2, 3, 4, 5, "ellipsis-right", totalPages];
     }
 
     if (currentPage >= totalPages - 3) {
@@ -932,8 +898,7 @@ function TransactionPage() {
   };
 
   const hasSearch =
-    Boolean(filterSearchTerm.trim()) ||
-    Boolean(listSearchTerm.trim());
+    Boolean(filterSearchTerm.trim()) || Boolean(listSearchTerm.trim());
 
   const hasActiveFilters =
     transactionFilter !== "all" ||
@@ -962,8 +927,7 @@ function TransactionPage() {
         type: "search-and-filter",
         icon: "search",
         title: "No matching transactions",
-        message:
-          "No transactions match your current search and filters.",
+        message: "No transactions match your current search and filters.",
       };
     }
 
@@ -973,8 +937,7 @@ function TransactionPage() {
         type: "search",
         icon: "search",
         title: "No transactions found",
-        message:
-          "We couldn't find anything matching your search.",
+        message: "We couldn't find anything matching your search.",
       };
     }
 
@@ -984,8 +947,7 @@ function TransactionPage() {
         type: "filters",
         icon: "filter",
         title: "No matching transactions",
-        message:
-          "No transactions match your current filters.",
+        message: "No transactions match your current filters.",
       };
     }
 
@@ -993,8 +955,7 @@ function TransactionPage() {
       type: "no-transactions",
       icon: "wallet",
       title: "No transactions yet",
-      message:
-        "Start tracking your spending by adding your first transaction.",
+      message: "Start tracking your spending by adding your first transaction.",
     };
   };
 
@@ -1017,12 +978,11 @@ function TransactionPage() {
     customStartDate,
     customEndDate,
     minAmount,
-    maxAmount
+    maxAmount,
   ]);
 
   return (
     <div className="transactions-page">
-
       {toast && (
         <div
           className={`transaction-toast ${toast.type}`}
@@ -1037,9 +997,7 @@ function TransactionPage() {
             )}
           </div>
 
-          <span className="transaction-toast-message">
-            {toast.message}
-          </span>
+          <span className="transaction-toast-message">{toast.message}</span>
 
           <button
             type="button"
@@ -1078,7 +1036,7 @@ function TransactionPage() {
         setIsAdvancedFilterOpen={setIsAdvancedFilterOpen}
         applyAdvancedFilters={applyAdvancedFilters}
       />
-      
+
       {/* PAGE HEADER */}
       <div className="transactions-header">
         <div>
@@ -1104,7 +1062,6 @@ function TransactionPage() {
 
       {/* FILTER BAR */}
       <div className="transaction-filter-bar">
-
         <div className="filter-search">
           <IconSearch size={18} />
 
@@ -1112,16 +1069,15 @@ function TransactionPage() {
             type="text"
             placeholder="Search..."
             value={filterSearchTerm}
-            onChange={(e) =>
-              setFilterSearchTerm(e.target.value)
-            }
+            onChange={(e) => setFilterSearchTerm(e.target.value)}
           />
         </div>
 
         <button
           type="button"
-          className={`advanced-filter-button ${hasActiveFilters ? "active" : ""
-            }`}
+          className={`advanced-filter-button ${
+            hasActiveFilters ? "active" : ""
+          }`}
           onClick={openAdvancedFilters}
         >
           <IconFilter size={17} />
@@ -1154,7 +1110,6 @@ function TransactionPage() {
         </button>
 
         <div className="filter-actions">
-
           <button className="secondary-button">
             <IconDownload size={18} />
             Export
@@ -1172,273 +1127,57 @@ function TransactionPage() {
             <IconPlus size={19} />
             Add transaction
           </button>
-
         </div>
       </div>
 
+      <div className="filter-actions"></div>
 
-
-
-
-
-
-
-
-
-
-      <div className="filter-actions">
-
-
-
-      </div>
-
-      {/* ADD TRANSACTION */}
-      {isAddTransactionOpen && (
-        <div className="add-transaction-card">
-          <div className="add-transaction-header">
-            <div className="add-title">
-              <div className="add-icon">
-                <IconPencil size={20} />
-              </div>
-              <h2>{editingTransactionId ? "Edit transaction" : "Add new transaction"}</h2>
-            </div>
-            <div className="paid-options">
-              <button className="paid-option active">
-                <IconUsers size={18} />
-                One member
-              </button>
-              <button className="paid-option">
-                <IconUsers size={18} />
-                Split equally
-              </button>
-            </div>
-          </div>
-
-          <div className="transaction-form">
-            {/* DATE */}
-            <div className="form-field">
-              <label>Date</label>
-              <div className="input-with-icon">
-                <input
-                  type="date"
-                  value={transactionDate}
-                  className={formErrors.transactionDate ? "input-error" : ""}
-                  onChange={(e) => {
-                    setTransactionDate(e.target.value);
-                    if (formErrors.transactionDate) {
-                      setFormErrors((currentErrors) => ({
-                        ...currentErrors, transactionDate: "",
-                      }));
-                    }
-                  }}
-                />
-                {formErrors.transactionDate && (<span className="field-error">
-                  {formErrors.transactionDate} </span>)}
-              </div>
-            </div>
-
-            {/* ACCOUNT */}
-            <div className="form-field">
-              <label>Account</label>
-              <select value={accountId}
-                className={formErrors.accountId ? "input-error" : ""}
-                onChange={(e) => {
-                  setAccountId(e.target.value);
-                  if (formErrors.accountId) {
-                    setFormErrors((currentErrors) => ({
-                      ...currentErrors,
-                      accountId: "",
-                    }));
-                  }
-                }}>
-                <option value="">Select account</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.accountName}
-                  </option>
-                ))}
-              </select>
-              {formErrors.accountId && (<span className="field-error"> {formErrors.accountId} </span>)}
-            </div>
-
-            {/* DESCRIPTION */}
-            <div className="form-field">
-              <label>Description</label>
-
-              <input
-                type="text"
-                placeholder="e.g. Swiggy order"
-                value={description}
-                className={formErrors.description ? "input-error" : ""}
-                onChange={(e) => {
-                  setDescription(e.target.value);
-                  if (formErrors.description) {
-                    setFormErrors((currentErrors) => ({
-                      ...currentErrors,
-                      description: "",
-                    }));
-                  }
-                }}
-              />
-              {formErrors.description && (<span className="field-error">{formErrors.description}</span>)}
-            </div>
-
-            {/* CATEGORY */}
-            <div className="form-field">
-              <label>Category</label>
-
-              <select value={categoryId}
-                className={formErrors.categoryId ? "input-error" : ""}
-                onChange={(e) => {
-                  setCategoryId(e.target.value);
-                  setSubcategoryId("");
-                  setFormErrors((currentErrors) => ({
-                    ...currentErrors,
-                    categoryId: "",
-                    subcategoryId: "",
-                  }));
-                }}>
-                <option value="">Select category</option>
-
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              {formErrors.categoryId && (
-                <span className="field-error">
-                  {formErrors.categoryId}
-                </span>
-              )}
-            </div>
-
-            {/* SUBCATEGORY */}
-            <div className="form-field">
-              <label>Subcategory</label>
-
-              <select value={subcategoryId}
-                className={formErrors.subcategoryId ? "input-error" : ""}
-                onChange={(e) => {
-                  setSubcategoryId(e.target.value);
-                  if (formErrors.subcategoryId) {
-                    setFormErrors((currentErrors) => ({
-                      ...currentErrors,
-                      subcategoryId: "",
-                    }));
-                  }
-                }}
-                disabled={!categoryId}>
-
-                <option value="">
-                  {categoryId ? "Select subcategory" : "Select category first"}
-                </option>
-
-                {subcategories.map((subcategory) => (
-                  <option key={subcategory.id} value={subcategory.id}>
-                    {subcategory.name}
-                  </option>
-                ))}
-              </select>
-              {formErrors.subcategoryId && (
-                <span className="field-error">
-                  {formErrors.subcategoryId}
-                </span>
-              )}
-            </div>
-
-            {/* AMOUNT */}
-            <div className="form-field">
-              <label>Amount (₹)</label>
-
-              <input
-                type="text"
-                placeholder="0.00"
-                value={amount}
-                className={formErrors.amount ? "input-error" : ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Allow only digits and one decimal point.
-                  if (!/^\d*\.?\d*$/.test(value)) {
-                    return;
-                  }
-                  setAmount(value);
-
-                  if (formErrors.amount) {
-                    setFormErrors((currentErrors) => ({
-                      ...currentErrors,
-                      amount: "",
-                    }));
-                  }
-                }}
-
-              />
-            </div>
-          </div>
-
-          {/* TYPE + ACTIONS */}
-          <div className="transaction-form-footer">
-
-            <div className="type-section">
-              <label>Type</label>
-
-              <div className="type-buttons">
-
-                <button
-                  className={`type-button ${transactionType === "debit" ? "selected debit" : ""
-                    }`}
-                  onClick={() => setTransactionType("debit")}
-                >
-                  <IconArrowDown size={18} />
-                  Debit
-                </button>
-
-                <button
-                  className={`type-button ${transactionType === "credit" ? "selected credit" : ""
-                    }`}
-                  onClick={() => setTransactionType("credit")}
-                >
-                  <IconArrowUp size={18} />
-                  Credit
-                </button>
-
-              </div>
-            </div>
-
-            <div className="form-actions">
-              <button type="button" className="clear-button" onClick={clearForm}>
-                Clear
-              </button>
-
-              <div className="transaction-form-actions">
-                <button className="save-button"
-                  onClick={saveTransaction}>
-                  {editingTransactionId ? "Update transaction" : "Save transaction"}
-                </button>
-                {editingTransactionId && (<button type="button" className="transaction-cancel-button"
-                  onClick={cancelEdit}>
-                  Cancel
-                </button>
-                )}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
+     {/* ADD TRANSACTION */}
+<TransactionForm
+  isAddTransactionOpen={isAddTransactionOpen}
+  editingTransactionId={editingTransactionId}
+  transactionDate={transactionDate}
+  setTransactionDate={setTransactionDate}
+  accountId={accountId}
+  setAccountId={setAccountId}
+  accounts={accounts}
+  description={description}
+  setDescription={setDescription}
+  categoryId={categoryId}
+  setCategoryId={setCategoryId}
+  categories={categories}
+  subcategoryId={subcategoryId}
+  setSubcategoryId={setSubcategoryId}
+  subcategories={subcategories}
+  amount={amount}
+  setAmount={setAmount}
+  transactionType={transactionType}
+  setTransactionType={setTransactionType}
+  formErrors={formErrors}
+  setFormErrors={setFormErrors}
+  clearForm={clearForm}
+  saveTransaction={saveTransaction}
+  cancelEdit={cancelEdit}
+/>
 
       {/* TRANSACTION DETAILS DRAWER */}
       {viewingTransaction && (
-        <div className="transaction-drawer-overlay" onClick={() => setViewingTransaction(null)}>
-          <aside className="transaction-details-drawer" onClick={(event) => event.stopPropagation()}>
+        <div
+          className="transaction-drawer-overlay"
+          onClick={() => setViewingTransaction(null)}
+        >
+          <aside
+            className="transaction-details-drawer"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="transaction-drawer-header">
               <div>
                 <h2>Transaction Details</h2>
-                <p>
-                  Complete information about this transaction.
-                </p>
+                <p>Complete information about this transaction.</p>
               </div>
-              <button type="button" className="drawer-close-button"
+              <button
+                type="button"
+                className="drawer-close-button"
                 onClick={() => setViewingTransaction(null)}
                 title="Close"
               >
@@ -1446,11 +1185,13 @@ function TransactionPage() {
               </button>
             </div>
             <div className="transaction-detail-summary">
-              <div className={`transaction-detail-symbol ${getCategoryClass(viewingTransaction.category)
-                }`}
+              <div
+                className={`transaction-detail-symbol ${getCategoryClass(
+                  viewingTransaction.category,
+                )}`}
               >
-                {viewingTransaction.transactionType
-                  ?.toLowerCase() === "income" ? (
+                {viewingTransaction.transactionType?.toLowerCase() ===
+                "income" ? (
                   <IconArrowUp size={21} />
                 ) : (
                   <IconArrowDown size={21} />
@@ -1459,44 +1200,32 @@ function TransactionPage() {
 
               <div className="transaction-detail-summary-text">
                 <strong>
-                  {viewingTransaction.description ||
-                    "Untitled transaction"}
+                  {viewingTransaction.description || "Untitled transaction"}
                 </strong>
 
-                <span>
-                  {viewingTransaction.category ||
-                    "Uncategorized"}
-                </span>
+                <span>{viewingTransaction.category || "Uncategorized"}</span>
               </div>
 
               <div
-                className={`transaction-detail-amount ${viewingTransaction.transactionType
-                  ?.toLowerCase() === "income"
-                  ? "credit-amount"
-                  : "debit-amount"
-                  }`}
+                className={`transaction-detail-amount ${
+                  viewingTransaction.transactionType?.toLowerCase() === "income"
+                    ? "credit-amount"
+                    : "debit-amount"
+                }`}
               >
-                {viewingTransaction.transactionType
-                  ?.toLowerCase() === "income"
+                {viewingTransaction.transactionType?.toLowerCase() === "income"
                   ? "+"
                   : "-"}
-
                 ₹
-                {Number(
-                  viewingTransaction.amount || 0
-                ).toLocaleString("en-IN")}
+                {Number(viewingTransaction.amount || 0).toLocaleString("en-IN")}
               </div>
-
             </div>
 
             <div className="transaction-details-list">
-
               <div className="transaction-detail-row">
                 <span>Date</span>
                 <strong>
-                  {formatTransactionDate(
-                    viewingTransaction.transactionDate
-                  )}
+                  {formatTransactionDate(viewingTransaction.transactionDate)}
                 </strong>
               </div>
 
@@ -1506,9 +1235,7 @@ function TransactionPage() {
                   {accounts.find(
                     (account) =>
                       String(account.id) ===
-                      String(
-                        viewingTransaction.accountId
-                      )
+                      String(viewingTransaction.accountId),
                   )?.accountName ||
                     viewingTransaction.account ||
                     "-"}
@@ -1517,30 +1244,27 @@ function TransactionPage() {
 
               <div className="transaction-detail-row">
                 <span>Category</span>
-                <strong>
-                  {viewingTransaction.category || "-"}
-                </strong>
+                <strong>{viewingTransaction.category || "-"}</strong>
               </div>
 
               <div className="transaction-detail-row">
                 <span>Subcategory</span>
-                <strong>
-                  {viewingTransaction.subcategory || "-"}
-                </strong>
+                <strong>{viewingTransaction.subcategory || "-"}</strong>
               </div>
 
               <div className="transaction-detail-row">
                 <span>Transaction type</span>
 
                 <span
-                  className={`transaction-type ${viewingTransaction.transactionType
-                    ?.toLowerCase() === "income"
-                    ? "credit"
-                    : "debit"
-                    }`}
+                  className={`transaction-type ${
+                    viewingTransaction.transactionType?.toLowerCase() ===
+                    "income"
+                      ? "credit"
+                      : "debit"
+                  }`}
                 >
-                  {viewingTransaction.transactionType
-                    ?.toLowerCase() === "income"
+                  {viewingTransaction.transactionType?.toLowerCase() ===
+                  "income"
                     ? "Credit"
                     : "Debit"}
                 </span>
@@ -1550,29 +1274,23 @@ function TransactionPage() {
                 <span>Amount</span>
                 <strong>
                   ₹
-                  {Number(
-                    viewingTransaction.amount || 0
-                  ).toLocaleString("en-IN")}
+                  {Number(viewingTransaction.amount || 0).toLocaleString(
+                    "en-IN",
+                  )}
                 </strong>
               </div>
 
               <div className="transaction-detail-row">
                 <span>Description</span>
-                <strong>
-                  {viewingTransaction.description || "-"}
-                </strong>
+                <strong>{viewingTransaction.description || "-"}</strong>
               </div>
-
             </div>
 
             <div className="transaction-drawer-actions">
-
               <button
                 type="button"
                 className="drawer-secondary-button"
-                onClick={() =>
-                  setViewingTransaction(null)
-                }
+                onClick={() => setViewingTransaction(null)}
               >
                 Close
               </button>
@@ -1580,78 +1298,64 @@ function TransactionPage() {
               <button
                 type="button"
                 className="drawer-primary-button"
-                onClick={() =>
-                  handleEditTransaction(
-                    viewingTransaction.id
-                  )
-                }
+                onClick={() => handleEditTransaction(viewingTransaction.id)}
               >
                 <IconPencil size={17} />
                 Edit transaction
               </button>
-
             </div>
-
           </aside>
         </div>
-      )
-      }
+      )}
 
       {/* DELETE CONFIRMATION */}
-      {
-        deleteTarget && (
+      {deleteTarget && (
+        <div
+          className="delete-dialog-overlay"
+          onClick={() => setDeleteTarget(null)}
+        >
           <div
-            className="delete-dialog-overlay"
-            onClick={() => setDeleteTarget(null)}
+            className="delete-dialog"
+            onClick={(event) => event.stopPropagation()}
           >
-            <div
-              className="delete-dialog"
-              onClick={(event) =>
-                event.stopPropagation()
-              }
-            >
+            <div className="delete-dialog-icon">
+              <IconAlertTriangle size={24} />
+            </div>
 
-              <div className="delete-dialog-icon">
-                <IconAlertTriangle size={24} />
-              </div>
+            <h2>Delete transaction?</h2>
 
-              <h2>Delete transaction?</h2>
+            <p>
+              Are you sure you want to delete{" "}
+              <strong>{deleteTarget.description || "this transaction"}</strong>
+              {deleteTarget.amount !== undefined && deleteTarget.amount !== null
+                ? ` (₹${Number(deleteTarget.amount).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })})`
+                : ""}
+              ? This action cannot be undone.
+            </p>
 
-              <p>
-                Are you sure you want to delete{" "}
-                <strong>
-                  {deleteTarget.description || "this transaction"}
-                </strong>
-                {deleteTarget.amount !== undefined && deleteTarget.amount !== null
-                  ? ` (₹${Number(deleteTarget.amount).toLocaleString("en-IN", {
-        minimumFractionDigits: 2, maximumFractionDigits: 2, })})`    : ""}
-                ? This action cannot be undone.
-              </p>
+            <div className="delete-dialog-actions">
+              <button
+                type="button"
+                className="delete-cancel-button"
+                onClick={() => setDeleteTarget(null)}
+              >
+                Cancel
+              </button>
 
-              <div className="delete-dialog-actions">
-
-                <button
-                  type="button"
-                  className="delete-cancel-button"
-                  onClick={() => setDeleteTarget(null)}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="delete-confirm-button"
-                  onClick={confirmDeleteTransaction}
-                >
-                  Delete transaction
-                </button>
-
-              </div>
-
+              <button
+                type="button"
+                className="delete-confirm-button"
+                onClick={confirmDeleteTransaction}
+              >
+                Delete transaction
+              </button>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* TRANSACTIONS LIST */}
       <TransactionTable
@@ -1684,8 +1388,7 @@ function TransactionPage() {
         setCurrentPage={setCurrentPage}
         loadTransactions={loadTransactions}
       />
-
-    </div >
+    </div>
   );
 }
 
