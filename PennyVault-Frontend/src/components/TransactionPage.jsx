@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getToken } from "../utils/auth";
 import "../Styles/Transactions.css";
+import AdvancedFilters from "./Transactions/AdvancedFilters";
 import {
   IconCalendar,
   IconChevronDown,
@@ -1056,311 +1057,26 @@ function TransactionPage() {
         </div>
       )}
 
-      {isAdvancedFilterOpen && (
-        <div
-          className="advanced-filter-overlay"
-          onClick={cancelAdvancedFilters}
-        >
-          <div
-            className="advanced-filter-panel"
-            onClick={(event) => event.stopPropagation()}
-          >
-
-            <div className="advanced-filter-header">
-
-              <div>
-                <h3>Filters</h3>
-                <p>Refine your transactions</p>
-              </div>
-
-              <button
-                type="button"
-                className="advanced-filter-close"
-                onClick={cancelAdvancedFilters}
-                aria-label="Close filters"
-              >
-                <IconX size={18} />
-              </button>
-
-            </div>
-
-            <div className="advanced-filter-body">
-
-              {/* TRANSACTION TYPE */}
-              <div className="advanced-filter-section">
-
-                <label>Transaction type</label>
-
-                <div className="filter-choice-group">
-
-                  <button
-                    type="button"
-                    className={
-                      draftTransactionFilter === "all"
-                        ? "selected"
-                        : ""
-                    }
-                    onClick={() =>
-                      setDraftTransactionFilter("all")
-                    }
-                  >
-                    All
-                  </button>
-
-                  <button
-                    type="button"
-                    className={
-                      draftTransactionFilter === "debit"
-                        ? "selected"
-                        : ""
-                    }
-                    onClick={() =>
-                      setDraftTransactionFilter("debit")
-                    }
-                  >
-                    Debit
-                  </button>
-
-                  <button
-                    type="button"
-                    className={
-                      draftTransactionFilter === "credit"
-                        ? "selected"
-                        : ""
-                    }
-                    onClick={() =>
-                      setDraftTransactionFilter("credit")
-                    }
-                  >
-                    Credit
-                  </button>
-
-                </div>
-
-              </div>
-
-              {/* CATEGORY */}
-              <div className="advanced-filter-section">
-
-                <label htmlFor="advanced-category">
-                  Category
-                </label>
-
-                <select
-                  id="advanced-category"
-                  value={draftCategoryFilter}
-                  onChange={(event) =>
-                    setDraftCategoryFilter(
-                      event.target.value
-                    )
-                  }
-                >
-                  <option value="">
-                    All categories
-                  </option>
-
-                  {categories.map((category) => (
-                    <option
-                      key={category.id}
-                      value={category.name}
-                    >
-                      {category.name}
-                    </option>
-                  ))}
-
-                </select>
-
-              </div>
-
-              {/* DATE */}
-              <div className="advanced-filter-section">
-
-                <label htmlFor="advanced-date">
-                  Date
-                </label>
-
-                <select
-                  id="advanced-date"
-                  value={draftDateFilter}
-                  onChange={(event) =>
-                    setDraftDateFilter(
-                      event.target.value
-                    )
-                  }
-                >
-                  <option value="all">
-                    All time
-                  </option>
-
-                  <option value="today">
-                    Today
-                  </option>
-
-                  <option value="thisWeek">
-                    This week
-                  </option>
-
-                  <option value="thisMonth">
-                    This month
-                  </option>
-
-                  <option value="lastMonth">
-                    Last month
-                  </option>
-
-                  <option value="last3Months">
-                    Last 3 months
-                  </option>
-
-                  <option value="thisYear">
-                    This year
-                  </option>
-
-                  <option value="custom">
-                    Custom range
-                  </option>
-
-                </select>
-
-              </div>
-
-              {/* CUSTOM DATE */}
-              {draftDateFilter === "custom" && (
-                <div className="advanced-filter-date-row">
-
-                  <div className="advanced-filter-section">
-
-                    <label htmlFor="advanced-start-date">
-                      Start date
-                    </label>
-
-                    <input
-                      id="advanced-start-date"
-                      type="date"
-                      value={draftCustomStartDate}
-                      onChange={(event) =>
-                        setDraftCustomStartDate(
-                          event.target.value
-                        )
-                      }
-                    />
-
-                  </div>
-
-                  <div className="advanced-filter-section">
-
-                    <label htmlFor="advanced-end-date">
-                      End date
-                    </label>
-
-                    <input
-                      id="advanced-end-date"
-                      type="date"
-                      value={draftCustomEndDate}
-                      onChange={(event) =>
-                        setDraftCustomEndDate(
-                          event.target.value
-                        )
-                      }
-                    />
-
-                  </div>
-
-                </div>
-              )}
-
-              {/* AMOUNT */}
-              <div className="advanced-filter-section">
-
-                <label>Amount range</label>
-
-                <div className="advanced-filter-amount-row">
-
-                  <div className="amount-input-wrapper">
-
-                    <span>₹</span>
-
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Minimum"
-                      value={draftMinAmount}
-                      onChange={(event) =>
-                        setDraftMinAmount(
-                          event.target.value
-                        )
-                      }
-                    />
-
-                  </div>
-
-                  <span className="amount-range-separator">
-                    —
-                  </span>
-
-                  <div className="amount-input-wrapper">
-                    <span>₹</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Maximum"
-                      value={draftMaxAmount}
-                      onChange={(event) =>
-                        setDraftMaxAmount(
-                          event.target.value
-                        )
-                      }
-                    />
-
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* FOOTER */}
-            <div className="advanced-filter-footer">
-
-              <button
-                type="button"
-                className="advanced-filter-clear"
-                onClick={() => {
-                  setDraftTransactionFilter("all");
-                  setDraftCategoryFilter("");
-                  setDraftDateFilter("thisMonth");
-                  setDraftCustomStartDate("");
-                  setDraftCustomEndDate("");
-                  setDraftMinAmount("");
-                  setDraftMaxAmount("");
-                }}
-              >
-                Clear all
-              </button>
-
-              <div className="advanced-filter-footer-actions">
-
-                <button
-                  type="button"
-                  className="advanced-filter-cancel"
-                  onClick={cancelAdvancedFilters}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  className="advanced-filter-apply"
-                  onClick={applyAdvancedFilters}
-                >
-                  Apply filters
-                </button>
-              </div>
-            </div>
-            </div>
-            </div>
-      )}
+      <AdvancedFilters
+  isOpen={isAdvancedFilterOpen}
+  draftTransactionFilter={draftTransactionFilter}
+  setDraftTransactionFilter={setDraftTransactionFilter}
+  draftCategoryFilter={draftCategoryFilter}
+  setDraftCategoryFilter={setDraftCategoryFilter}
+  categories={categories}
+  draftDateFilter={draftDateFilter}
+  setDraftDateFilter={setDraftDateFilter}
+  draftCustomStartDate={draftCustomStartDate}
+  setDraftCustomStartDate={setDraftCustomStartDate}
+  draftCustomEndDate={draftCustomEndDate}
+  setDraftCustomEndDate={setDraftCustomEndDate}
+  draftMinAmount={draftMinAmount}
+  setDraftMinAmount={setDraftMinAmount}
+  draftMaxAmount={draftMaxAmount}
+  setDraftMaxAmount={setDraftMaxAmount}
+  setIsAdvancedFilterOpen={setIsAdvancedFilterOpen}
+  applyAdvancedFilters={applyAdvancedFilters}
+/>
   
             {/* PAGE HEADER */}
             <div className="transactions-header">
