@@ -138,6 +138,8 @@ function TransactionPage() {
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
   const deleteInProgressRef = useRef(false);
   const [formErrors, setFormErrors] = useState({});
+  const [isSavingTransaction, setIsSavingTransaction] = useState(false);
+  const saveInProgressRef = useRef(false);
 
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
@@ -400,9 +402,17 @@ function TransactionPage() {
   };
 
   const saveTransaction = async () => {
+    // Prevent repeated submissions before React has a chance to re-render.
+    if (saveInProgressRef.current) {
+      return;
+    }
+
     if (!validateTransactionForm()) {
       return;
     }
+
+    saveInProgressRef.current = true;
+    setIsSavingTransaction(true);
 
     try {
       const token = getToken();
@@ -487,6 +497,9 @@ function TransactionPage() {
     } catch (error) {
       console.error("Error saving/updating transaction:", error);
       showToast("Something went wrong while saving the transaction.", "error");
+    } finally {
+      saveInProgressRef.current = false;
+      setIsSavingTransaction(false);
     }
   };
 
@@ -1167,6 +1180,7 @@ function TransactionPage() {
         setFormErrors={setFormErrors}
         clearForm={clearForm}
         saveTransaction={saveTransaction}
+        isSavingTransaction={isSavingTransaction}
         cancelEdit={cancelEdit}
       />
 
