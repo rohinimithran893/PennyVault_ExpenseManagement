@@ -334,15 +334,14 @@ function TransactionForm({
                   : "Save transaction"}
             </button>
 
-            {editingTransactionId && (
-              <button
-                type="button"
-                className="transaction-cancel-button"
-                onClick={cancelEdit}
-              >
-                Cancel
-              </button>
-            )}
+            <button
+              type="button"
+              className="transaction-cancel-button"
+              onClick={cancelEdit}
+              disabled={isSavingTransaction}
+            >
+              Cancel
+            </button>
 
           </div>
         </div>
