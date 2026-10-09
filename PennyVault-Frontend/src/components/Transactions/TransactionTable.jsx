@@ -10,7 +10,6 @@ import {
   IconAlertCircle,
   IconArrowDown,
   IconArrowUp,
-  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconLayoutList,
