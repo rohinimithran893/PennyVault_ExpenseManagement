@@ -135,6 +135,8 @@ function TransactionPage() {
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false);
   const [viewingTransaction, setViewingTransaction] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
+  const deleteInProgressRef = useRef(false);
   const [formErrors, setFormErrors] = useState({});
 
   const [toast, setToast] = useState(null);
@@ -612,10 +614,14 @@ function TransactionPage() {
   };
 
   const confirmDeleteTransaction = async () => {
-    if (!deleteTarget) {
+    if (!deleteTarget || deleteInProgressRef.current) {
       return;
     }
+
+    deleteInProgressRef.current = true;
+    setIsDeletingTransaction(true);
     const transactionId = deleteTarget.id;
+
     try {
       const token = getToken();
       const response = await fetch(
@@ -627,34 +633,37 @@ function TransactionPage() {
           },
         },
       );
+
       if (!response.ok) {
         let errorMessage = "Failed to delete transaction.";
         try {
           const data = await response.json();
           errorMessage = data.message || errorMessage;
         } catch (error) {
-          // Response may not contain JSON
+          // Response may not contain JSON.
         }
 
         console.error("Transaction delete failed:", errorMessage);
-
         showToast(errorMessage, "error");
         return;
       }
+
       setTransactions((currentTransactions) =>
         currentTransactions.filter(
-          (transactionItem) => transactionItem.id !== transactionId,
+          (transactionItem) => String(transactionItem.id) !== String(transactionId),
         ),
       );
       setDeleteTarget(null);
       showToast("Transaction deleted successfully.", "success");
     } catch (error) {
       console.error("Error deleting transaction:", error);
-
       showToast(
-        "Something went wrong while deleting the transaction.",
+        "Something went wrong while deleting the transaction. Please try again.",
         "error",
       );
+    } finally {
+      deleteInProgressRef.current = false;
+      setIsDeletingTransaction(false);
     }
   };
 
@@ -1167,6 +1176,7 @@ function TransactionPage() {
         setViewingTransaction={setViewingTransaction}
         deleteTarget={deleteTarget}
         setDeleteTarget={setDeleteTarget}
+        isDeletingTransaction={isDeletingTransaction}
         accounts={accounts}
         getCategoryClass={getCategoryClass}
         formatTransactionDate={formatTransactionDate}
