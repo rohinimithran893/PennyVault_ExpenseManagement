@@ -1282,7 +1282,7 @@ function TransactionPage() {
         transactionFilter={transactionFilter}
         setTransactionFilter={setTransactionFilter}
         listSearchTerm={listSearchTerm}
-        setListSearchTerm={setListSearchTerm}
+        setListSearchTerm={handleSearchChange}
         sortConfig={sortConfig}
         handleSort={handleSort}
         isTransactionsLoading={isTransactionsLoading}
