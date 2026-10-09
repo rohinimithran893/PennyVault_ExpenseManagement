@@ -511,8 +511,8 @@ function TransactionTable({
 
       </div>
 
-      {/* PAGINATION */}
-      {totalPages > 1 && (
+      {/* PAGINATION SUMMARY AND CONTROLS */}
+      {filteredTransactions.length > 0 && (
         <div className="transactions-pagination">
 
           <span className="pagination-summary">
@@ -528,7 +528,8 @@ function TransactionTable({
             of {filteredTransactions.length} transactions
           </span>
 
-          <div className="pagination-buttons">
+          {totalPages > 1 && (
+            <div className="pagination-buttons">
 
             <button
               type="button"
@@ -594,7 +595,8 @@ function TransactionTable({
               <IconChevronRight size={18} />
             </button>
 
-          </div>
+            </div>
+          )}
 
         </div>
       )}
