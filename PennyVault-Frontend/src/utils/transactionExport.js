@@ -136,7 +136,9 @@ const buildExportRows = (transactions, accounts = []) =>
       description: transaction.description || "",
       account:
         transaction.accountName ||
-        transaction.account ||
+        (typeof transaction.account === "string"
+          ? transaction.account
+          : transaction.account?.accountName || transaction.account?.name) ||
         matchedAccount?.accountName ||
         matchedAccount?.name ||
         "",
