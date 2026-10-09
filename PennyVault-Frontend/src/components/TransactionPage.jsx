@@ -344,7 +344,7 @@ function TransactionPage() {
         description: transaction.description,
         accountId: transaction.accountId ?? transaction.account?.id ?? "",
         accountName:
-          transaction.accountName ?? transaction.account?.accountName ?? "",
+          transaction.accountName ?? transaction.account?.accountName ?? transaction.account?.name ?? "",
         category: transaction.category,
         categoryClass: getCategoryClass(transaction.category),
         subcategory: transaction.subcategory,
@@ -524,7 +524,7 @@ function TransactionPage() {
           description: transaction.description,
           accountId: transaction.accountId ?? transaction.account?.id ?? "",
           accountName:
-            transaction.accountName ?? transaction.account?.accountName ?? "",
+            transaction.accountName ?? transaction.account?.accountName ?? transaction.account?.name ?? "",
           category: transaction.category,
           categoryClass: getCategoryClass(transaction.category),
           subcategory: transaction.subcategory,
