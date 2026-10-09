@@ -503,8 +503,7 @@ function TransactionPage() {
     }
   };
 
-  const clearForm = () => {
-    setEditingTransactionId(null);
+  const resetTransactionFields = () => {
     setAccountId("");
     setCategoryId("");
     setSubcategoryId("");
@@ -514,6 +513,12 @@ function TransactionPage() {
     setTransactionType("debit");
     setTransactionDate(new Date().toISOString().split("T")[0]);
     setFormErrors({});
+  };
+
+  // Reset the form completely when starting a new transaction or after saving.
+  const clearForm = () => {
+    setEditingTransactionId(null);
+    resetTransactionFields();
   };
 
   const cancelEdit = () => {
@@ -1262,7 +1267,7 @@ function TransactionPage() {
         setTransactionType={setTransactionType}
         formErrors={formErrors}
         setFormErrors={setFormErrors}
-        clearForm={clearForm}
+        clearForm={resetTransactionFields}
         saveTransaction={saveTransaction}
         isSavingTransaction={isSavingTransaction}
         cancelEdit={cancelEdit}
