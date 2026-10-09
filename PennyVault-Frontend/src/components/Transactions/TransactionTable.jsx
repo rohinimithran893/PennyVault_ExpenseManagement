@@ -128,7 +128,7 @@ function TransactionTable({
                 <input type="checkbox" />
               </th>
 
-              <th>
+              <th aria-sort={sortConfig.key === "date" ? (sortConfig.direction === "asc" ? "ascending" : "descending") : "none"}>
                 <button
                   type="button"
                   className={`transaction-sort-button ${
@@ -144,13 +144,11 @@ function TransactionTable({
                     ) : (
                       <IconArrowDown size={14} />
                     )
-                  ) : (
-                    <IconChevronDown size={14} />
-                  )}
+                  ) : null}
                 </button>
               </th>
 
-              <th>
+              <th aria-sort={sortConfig.key === "description" ? (sortConfig.direction === "asc" ? "ascending" : "descending") : "none"}>
                 <button
                   type="button"
                   className={`transaction-sort-button ${
@@ -168,13 +166,11 @@ function TransactionTable({
                     ) : (
                       <IconArrowDown size={14} />
                     )
-                  ) : (
-                    <IconChevronDown size={14} />
-                  )}
+                  ) : null}
                 </button>
               </th>
 
-              <th>
+              <th aria-sort={sortConfig.key === "category" ? (sortConfig.direction === "asc" ? "ascending" : "descending") : "none"}>
                 <button
                   type="button"
                   className={`transaction-sort-button ${
@@ -192,9 +188,7 @@ function TransactionTable({
                     ) : (
                       <IconArrowDown size={14} />
                     )
-                  ) : (
-                    <IconChevronDown size={14} />
-                  )}
+                  ) : null}
                 </button>
               </th>
 
@@ -202,7 +196,7 @@ function TransactionTable({
 
               <th>Paid by</th>
 
-              <th>
+              <th aria-sort={sortConfig.key === "amount" ? (sortConfig.direction === "asc" ? "ascending" : "descending") : "none"}>
                 <button
                   type="button"
                   className={`transaction-sort-button ${
@@ -220,13 +214,11 @@ function TransactionTable({
                     ) : (
                       <IconArrowDown size={14} />
                     )
-                  ) : (
-                    <IconChevronDown size={14} />
-                  )}
+                  ) : null}
                 </button>
               </th>
 
-              <th>
+              <th aria-sort={sortConfig.key === "type" ? (sortConfig.direction === "asc" ? "ascending" : "descending") : "none"}>
                 <button
                   type="button"
                   className={`transaction-sort-button ${
@@ -242,9 +234,7 @@ function TransactionTable({
                     ) : (
                       <IconArrowDown size={14} />
                     )
-                  ) : (
-                    <IconChevronDown size={14} />
-                  )}
+                  ) : null}
                 </button>
               </th>
 
@@ -385,7 +375,7 @@ function TransactionTable({
             /* TRANSACTION ROWS */
             ) : (
               paginatedTransactions.map((transaction, index) => (
-                <tr key={index}>
+                <tr key={transaction.id}>
 
                   <td>
                     <input type="checkbox" />
