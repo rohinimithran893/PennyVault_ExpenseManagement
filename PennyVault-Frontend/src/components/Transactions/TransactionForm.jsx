@@ -30,6 +30,7 @@ function TransactionForm({
   setFormErrors,
   clearForm,
   saveTransaction,
+  isSavingTransaction,
   cancelEdit,
 }) {
   if (!isAddTransactionOpen) {
@@ -322,10 +323,15 @@ function TransactionForm({
               type="button"
               className="save-button"
               onClick={saveTransaction}
+              disabled={isSavingTransaction}
             >
-              {editingTransactionId
-                ? "Update transaction"
-                : "Save transaction"}
+              {isSavingTransaction
+                ? editingTransactionId
+                  ? "Updating..."
+                  : "Saving..."
+                : editingTransactionId
+                  ? "Update transaction"
+                  : "Save transaction"}
             </button>
 
             {editingTransactionId && (

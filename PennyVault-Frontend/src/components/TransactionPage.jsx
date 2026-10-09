@@ -138,6 +138,8 @@ function TransactionPage() {
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false);
   const deleteInProgressRef = useRef(false);
   const [formErrors, setFormErrors] = useState({});
+  const [isSavingTransaction, setIsSavingTransaction] = useState(false);
+  const saveInProgressRef = useRef(false);
 
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
@@ -400,9 +402,17 @@ function TransactionPage() {
   };
 
   const saveTransaction = async () => {
+    // Prevent repeated submissions before React has a chance to re-render.
+    if (saveInProgressRef.current) {
+      return;
+    }
+
     if (!validateTransactionForm()) {
       return;
     }
+
+    saveInProgressRef.current = true;
+    setIsSavingTransaction(true);
 
     try {
       const token = getToken();
@@ -487,6 +497,9 @@ function TransactionPage() {
     } catch (error) {
       console.error("Error saving/updating transaction:", error);
       showToast("Something went wrong while saving the transaction.", "error");
+    } finally {
+      saveInProgressRef.current = false;
+      setIsSavingTransaction(false);
     }
   };
 
@@ -888,16 +901,24 @@ function TransactionPage() {
 
   const paginationItems = getPaginationItems();
 
-  const clearFilters = () => {
+  const resetDateFilter = () => {
     setDateFilter("thisMonth");
     setCustomStartDate("");
     setCustomEndDate("");
+  };
+
+  const clearFilters = () => {
+    resetDateFilter();
     setCategoryFilter("");
     setMinAmount("");
     setMaxAmount("");
     setTransactionFilter("all");
-    setFilterSearchTerm("");
-    setListSearchTerm("");
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value) => {
+    setFilterSearchTerm(value);
+    setListSearchTerm(value);
     setCurrentPage(1);
   };
 
@@ -907,17 +928,72 @@ function TransactionPage() {
     setCurrentPage(1);
   };
 
+  const clearAll = () => {
+    clearFilters();
+    clearSearch();
+  };
+
+  const removeActiveFilter = (filterKey) => {
+    switch (filterKey) {
+      case "type":
+        setTransactionFilter("all");
+        break;
+      case "category":
+        setCategoryFilter("");
+        break;
+      case "date":
+        resetDateFilter();
+        break;
+      case "minAmount":
+        setMinAmount("");
+        break;
+      case "maxAmount":
+        setMaxAmount("");
+        break;
+      default:
+        break;
+    }
+    setCurrentPage(1);
+  };
+
+  const dateFilterLabels = {
+    all: "All time",
+    today: "Today",
+    thisWeek: "This week",
+    thisMonth: "This month",
+    lastMonth: "Last month",
+    last3Months: "Last 3 months",
+    thisYear: "This year",
+    custom: "Custom date range",
+  };
+
+  const activeFilterChips = [
+    ...(transactionFilter !== "all"
+      ? [{ key: "type", label: `Type: ${transactionFilter === "debit" ? "Debit" : "Credit"}` }]
+      : []),
+    ...(categoryFilter
+      ? [{ key: "category", label: `Category: ${categoryFilter}` }]
+      : []),
+    ...(dateFilter !== "thisMonth"
+      ? [{
+          key: "date",
+          label: dateFilter === "custom"
+            ? `Date: ${customStartDate || "Any"} – ${customEndDate || "Any"}`
+            : `Date: ${dateFilterLabels[dateFilter] || dateFilter}`,
+        }]
+      : []),
+    ...(minAmount
+      ? [{ key: "minAmount", label: `Min: ₹${Number(minAmount).toLocaleString("en-IN")}` }]
+      : []),
+    ...(maxAmount
+      ? [{ key: "maxAmount", label: `Max: ₹${Number(maxAmount).toLocaleString("en-IN")}` }]
+      : []),
+  ];
+
   const hasSearch =
     Boolean(filterSearchTerm.trim()) || Boolean(listSearchTerm.trim());
 
-  const hasActiveFilters =
-    transactionFilter !== "all" ||
-    Boolean(categoryFilter) ||
-    dateFilter !== "thisMonth" ||
-    Boolean(customStartDate) ||
-    Boolean(customEndDate) ||
-    Boolean(minAmount) ||
-    Boolean(maxAmount);
+  const hasActiveFilters = activeFilterChips.length > 0;
 
   const getEmptyState = () => {
     // 1. User genuinely has no transactions
@@ -972,6 +1048,11 @@ function TransactionPage() {
   const emptyState = getEmptyState();
 
   useEffect(() => {
+    if (totalPages === 0 && currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
@@ -1079,7 +1160,7 @@ function TransactionPage() {
             type="text"
             placeholder="Search..."
             value={filterSearchTerm}
-            onChange={(e) => setFilterSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 
@@ -1096,17 +1177,7 @@ function TransactionPage() {
 
           {hasActiveFilters && (
             <span className="advanced-filter-count">
-              {
-                [
-                  transactionFilter !== "all",
-                  Boolean(categoryFilter),
-                  dateFilter !== "thisMonth",
-                  Boolean(customStartDate),
-                  Boolean(customEndDate),
-                  Boolean(minAmount),
-                  Boolean(maxAmount),
-                ].filter(Boolean).length
-              }
+              {activeFilterChips.length}
             </span>
           )}
         </button>
@@ -1114,7 +1185,7 @@ function TransactionPage() {
         <button
           type="button"
           className="clear-filters-button"
-          onClick={clearFilters}
+          onClick={clearAll}
         >
           Clear
         </button>
@@ -1140,7 +1211,33 @@ function TransactionPage() {
         </div>
       </div>
 
-      <div className="filter-actions"></div>
+      {activeFilterChips.length > 0 && (
+        <div className="active-filters" aria-label="Active filters">
+          <span className="active-filters-title">Active filters</span>
+          <div className="active-filter-chips">
+            {activeFilterChips.map((filter) => (
+              <span className="active-filter-chip" key={filter.key}>
+                {filter.label}
+                <button
+                  type="button"
+                  onClick={() => removeActiveFilter(filter.key)}
+                  aria-label={`Remove ${filter.label} filter`}
+                  title={`Remove ${filter.label} filter`}
+                >
+                  <IconX size={14} />
+                </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              className="active-filters-clear"
+              onClick={clearFilters}
+            >
+              Clear all
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ADD TRANSACTION */}
       <TransactionForm
@@ -1167,6 +1264,7 @@ function TransactionPage() {
         setFormErrors={setFormErrors}
         clearForm={clearForm}
         saveTransaction={saveTransaction}
+        isSavingTransaction={isSavingTransaction}
         cancelEdit={cancelEdit}
       />
 
@@ -1189,7 +1287,7 @@ function TransactionPage() {
         transactionFilter={transactionFilter}
         setTransactionFilter={setTransactionFilter}
         listSearchTerm={listSearchTerm}
-        setListSearchTerm={setListSearchTerm}
+        setListSearchTerm={handleSearchChange}
         sortConfig={sortConfig}
         handleSort={handleSort}
         isTransactionsLoading={isTransactionsLoading}
