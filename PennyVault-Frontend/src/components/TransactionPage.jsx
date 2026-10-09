@@ -1048,6 +1048,11 @@ function TransactionPage() {
   const emptyState = getEmptyState();
 
   useEffect(() => {
+    if (totalPages === 0 && currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
