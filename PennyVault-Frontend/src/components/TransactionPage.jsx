@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getToken } from "../utils/auth";
+import { exportTransactionsCsv, exportTransactionsXlsx } from "../utils/transactionExport";
 import "../Styles/Transactions.css";
 import AdvancedFilters from "./Transactions/AdvancedFilters";
 import TransactionTable from "./Transactions/TransactionTable";
@@ -119,9 +120,10 @@ function TransactionPage() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  // Show the newest transaction dates first by default.
   const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: null,
+    key: "date",
+    direction: "desc",
   });
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   const [draftTransactionFilter, setDraftTransactionFilter] = useState("all");
@@ -140,6 +142,8 @@ function TransactionPage() {
   const [formErrors, setFormErrors] = useState({});
   const [isSavingTransaction, setIsSavingTransaction] = useState(false);
   const saveInProgressRef = useRef(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef(null);
 
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
@@ -199,6 +203,31 @@ function TransactionPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!isExportMenuOpen) {
+      return undefined;
+    }
+
+    const closeExportMenu = (event) => {
+      if (event.type === "keydown" && event.key === "Escape") {
+        setIsExportMenuOpen(false);
+      } else if (
+        event.type === "mousedown" &&
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeExportMenu);
+    document.addEventListener("keydown", closeExportMenu);
+    return () => {
+      document.removeEventListener("mousedown", closeExportMenu);
+      document.removeEventListener("keydown", closeExportMenu);
+    };
+  }, [isExportMenuOpen]);
 
   useEffect(() => {
     const loadAccounts = async () => {
@@ -313,6 +342,9 @@ function TransactionPage() {
         id: transaction.id,
         date: transaction.transactionDate,
         description: transaction.description,
+        accountId: transaction.accountId ?? transaction.account?.id ?? "",
+        accountName:
+          transaction.accountName ?? transaction.account?.accountName ?? transaction.account?.name ?? "",
         category: transaction.category,
         categoryClass: getCategoryClass(transaction.category),
         subcategory: transaction.subcategory,
@@ -343,6 +375,14 @@ function TransactionPage() {
     setCurrentPage(1);
 
     setSortConfig((currentSort) => {
+      // Date starts descending by default; the first click switches to ascending.
+      if (currentSort.key === key && key === "date") {
+        return {
+          key,
+          direction: currentSort.direction === "desc" ? "asc" : "desc",
+        };
+      }
+
       if (currentSort.key !== key) {
         return {
           key,
@@ -357,9 +397,10 @@ function TransactionPage() {
         };
       }
 
+      // Resetting another column's sort returns to newest date first.
       return {
-        key: null,
-        direction: null,
+        key: "date",
+        direction: "desc",
       };
     });
   };
@@ -481,6 +522,9 @@ function TransactionPage() {
           id: transaction.id,
           date: transaction.transactionDate,
           description: transaction.description,
+          accountId: transaction.accountId ?? transaction.account?.id ?? "",
+          accountName:
+            transaction.accountName ?? transaction.account?.accountName ?? transaction.account?.name ?? "",
           category: transaction.category,
           categoryClass: getCategoryClass(transaction.category),
           subcategory: transaction.subcategory,
@@ -503,8 +547,7 @@ function TransactionPage() {
     }
   };
 
-  const clearForm = () => {
-    setEditingTransactionId(null);
+  const resetTransactionFields = () => {
     setAccountId("");
     setCategoryId("");
     setSubcategoryId("");
@@ -514,6 +557,12 @@ function TransactionPage() {
     setTransactionType("debit");
     setTransactionDate(new Date().toISOString().split("T")[0]);
     setFormErrors({});
+  };
+
+  // Reset the form completely when starting a new transaction or after saving.
+  const clearForm = () => {
+    setEditingTransactionId(null);
+    resetTransactionFields();
   };
 
   const cancelEdit = () => {
@@ -807,15 +856,20 @@ function TransactionPage() {
   });
 
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    if (!sortConfig.key || !sortConfig.direction) {
-      return 0;
-    }
-
     let comparison = 0;
 
     switch (sortConfig.key) {
       case "date":
         comparison = String(a.date || "").localeCompare(String(b.date || ""));
+        // If dates match, use the larger/newer transaction ID first when possible.
+        if (comparison === 0) {
+          const idA = Number(a.id);
+          const idB = Number(b.id);
+          comparison =
+            Number.isFinite(idA) && Number.isFinite(idB)
+              ? idA - idB
+              : String(a.id || "").localeCompare(String(b.id || ""));
+        }
         break;
 
       case "description":
@@ -857,6 +911,34 @@ function TransactionPage() {
 
     return sortConfig.direction === "asc" ? comparison : -comparison;
   });
+
+  const exportTransactions = (format) => {
+    setIsExportMenuOpen(false);
+
+    if (sortedTransactions.length === 0) {
+      showToast("No transactions to export. Adjust your search or filters.", "error");
+      return;
+    }
+
+    const now = new Date();
+    const exportDate = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+    const filename = `PennyVault_Transactions_${exportDate}.${format}`;
+
+    if (format === "csv") {
+      exportTransactionsCsv(sortedTransactions, accounts, filename);
+    } else {
+      exportTransactionsXlsx(sortedTransactions, accounts, filename);
+    }
+
+    showToast(
+      `Exported ${sortedTransactions.length} transaction${sortedTransactions.length === 1 ? "" : "s"} as ${format.toUpperCase()}.`,
+      "success",
+    );
+  };
 
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
 
@@ -1191,10 +1273,46 @@ function TransactionPage() {
         </button>
 
         <div className="filter-actions">
-          <button className="secondary-button">
-            <IconDownload size={18} />
-            Export
-          </button>
+          <div className="export-menu-container" ref={exportMenuRef}>
+            <button
+              type="button"
+              className="secondary-button"
+              aria-haspopup="menu"
+              aria-expanded={isExportMenuOpen}
+              onClick={() => setIsExportMenuOpen((isOpen) => !isOpen)}
+            >
+              <IconDownload size={18} />
+              Export
+              <IconChevronDown size={15} />
+            </button>
+
+            {isExportMenuOpen && (
+              <div className="export-menu" role="menu" aria-label="Export transactions">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => exportTransactions("csv")}
+                >
+                  <IconDownload size={17} />
+                  <span>
+                    <strong>Export as CSV</strong>
+                    <small>.csv spreadsheet file</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => exportTransactions("xlsx")}
+                >
+                  <IconDownload size={17} />
+                  <span>
+                    <strong>Export as Excel</strong>
+                    <small>.xlsx workbook</small>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
@@ -1262,7 +1380,7 @@ function TransactionPage() {
         setTransactionType={setTransactionType}
         formErrors={formErrors}
         setFormErrors={setFormErrors}
-        clearForm={clearForm}
+        clearForm={resetTransactionFields}
         saveTransaction={saveTransaction}
         isSavingTransaction={isSavingTransaction}
         cancelEdit={cancelEdit}
