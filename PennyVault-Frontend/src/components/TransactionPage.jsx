@@ -916,6 +916,12 @@ function TransactionPage() {
     setCurrentPage(1);
   };
 
+  const handleSearchChange = (value) => {
+    setFilterSearchTerm(value);
+    setListSearchTerm(value);
+    setCurrentPage(1);
+  };
+
   const clearSearch = () => {
     setFilterSearchTerm("");
     setListSearchTerm("");
@@ -1149,7 +1155,7 @@ function TransactionPage() {
             type="text"
             placeholder="Search..."
             value={filterSearchTerm}
-            onChange={(e) => setFilterSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 
