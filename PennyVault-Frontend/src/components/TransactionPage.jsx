@@ -119,9 +119,10 @@ function TransactionPage() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  // Show the newest transaction dates first by default.
   const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: null,
+    key: "date",
+    direction: "desc",
   });
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   const [draftTransactionFilter, setDraftTransactionFilter] = useState("all");
@@ -343,6 +344,14 @@ function TransactionPage() {
     setCurrentPage(1);
 
     setSortConfig((currentSort) => {
+      // Date starts descending by default; the first click switches to ascending.
+      if (currentSort.key === key && key === "date") {
+        return {
+          key,
+          direction: currentSort.direction === "desc" ? "asc" : "desc",
+        };
+      }
+
       if (currentSort.key !== key) {
         return {
           key,
@@ -357,9 +366,10 @@ function TransactionPage() {
         };
       }
 
+      // Resetting another column's sort returns to newest date first.
       return {
-        key: null,
-        direction: null,
+        key: "date",
+        direction: "desc",
       };
     });
   };
@@ -812,15 +822,20 @@ function TransactionPage() {
   });
 
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    if (!sortConfig.key || !sortConfig.direction) {
-      return 0;
-    }
-
     let comparison = 0;
 
     switch (sortConfig.key) {
       case "date":
         comparison = String(a.date || "").localeCompare(String(b.date || ""));
+        // If dates match, use the larger/newer transaction ID first when possible.
+        if (comparison === 0) {
+          const idA = Number(a.id);
+          const idB = Number(b.id);
+          comparison =
+            Number.isFinite(idA) && Number.isFinite(idB)
+              ? idA - idB
+              : String(a.id || "").localeCompare(String(b.id || ""));
+        }
         break;
 
       case "description":
