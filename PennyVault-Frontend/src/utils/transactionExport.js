@@ -9,8 +9,10 @@ const EXPORT_COLUMNS = [
 ];
 
 const escapeCsvValue = (value) => {
-  const text = value == null ? "" : String(value);
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  const rawText = value == null ? "" : String(value);
+  // Prevent spreadsheet formula injection from user-entered text fields.
+  const text = /^[=+@\\t\\r-]/.test(rawText) ? \`'\${rawText}\` : rawText;
+  return /[",\\r\\n]/.test(text) ? \`"\${text.replace(/"/g, '""')}"\` : text;
 };
 
 const escapeXml = (value) =>
@@ -155,7 +157,7 @@ export const exportTransactionsCsv = (transactions, accounts = [], filename) => 
       EXPORT_COLUMNS.map((column) => escapeCsvValue(row[column.key])).join(","),
     ),
   ].join("\r\n");
-  downloadBlob(new Blob(["\\uFEFF", csv], { type: "text/csv;charset=utf-8;" }), filename);
+  downloadBlob(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" }), filename);
 };
 
 export const exportTransactionsXlsx = (transactions, accounts = [], filename) => {
