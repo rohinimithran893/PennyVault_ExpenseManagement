@@ -1856,3 +1856,17 @@
     gap: 0;
   }
 }
+
+/* Delete confirmation: prevent accidental duplicate actions while deleting. */
+.delete-cancel-button:disabled,
+.delete-confirm-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.delete-confirm-button:disabled:hover {
+  background: #e44444;
+  box-shadow: none;
+}
