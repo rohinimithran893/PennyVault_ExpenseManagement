@@ -922,6 +922,11 @@ function TransactionPage() {
     setCurrentPage(1);
   };
 
+  const clearAll = () => {
+    clearFilters();
+    clearSearch();
+  };
+
   const removeActiveFilter = (filterKey) => {
     switch (filterKey) {
       case "type":
@@ -1169,7 +1174,7 @@ function TransactionPage() {
         <button
           type="button"
           className="clear-filters-button"
-          onClick={clearFilters}
+          onClick={clearAll}
         >
           Clear
         </button>
