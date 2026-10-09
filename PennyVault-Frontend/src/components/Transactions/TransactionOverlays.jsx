@@ -12,6 +12,7 @@ function TransactionOverlays({
   setViewingTransaction,
   deleteTarget,
   setDeleteTarget,
+  isDeletingTransaction,
   accounts,
   getCategoryClass,
   formatTransactionDate,
@@ -206,21 +207,27 @@ function TransactionOverlays({
       {deleteTarget && (
         <div
           className="delete-dialog-overlay"
-          onClick={() => setDeleteTarget(null)}
+          onClick={() => {
+            if (!isDeletingTransaction) {
+              setDeleteTarget(null);
+            }
+          }}
         >
           <div
             className="delete-dialog"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-transaction-title"
+            aria-describedby="delete-transaction-description"
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="delete-dialog-icon">
               <IconAlertTriangle size={24} />
             </div>
 
-            <h2>Delete transaction?</h2>
+            <h2 id="delete-transaction-title">Delete transaction?</h2>
 
-            <p>
+            <p id="delete-transaction-description">
               Are you sure you want to delete{" "}
               <strong>
                 {deleteTarget.description ||
@@ -246,6 +253,7 @@ function TransactionOverlays({
                 type="button"
                 className="delete-cancel-button"
                 onClick={() => setDeleteTarget(null)}
+                disabled={isDeletingTransaction}
               >
                 Cancel
               </button>
@@ -254,8 +262,9 @@ function TransactionOverlays({
                 type="button"
                 className="delete-confirm-button"
                 onClick={confirmDeleteTransaction}
+                disabled={isDeletingTransaction}
               >
-                Delete transaction
+                {isDeletingTransaction ? "Deleting..." : "Delete transaction"}
               </button>
 
             </div>
