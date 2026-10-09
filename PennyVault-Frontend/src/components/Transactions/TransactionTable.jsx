@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  IconSearch,
   IconPlus,
   IconEye,
   IconPencil,
@@ -19,8 +18,6 @@ import {
 function TransactionTable({
   transactionFilter,
   setTransactionFilter,
-  listSearchTerm,
-  setListSearchTerm,
   sortConfig,
   handleSort,
   isTransactionsLoading,
@@ -86,19 +83,6 @@ function TransactionTable({
         </div>
 
         <div className="list-header-right">
-
-          <div className="list-search">
-            <IconSearch size={18} />
-
-            <input
-              type="text"
-              placeholder="Search in transactions..."
-              value={listSearchTerm}
-              onChange={(e) =>
-                setListSearchTerm(e.target.value)
-              }
-            />
-          </div>
 
           <div className="view-toggle">
             <button className="view-button active">
