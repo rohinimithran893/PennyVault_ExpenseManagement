@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getToken } from "../utils/auth";
+import { exportTransactionsCsv, exportTransactionsXlsx } from "../utils/transactionExport";
 import "../Styles/Transactions.css";
 import AdvancedFilters from "./Transactions/AdvancedFilters";
 import TransactionTable from "./Transactions/TransactionTable";
@@ -141,6 +142,8 @@ function TransactionPage() {
   const [formErrors, setFormErrors] = useState({});
   const [isSavingTransaction, setIsSavingTransaction] = useState(false);
   const saveInProgressRef = useRef(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef(null);
 
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
@@ -200,6 +203,31 @@ function TransactionPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!isExportMenuOpen) {
+      return undefined;
+    }
+
+    const closeExportMenu = (event) => {
+      if (event.type === "keydown" && event.key === "Escape") {
+        setIsExportMenuOpen(false);
+      } else if (
+        event.type === "mousedown" &&
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target)
+      ) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeExportMenu);
+    document.addEventListener("keydown", closeExportMenu);
+    return () => {
+      document.removeEventListener("mousedown", closeExportMenu);
+      document.removeEventListener("keydown", closeExportMenu);
+    };
+  }, [isExportMenuOpen]);
 
   useEffect(() => {
     const loadAccounts = async () => {
@@ -314,6 +342,9 @@ function TransactionPage() {
         id: transaction.id,
         date: transaction.transactionDate,
         description: transaction.description,
+        accountId: transaction.accountId ?? transaction.account?.id ?? "",
+        accountName:
+          transaction.accountName ?? transaction.account?.accountName ?? "",
         category: transaction.category,
         categoryClass: getCategoryClass(transaction.category),
         subcategory: transaction.subcategory,
@@ -491,6 +522,9 @@ function TransactionPage() {
           id: transaction.id,
           date: transaction.transactionDate,
           description: transaction.description,
+          accountId: transaction.accountId ?? transaction.account?.id ?? "",
+          accountName:
+            transaction.accountName ?? transaction.account?.accountName ?? "",
           category: transaction.category,
           categoryClass: getCategoryClass(transaction.category),
           subcategory: transaction.subcategory,
@@ -878,6 +912,29 @@ function TransactionPage() {
     return sortConfig.direction === "asc" ? comparison : -comparison;
   });
 
+  const exportTransactions = (format) => {
+    setIsExportMenuOpen(false);
+
+    if (sortedTransactions.length === 0) {
+      showToast("No transactions to export. Adjust your search or filters.", "error");
+      return;
+    }
+
+    const exportDate = new Date().toISOString().slice(0, 10);
+    const filename = `PennyVault_Transactions_${exportDate}.${format}`;
+
+    if (format === "csv") {
+      exportTransactionsCsv(sortedTransactions, accounts, filename);
+    } else {
+      exportTransactionsXlsx(sortedTransactions, accounts, filename);
+    }
+
+    showToast(
+      `Exported ${sortedTransactions.length} transaction${sortedTransactions.length === 1 ? "" : "s"} as ${format.toUpperCase()}.`,
+      "success",
+    );
+  };
+
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -1211,10 +1268,46 @@ function TransactionPage() {
         </button>
 
         <div className="filter-actions">
-          <button className="secondary-button">
-            <IconDownload size={18} />
-            Export
-          </button>
+          <div className="export-menu-container" ref={exportMenuRef}>
+            <button
+              type="button"
+              className="secondary-button"
+              aria-haspopup="menu"
+              aria-expanded={isExportMenuOpen}
+              onClick={() => setIsExportMenuOpen((isOpen) => !isOpen)}
+            >
+              <IconDownload size={18} />
+              Export
+              <IconChevronDown size={15} />
+            </button>
+
+            {isExportMenuOpen && (
+              <div className="export-menu" role="menu" aria-label="Export transactions">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => exportTransactions("csv")}
+                >
+                  <IconDownload size={17} />
+                  <span>
+                    <strong>Export as CSV</strong>
+                    <small>.csv spreadsheet file</small>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => exportTransactions("xlsx")}
+                >
+                  <IconDownload size={17} />
+                  <span>
+                    <strong>Export as Excel</strong>
+                    <small>.xlsx workbook</small>
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
