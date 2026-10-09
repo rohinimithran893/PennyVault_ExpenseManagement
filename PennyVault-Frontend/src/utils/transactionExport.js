@@ -11,8 +11,8 @@ const EXPORT_COLUMNS = [
 const escapeCsvValue = (value) => {
   const rawText = value == null ? "" : String(value);
   // Prevent spreadsheet formula injection from user-entered text fields.
-  const text = /^[=+@\\t\\r-]/.test(rawText) ? \`'\${rawText}\` : rawText;
-  return /[",\\r\\n]/.test(text) ? \`"\${text.replace(/"/g, '""')}"\` : text;
+  const text = /^[=+@\\t\\r-]/.test(rawText) ? "'" + rawText : rawText;
+  return /[",\\r\\n]/.test(text) ? "\"" + text.replace(/\"/g, "\"\"") + "\"" : text;
 };
 
 const escapeXml = (value) =>
