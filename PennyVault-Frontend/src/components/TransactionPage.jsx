@@ -711,6 +711,97 @@ function TransactionPage() {
     }
   };
 
+  // Date-only match. The summary cards use this on its own, so search, type,
+  // category and amount filters narrow the list without changing the cards.
+  const matchesDateFilter = (transaction) => {
+    if (dateFilter === "all") {
+      return true;
+    }
+    const today = new Date();
+    const [year, month, day] = transaction.date.split("-").map(Number);
+    const transactionDate = new Date(year, month - 1, day);
+
+    if (dateFilter === "today") {
+      return (
+        transactionDate.getFullYear() === today.getFullYear() &&
+        transactionDate.getMonth() === today.getMonth() &&
+        transactionDate.getDate() === today.getDate()
+      );
+    }
+    if (dateFilter === "thisWeek") {
+      const startOfWeek = new Date(today);
+      const dayOfWeek = today.getDay();
+
+      startOfWeek.setDate(today.getDate() - dayOfWeek);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      return transactionDate >= startOfWeek && transactionDate <= endOfWeek;
+    }
+    if (dateFilter === "thisMonth") {
+      return (
+        transactionDate.getFullYear() === today.getFullYear() &&
+        transactionDate.getMonth() === today.getMonth()
+      );
+    }
+    if (dateFilter === "lastMonth") {
+      const lastMonthStart = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        1,
+      );
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      lastMonthEnd.setHours(23, 59, 59, 999);
+      return (
+        transactionDate >= lastMonthStart && transactionDate <= lastMonthEnd
+      );
+    }
+    if (dateFilter === "last3Months") {
+      const threeMonthsAgo = new Date(
+        today.getFullYear(),
+        today.getMonth() - 2,
+        1,
+      );
+      const endOfCurrentMonth = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0,
+      );
+      endOfCurrentMonth.setHours(23, 59, 59, 999);
+      return (
+        transactionDate >= threeMonthsAgo &&
+        transactionDate <= endOfCurrentMonth
+      );
+    }
+    if (dateFilter === "thisYear") {
+      return transactionDate.getFullYear() === today.getFullYear();
+    }
+    if (dateFilter === "custom") {
+      const startDate = customStartDate
+        ? new Date(`${customStartDate}T00:00:00`)
+        : null;
+      const endDate = customEndDate
+        ? new Date(`${customEndDate}T23:59:59.999`)
+        : null;
+      if (startDate && endDate) {
+        return transactionDate >= startDate && transactionDate <= endDate;
+      }
+      if (startDate) {
+        return transactionDate >= startDate;
+      }
+      if (endDate) {
+        return transactionDate <= endDate;
+      }
+      return true;
+    }
+    return true;
+  };
+
+  const dateFilteredTransactions = transactions.filter(matchesDateFilter);
+
   const filteredTransactions = transactions.filter((transaction) => {
     const searchTerm = filterSearchTerm.toLowerCase().trim();
 
@@ -727,92 +818,7 @@ function TransactionPage() {
       (!maxAmount ||
         (Number.isFinite(transactionAmount) &&
           transactionAmount <= Number(maxAmount)));
-    const matchesDate = (() => {
-      if (dateFilter === "all") {
-        return true;
-      }
-      const today = new Date();
-      const [year, month, day] = transaction.date.split("-").map(Number);
-      const transactionDate = new Date(year, month - 1, day);
-
-      if (dateFilter === "today") {
-        return (
-          transactionDate.getFullYear() === today.getFullYear() &&
-          transactionDate.getMonth() === today.getMonth() &&
-          transactionDate.getDate() === today.getDate()
-        );
-      }
-      if (dateFilter === "thisWeek") {
-        const startOfWeek = new Date(today);
-        const dayOfWeek = today.getDay();
-
-        startOfWeek.setDate(today.getDate() - dayOfWeek);
-        startOfWeek.setHours(0, 0, 0, 0);
-
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
-
-        return transactionDate >= startOfWeek && transactionDate <= endOfWeek;
-      }
-      if (dateFilter === "thisMonth") {
-        return (
-          transactionDate.getFullYear() === today.getFullYear() &&
-          transactionDate.getMonth() === today.getMonth()
-        );
-      }
-      if (dateFilter === "lastMonth") {
-        const lastMonthStart = new Date(
-          today.getFullYear(),
-          today.getMonth() - 1,
-          1,
-        );
-        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-        lastMonthEnd.setHours(23, 59, 59, 999);
-        return (
-          transactionDate >= lastMonthStart && transactionDate <= lastMonthEnd
-        );
-      }
-      if (dateFilter === "last3Months") {
-        const threeMonthsAgo = new Date(
-          today.getFullYear(),
-          today.getMonth() - 2,
-          1,
-        );
-        const endOfCurrentMonth = new Date(
-          today.getFullYear(),
-          today.getMonth() + 1,
-          0,
-        );
-        endOfCurrentMonth.setHours(23, 59, 59, 999);
-        return (
-          transactionDate >= threeMonthsAgo &&
-          transactionDate <= endOfCurrentMonth
-        );
-      }
-      if (dateFilter === "thisYear") {
-        return transactionDate.getFullYear() === today.getFullYear();
-      }
-      if (dateFilter === "custom") {
-        const startDate = customStartDate
-          ? new Date(`${customStartDate}T00:00:00`)
-          : null;
-        const endDate = customEndDate
-          ? new Date(`${customEndDate}T23:59:59.999`)
-          : null;
-        if (startDate && endDate) {
-          return transactionDate >= startDate && transactionDate <= endDate;
-        }
-        if (startDate) {
-          return transactionDate >= startDate;
-        }
-        if (endDate) {
-          return transactionDate <= endDate;
-        }
-        return true;
-      }
-      return true;
-    })();
+    const matchesDate = matchesDateFilter(transaction);
 
     const matchingAccount = accounts.find(
       (account) => String(account.id) === String(transaction.accountId),
@@ -837,12 +843,12 @@ function TransactionPage() {
     );
   });
 
-  const totalIncome = filteredTransactions.reduce((total, transaction) => {
+  const totalIncome = dateFilteredTransactions.reduce((total, transaction) => {
     return transaction.type?.toLowerCase() === "credit"
       ? total + (Number(transaction.amount) || 0)
       : total;
   }, 0);
-  const totalExpenses = filteredTransactions.reduce((total, transaction) => {
+  const totalExpenses = dateFilteredTransactions.reduce((total, transaction) => {
     return transaction.type?.toLowerCase() === "debit"
       ? total + (Number(transaction.amount) || 0)
       : total;
@@ -1215,7 +1221,7 @@ function TransactionPage() {
         periodLabel={summaryPeriodLabel}
         totalIncome={totalIncome}
         totalExpenses={totalExpenses}
-        filteredTransactions={filteredTransactions}
+        summaryTransactions={dateFilteredTransactions}
         formatTransactionAmount={formatTransactionAmount}
       />
       <TransactionToolbar
