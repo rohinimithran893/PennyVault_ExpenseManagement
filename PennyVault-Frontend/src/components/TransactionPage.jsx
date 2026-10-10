@@ -816,7 +816,10 @@ function TransactionPage() {
       (account) => String(account.id) === String(transaction.accountId),
     );
     const searchableAccount =
-      transaction.accountName || matchingAccount?.accountName || matchingAccount?.name || "";
+      transaction.accountName ||
+      matchingAccount?.accountName ||
+      matchingAccount?.name ||
+      "";
     const matchesSearch =
       !searchTerm ||
       transaction.description?.toLowerCase().includes(searchTerm) ||
@@ -1189,8 +1192,6 @@ function TransactionPage() {
           <h1>Transactions</h1>
           <p>View, add and manage all your transactions</p>
         </div>
-
-
       </div>
 
       <TransactionToolbar
