@@ -8,29 +8,8 @@ import TransactionForm from "./Transactions/TransactionForm";
 import TransactionOverlays from "./Transactions/TransactionOverlays";
 import TransactionToolbar from "./Transactions/TransactionToolbar";
 import {
-  IconCalendar,
-  IconChevronDown,
-  IconSearch,
-  IconDownload,
-  IconPlus,
-  IconPencil,
-  IconEye,
-  IconTrash,
-  IconX,
-  IconAlertTriangle,
   IconCheck,
   IconAlertCircle,
-  IconUsers,
-  IconWallet,
-  IconUser,
-  IconFilter,
-  IconArrowDown,
-  IconArrowUp,
-  IconDotsVertical,
-  IconChevronLeft,
-  IconChevronRight,
-  IconLayoutList,
-  IconChartDonut,
 } from "@tabler/icons-react";
 
 const getCategoryClass = (category) => {
@@ -1278,8 +1257,6 @@ function TransactionPage() {
 
       {/* TRANSACTIONS LIST */}
       <TransactionTable
-        transactionFilter={transactionFilter}
-        setTransactionFilter={setTransactionFilter}
         sortConfig={sortConfig}
         handleSort={handleSort}
         isTransactionsLoading={isTransactionsLoading}
