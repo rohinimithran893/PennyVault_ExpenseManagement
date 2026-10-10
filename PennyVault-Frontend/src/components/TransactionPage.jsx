@@ -110,7 +110,6 @@ function TransactionPage() {
   const [transactions, setTransactions] = useState([]);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(true);
   const [transactionsError, setTransactionsError] = useState(null);
-  const [listSearchTerm, setListSearchTerm] = useState("");
   const [filterSearchTerm, setFilterSearchTerm] = useState("");
   const [transactionFilter, setTransactionFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -730,8 +729,7 @@ function TransactionPage() {
   };
 
   const filteredTransactions = transactions.filter((transaction) => {
-    const filterSearch = filterSearchTerm.toLowerCase().trim();
-    const listSearch = listSearchTerm.toLowerCase().trim();
+    const searchTerm = filterSearchTerm.toLowerCase().trim();
 
     const matchesType =
       transactionFilter === "all" ||
@@ -833,19 +831,11 @@ function TransactionPage() {
       return true;
     })();
 
-    const matchesFilterSearch =
-      !filterSearch ||
-      transaction.description?.toLowerCase().includes(filterSearch) ||
-      transaction.category?.toLowerCase().includes(filterSearch) ||
-      transaction.subcategory?.toLowerCase().includes(filterSearch);
-
-    const matchesListSearch =
-      !listSearch ||
-      transaction.description?.toLowerCase().includes(listSearch) ||
-      transaction.category?.toLowerCase().includes(listSearch) ||
-      transaction.subcategory?.toLowerCase().includes(listSearch);
-
-    const matchesSearch = matchesFilterSearch && matchesListSearch;
+    const matchesSearch =
+      !searchTerm ||
+      transaction.description?.toLowerCase().includes(searchTerm) ||
+      transaction.category?.toLowerCase().includes(searchTerm) ||
+      transaction.subcategory?.toLowerCase().includes(searchTerm);
     return (
       matchesType &&
       matchesCategory &&
@@ -1000,13 +990,11 @@ function TransactionPage() {
 
   const handleSearchChange = (value) => {
     setFilterSearchTerm(value);
-    setListSearchTerm(value);
     setCurrentPage(1);
   };
 
   const clearSearch = () => {
     setFilterSearchTerm("");
-    setListSearchTerm("");
     setCurrentPage(1);
   };
 
@@ -1072,8 +1060,7 @@ function TransactionPage() {
       : []),
   ];
 
-  const hasSearch =
-    Boolean(filterSearchTerm.trim()) || Boolean(listSearchTerm.trim());
+  const hasSearch = Boolean(filterSearchTerm.trim());
 
   const hasActiveFilters = activeFilterChips.length > 0;
 
@@ -1144,7 +1131,6 @@ function TransactionPage() {
     setCurrentPage(1);
   }, [
     filterSearchTerm,
-    listSearchTerm,
     transactionFilter,
     categoryFilter,
     dateFilter,
@@ -1404,8 +1390,6 @@ function TransactionPage() {
       <TransactionTable
         transactionFilter={transactionFilter}
         setTransactionFilter={setTransactionFilter}
-        listSearchTerm={listSearchTerm}
-        setListSearchTerm={handleSearchChange}
         sortConfig={sortConfig}
         handleSort={handleSort}
         isTransactionsLoading={isTransactionsLoading}
