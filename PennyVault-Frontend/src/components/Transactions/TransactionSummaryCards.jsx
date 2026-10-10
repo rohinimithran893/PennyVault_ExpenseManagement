@@ -6,12 +6,25 @@ import {
 } from "@tabler/icons-react";
 
 function TransactionSummaryCards({
-  transactionAmount,
+  netBalance,
+  periodLabel,
   totalIncome,
   totalExpenses,
   filteredTransactions,
   formatTransactionAmount,
 }) {
+  // Round to paise first so float noise (e.g. 0.1 + 0.2) can't flip the sign.
+  const roundedNetBalance = Math.round((Number(netBalance) || 0) * 100) / 100;
+  const netBalanceState =
+    roundedNetBalance > 0
+      ? "positive"
+      : roundedNetBalance < 0
+        ? "negative"
+        : "zero";
+  const netBalanceDisplay = `${
+    roundedNetBalance < 0 ? "-" : ""
+  }${formatTransactionAmount(Math.abs(roundedNetBalance))}`;
+
   const incomeTransactionCount = filteredTransactions.filter(
     (transaction) => transaction.type?.toLowerCase() === "credit",
   ).length;
@@ -22,16 +35,18 @@ function TransactionSummaryCards({
 
   return (
     <div className="transaction-summary-cards" aria-label="Transaction summary">
-      <article className="transaction-summary-card transaction-summary-amount">
+      <article
+        className={`transaction-summary-card transaction-summary-net ${netBalanceState}`}
+      >
         <div className="transaction-summary-icon">
           <IconWallet size={28} stroke={2} />
         </div>
         <div className="transaction-summary-content">
-          <h2>Transaction Amount</h2>
-          <p className="transaction-summary-value">
-            {formatTransactionAmount(transactionAmount)}
-          </p>
-          <span>Total income plus expenses</span>
+          <h2>Net Balance</h2>
+          <p className="transaction-summary-value">{netBalanceDisplay}</p>
+          <span>
+            Income minus expenses{periodLabel ? ` · ${periodLabel}` : ""}
+          </span>
         </div>
       </article>
 
