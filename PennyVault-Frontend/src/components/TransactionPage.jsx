@@ -7,6 +7,7 @@ import TransactionTable from "./Transactions/TransactionTable";
 import TransactionForm from "./Transactions/TransactionForm";
 import TransactionOverlays from "./Transactions/TransactionOverlays";
 import TransactionToolbar from "./Transactions/TransactionToolbar";
+import TransactionHeader from "./Transactions/TransactionHeader";
 import {
   IconCheck,
   IconAlertCircle,
@@ -14,7 +15,6 @@ import {
   IconTrendingUp,
   IconTrendingDown,
   IconWallet,
-  IconPlus,
 } from "@tabler/icons-react";
 
 const getCategoryClass = (category) => {
@@ -1202,24 +1202,13 @@ function TransactionPage() {
       />
 
       {/* PAGE HEADER */}
-      <div className="transactions-header">
-        <div>
-          <h1>Transactions</h1>
-          <p>View, add and manage all your transactions</p>
-        </div>
-        <button
-          type="button"
-          className="primary-button transactions-header-add-button"
-          onClick={() => {
-            clearForm();
-            setViewingTransaction(null);
-            setIsAddTransactionOpen(true);
-          }}
-        >
-          <IconPlus size={19} />
-          Add transaction
-        </button>
-      </div>
+      <TransactionHeader
+        onAddTransaction={() => {
+          clearForm();
+          setViewingTransaction(null);
+          setIsAddTransactionOpen(true);
+        }}
+      />
 
       <div className="transaction-summary-cards" aria-label="Transaction summary">
         <article className="transaction-summary-card transaction-summary-amount">
