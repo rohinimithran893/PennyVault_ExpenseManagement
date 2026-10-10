@@ -1,12 +1,9 @@
 import React from "react";
+import TransactionEmptyState from "./TransactionEmptyState";
 import {
-  IconSearch,
-  IconPlus,
   IconEye,
   IconPencil,
   IconTrash,
-  IconFilter,
-  IconWallet,
   IconAlertCircle,
   IconArrowDown,
   IconArrowUp,
@@ -252,78 +249,14 @@ function TransactionTable({
                   colSpan="9"
                   className="transactions-empty-state"
                 >
-                  <div className="empty-state-content">
-
-                    <div
-                      className={`empty-state-icon ${emptyState.type}`}
-                    >
-                      {emptyState.icon === "wallet" && (
-                        <IconWallet size={28} />
-                      )}
-
-                      {emptyState.icon === "search" && (
-                        <IconSearch size={28} />
-                      )}
-
-                      {emptyState.icon === "filter" && (
-                        <IconFilter size={28} />
-                      )}
-                    </div>
-
-                    <h3>{emptyState.title}</h3>
-
-                    <p>{emptyState.message}</p>
-
-                    <div className="empty-state-actions">
-
-                      {emptyState.type === "no-transactions" && (
-                        <button
-                          type="button"
-                          className="empty-state-primary-button"
-                          onClick={() => {
-                            clearForm();
-                            setEditingTransactionId(null);
-                            setIsAddTransactionOpen(true);
-                          }}
-                        >
-                          <IconPlus size={17} />
-                          Add transaction
-                        </button>
-                      )}
-
-                      {emptyState.type === "search" && (
-                        <button
-                          type="button"
-                          className="empty-state-secondary-button"
-                          onClick={clearSearch}
-                        >
-                          Clear search
-                        </button>
-                      )}
-
-                      {emptyState.type === "filters" && (
-                        <button
-                          type="button"
-                          className="empty-state-secondary-button"
-                          onClick={clearFilters}
-                        >
-                          Clear filters
-                        </button>
-                      )}
-
-                      {emptyState.type === "search-and-filter" && (
-                        <button
-                          type="button"
-                          className="empty-state-secondary-button"
-                          onClick={clearFilters}
-                        >
-                          Clear filters
-                        </button>
-                      )}
-
-                    </div>
-
-                  </div>
+                  <TransactionEmptyState
+                    emptyState={emptyState}
+                    clearForm={clearForm}
+                    setEditingTransactionId={setEditingTransactionId}
+                    setIsAddTransactionOpen={setIsAddTransactionOpen}
+                    clearSearch={clearSearch}
+                    clearFilters={clearFilters}
+                  />
                 </td>
               </tr>
 
