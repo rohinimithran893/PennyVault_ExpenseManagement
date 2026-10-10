@@ -24,6 +24,7 @@ function TransactionToolbar({
   clearFilters,
 }) {
   return (
+    <>
           <div className="transaction-filter-bar">
             <div className="filter-search">
               <IconSearch size={18} />
@@ -142,6 +143,7 @@ function TransactionToolbar({
               </div>
             </div>
           )}
+    </>
   );
 }
 
