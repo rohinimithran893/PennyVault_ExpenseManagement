@@ -1258,11 +1258,6 @@ function TransactionPage() {
         isExportMenuOpen={isExportMenuOpen}
         setIsExportMenuOpen={setIsExportMenuOpen}
         exportTransactions={exportTransactions}
-        onAddTransaction={() => {
-          clearForm();
-          setViewingTransaction(null);
-          setIsAddTransactionOpen(true);
-        }}
         removeActiveFilter={removeActiveFilter}
         clearFilters={clearFilters}
       />
