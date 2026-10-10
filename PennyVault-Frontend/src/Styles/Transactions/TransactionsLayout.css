@@ -127,6 +127,24 @@
   color: #9999aa;
 }
 
+.transaction-summary-net.positive .transaction-summary-icon {
+  background: #e8f8f0;
+  color: #15945e;
+}
+
+.transaction-summary-net.negative .transaction-summary-icon {
+  background: #fff0f0;
+  color: #e04b4b;
+}
+
+.transaction-summary-net.positive .transaction-summary-value {
+  color: #15945e;
+}
+
+.transaction-summary-net.negative .transaction-summary-value {
+  color: #e04b4b;
+}
+
 .transaction-summary-income .transaction-summary-icon {
   background: #e8f8f0;
   color: #15945e;

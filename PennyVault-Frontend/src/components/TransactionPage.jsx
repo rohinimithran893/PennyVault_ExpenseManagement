@@ -847,7 +847,7 @@ function TransactionPage() {
       ? total + (Number(transaction.amount) || 0)
       : total;
   }, 0);
-  const transactionAmount = totalIncome + totalExpenses;
+  const netBalance = totalIncome - totalExpenses;
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     let comparison = 0;
 
@@ -1040,6 +1040,8 @@ function TransactionPage() {
     custom: "Custom date range",
   };
 
+  const summaryPeriodLabel = dateFilterLabels[dateFilter] || "";
+
   const activeFilterChips = [
     ...(transactionFilter !== "all"
       ? [{ key: "type", label: `Type: ${transactionFilter === "debit" ? "Debit" : "Credit"}` }]
@@ -1209,7 +1211,8 @@ function TransactionPage() {
       />
 
       <TransactionSummaryCards
-        transactionAmount={transactionAmount}
+        netBalance={netBalance}
+        periodLabel={summaryPeriodLabel}
         totalIncome={totalIncome}
         totalExpenses={totalExpenses}
         filteredTransactions={filteredTransactions}
