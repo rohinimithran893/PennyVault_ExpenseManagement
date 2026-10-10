@@ -8,13 +8,11 @@ import TransactionForm from "./Transactions/TransactionForm";
 import TransactionOverlays from "./Transactions/TransactionOverlays";
 import TransactionToolbar from "./Transactions/TransactionToolbar";
 import TransactionHeader from "./Transactions/TransactionHeader";
+import TransactionSummaryCards from "./Transactions/TransactionSummaryCards";
 import {
   IconCheck,
   IconAlertCircle,
   IconX,
-  IconTrendingUp,
-  IconTrendingDown,
-  IconWallet,
 } from "@tabler/icons-react";
 
 const getCategoryClass = (category) => {
@@ -1210,32 +1208,13 @@ function TransactionPage() {
         }}
       />
 
-      <div className="transaction-summary-cards" aria-label="Transaction summary">
-        <article className="transaction-summary-card transaction-summary-amount">
-          <div className="transaction-summary-icon"><IconWallet size={28} stroke={2} /></div>
-          <div className="transaction-summary-content">
-            <h2>Transaction Amount</h2>
-            <p className="transaction-summary-value">{formatTransactionAmount(transactionAmount)}</p>
-            <span>Total income plus expenses</span>
-          </div>
-        </article>
-        <article className="transaction-summary-card transaction-summary-income">
-          <div className="transaction-summary-icon"><IconTrendingUp size={28} stroke={2} /></div>
-          <div className="transaction-summary-content">
-            <h2>Total Income</h2>
-            <p className="transaction-summary-value">{formatTransactionAmount(totalIncome)}</p>
-            <span>Across {filteredTransactions.filter((transaction) => transaction.type?.toLowerCase() === "credit").length} transactions</span>
-          </div>
-        </article>
-        <article className="transaction-summary-card transaction-summary-expenses">
-          <div className="transaction-summary-icon"><IconTrendingDown size={28} stroke={2} /></div>
-          <div className="transaction-summary-content">
-            <h2>Total Expenses</h2>
-            <p className="transaction-summary-value">{formatTransactionAmount(totalExpenses)}</p>
-            <span>Across {filteredTransactions.filter((transaction) => transaction.type?.toLowerCase() === "debit").length} transactions</span>
-          </div>
-        </article>
-      </div>
+      <TransactionSummaryCards
+        transactionAmount={transactionAmount}
+        totalIncome={totalIncome}
+        totalExpenses={totalExpenses}
+        filteredTransactions={filteredTransactions}
+        formatTransactionAmount={formatTransactionAmount}
+      />
       <TransactionToolbar
         filterSearchTerm={filterSearchTerm}
         handleSearchChange={handleSearchChange}
