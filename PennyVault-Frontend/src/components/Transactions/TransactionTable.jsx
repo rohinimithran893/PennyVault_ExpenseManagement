@@ -17,8 +17,6 @@ import {
 } from "@tabler/icons-react";
 
 function TransactionTable({
-  transactionFilter,
-  setTransactionFilter,
   sortConfig,
   handleSort,
   isTransactionsLoading,
@@ -53,34 +51,7 @@ function TransactionTable({
         <div>
           <h2>Transactions list</h2>
 
-          <div className="transaction-tabs">
-            <button
-              className={`transaction-tab ${
-                transactionFilter === "all" ? "active" : ""
-              }`}
-              onClick={() => setTransactionFilter("all")}
-            >
-              All
-            </button>
 
-            <button
-              className={`transaction-tab ${
-                transactionFilter === "debit" ? "active" : ""
-              }`}
-              onClick={() => setTransactionFilter("debit")}
-            >
-              Debit
-            </button>
-
-            <button
-              className={`transaction-tab ${
-                transactionFilter === "credit" ? "active" : ""
-              }`}
-              onClick={() => setTransactionFilter("credit")}
-            >
-              Credit
-            </button>
-          </div>
         </div>
 
         <div className="list-header-right">
