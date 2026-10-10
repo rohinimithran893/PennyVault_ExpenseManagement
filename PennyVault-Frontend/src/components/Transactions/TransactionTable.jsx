@@ -30,6 +30,12 @@ function TransactionTable({
   handleEditTransaction,
   handleDeleteTransaction,
   filteredTransactions,
+  startIndex,
+  itemsPerPage,
+  totalPages,
+  paginationItems,
+  currentPage,
+  setCurrentPage,
   loadTransactions,
 }) {
   return (
