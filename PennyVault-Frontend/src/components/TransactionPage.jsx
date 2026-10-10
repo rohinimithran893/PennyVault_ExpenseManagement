@@ -14,6 +14,7 @@ import {
   IconTrendingUp,
   IconTrendingDown,
   IconWallet,
+  IconPlus,
 } from "@tabler/icons-react";
 
 const getCategoryClass = (category) => {
@@ -1206,6 +1207,18 @@ function TransactionPage() {
           <h1>Transactions</h1>
           <p>View, add and manage all your transactions</p>
         </div>
+        <button
+          type="button"
+          className="primary-button transactions-header-add-button"
+          onClick={() => {
+            clearForm();
+            setViewingTransaction(null);
+            setIsAddTransactionOpen(true);
+          }}
+        >
+          <IconPlus size={19} />
+          Add transaction
+        </button>
       </div>
 
       <div className="transaction-summary-cards" aria-label="Transaction summary">
