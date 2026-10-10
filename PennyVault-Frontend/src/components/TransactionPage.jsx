@@ -10,6 +10,7 @@ import TransactionToolbar from "./Transactions/TransactionToolbar";
 import {
   IconCheck,
   IconAlertCircle,
+  IconX,
 } from "@tabler/icons-react";
 
 const getCategoryClass = (category) => {
@@ -821,7 +822,7 @@ function TransactionPage() {
       transaction.description?.toLowerCase().includes(searchTerm) ||
       transaction.category?.toLowerCase().includes(searchTerm) ||
       transaction.subcategory?.toLowerCase().includes(searchTerm) ||
-      searchableAccount.toLowerCase().includes(searchTerm);
+      String(searchableAccount).toLowerCase().includes(searchTerm);
     return (
       matchesType &&
       matchesCategory &&
