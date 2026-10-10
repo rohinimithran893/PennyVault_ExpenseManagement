@@ -1,5 +1,6 @@
 import React from "react";
 import TransactionEmptyState from "./TransactionEmptyState";
+import TransactionPagination from "./TransactionPagination";
 import {
   IconEye,
   IconPencil,
@@ -7,8 +8,6 @@ import {
   IconAlertCircle,
   IconArrowDown,
   IconArrowUp,
-  IconChevronLeft,
-  IconChevronRight,
   IconLayoutList,
   IconChartDonut,
 } from "@tabler/icons-react";
@@ -31,12 +30,6 @@ function TransactionTable({
   handleEditTransaction,
   handleDeleteTransaction,
   filteredTransactions,
-  startIndex,
-  itemsPerPage,
-  totalPages,
-  paginationItems,
-  currentPage,
-  setCurrentPage,
   loadTransactions,
 }) {
   return (
@@ -390,94 +383,15 @@ function TransactionTable({
       </div>
 
       {/* PAGINATION SUMMARY AND CONTROLS */}
-      {filteredTransactions.length > 0 && (
-        <div className="transactions-pagination">
-
-          <span className="pagination-summary">
-            Showing{" "}
-            {filteredTransactions.length === 0
-              ? 0
-              : startIndex + 1}{" "}
-            to{" "}
-            {Math.min(
-              startIndex + itemsPerPage,
-              filteredTransactions.length
-            )}{" "}
-            of {filteredTransactions.length} transactions
-          </span>
-
-          {totalPages > 1 && (
-            <div className="pagination-buttons">
-
-            <button
-              type="button"
-              className="pagination-nav-button"
-              onClick={() =>
-                setCurrentPage((page) =>
-                  Math.max(page - 1, 1)
-                )
-              }
-              disabled={currentPage === 1}
-              aria-label="Previous page"
-            >
-              <IconChevronLeft size={18} />
-            </button>
-
-            {paginationItems.map((item, index) => {
-
-              if (typeof item === "string") {
-                return (
-                  <span
-                    key={`${item}-${index}`}
-                    className="pagination-ellipsis"
-                    aria-hidden="true"
-                  >
-                    ...
-                  </span>
-                );
-              }
-
-              return (
-                <button
-                  key={item}
-                  type="button"
-                  className={
-                    currentPage === item
-                      ? "current-page"
-                      : ""
-                  }
-                  onClick={() => setCurrentPage(item)}
-                  aria-label={`Go to page ${item}`}
-                  aria-current={
-                    currentPage === item
-                      ? "page"
-                      : undefined
-                  }
-                >
-                  {item}
-                </button>
-              );
-            })}
-
-            <button
-              type="button"
-              className="pagination-nav-button"
-              onClick={() =>
-                setCurrentPage((page) =>
-                  Math.min(page + 1, totalPages)
-                )
-              }
-              disabled={currentPage === totalPages}
-              aria-label="Next page"
-            >
-              <IconChevronRight size={18} />
-            </button>
-
-            </div>
-          )}
-
-        </div>
-      )}
+      <TransactionPagination
+        filteredTransactionsCount={filteredTransactions.length}
+        startIndex={startIndex}
+        itemsPerPage={itemsPerPage}
+        totalPages={totalPages}
+        paginationItems={paginationItems}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+      />
 
     </div>
   );
