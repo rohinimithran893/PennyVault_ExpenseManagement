@@ -64,7 +64,7 @@ function AdvancedFilters({
                 type="button"
                 className={
                   draftTransactionFilter === "all"
-                    ? "active"
+                    ? "selected"
                     : ""
                 }
                 onClick={() =>
@@ -78,7 +78,7 @@ function AdvancedFilters({
                 type="button"
                 className={
                   draftTransactionFilter === "debit"
-                    ? "active"
+                    ? "selected"
                     : ""
                 }
                 onClick={() =>
@@ -92,7 +92,7 @@ function AdvancedFilters({
                 type="button"
                 className={
                   draftTransactionFilter === "credit"
-                    ? "active"
+                    ? "selected"
                     : ""
                 }
                 onClick={() =>
