@@ -4,6 +4,8 @@ import { exportTransactionsCsv, exportTransactionsXlsx } from "../utils/transact
 import "../Styles/Transactions.css";
 import AdvancedFilters from "./Transactions/AdvancedFilters";
 import TransactionTable from "./Transactions/TransactionTable";
+import TransactionEmptyState from "./Transactions/TransactionEmptyState";
+import TransactionPagination from "./Transactions/TransactionPagination";
 import TransactionForm from "./Transactions/TransactionForm";
 import TransactionOverlays from "./Transactions/TransactionOverlays";
 import TransactionToolbar from "./Transactions/TransactionToolbar";
@@ -843,16 +845,35 @@ function TransactionPage() {
     );
   });
 
-  const totalIncome = dateFilteredTransactions.reduce((total, transaction) => {
-    return transaction.type?.toLowerCase() === "credit"
-      ? total + (Number(transaction.amount) || 0)
-      : total;
-  }, 0);
-  const totalExpenses = dateFilteredTransactions.reduce((total, transaction) => {
-    return transaction.type?.toLowerCase() === "debit"
-      ? total + (Number(transaction.amount) || 0)
-      : total;
-  }, 0);
+  // One pass over the date-filtered list gives every number the summary
+  // cards show: money totals and how many transactions make them up.
+  const {
+    totalIncome,
+    totalExpenses,
+    incomeTransactionCount,
+    expenseTransactionCount,
+  } = dateFilteredTransactions.reduce(
+    (summary, transaction) => {
+      const type = transaction.type?.toLowerCase();
+      const amount = Number(transaction.amount) || 0;
+
+      if (type === "credit") {
+        summary.totalIncome += amount;
+        summary.incomeTransactionCount += 1;
+      } else if (type === "debit") {
+        summary.totalExpenses += amount;
+        summary.expenseTransactionCount += 1;
+      }
+
+      return summary;
+    },
+    {
+      totalIncome: 0,
+      totalExpenses: 0,
+      incomeTransactionCount: 0,
+      expenseTransactionCount: 0,
+    },
+  );
   const netBalance = totalIncome - totalExpenses;
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     let comparison = 0;
@@ -1221,7 +1242,8 @@ function TransactionPage() {
         periodLabel={summaryPeriodLabel}
         totalIncome={totalIncome}
         totalExpenses={totalExpenses}
-        summaryTransactions={dateFilteredTransactions}
+        incomeTransactionCount={incomeTransactionCount}
+        expenseTransactionCount={expenseTransactionCount}
         formatTransactionAmount={formatTransactionAmount}
       />
       <TransactionToolbar
@@ -1289,25 +1311,33 @@ function TransactionPage() {
         isTransactionsLoading={isTransactionsLoading}
         transactionsError={transactionsError}
         paginatedTransactions={paginatedTransactions}
-        emptyState={emptyState}
-        clearForm={clearForm}
-        setEditingTransactionId={setEditingTransactionId}
-        setIsAddTransactionOpen={setIsAddTransactionOpen}
-        clearSearch={clearSearch}
-        clearFilters={clearFilters}
         formatTransactionDate={formatTransactionDate}
         formatTransactionAmount={formatTransactionAmount}
         handleViewTransaction={handleViewTransaction}
         handleEditTransaction={handleEditTransaction}
         handleDeleteTransaction={handleDeleteTransaction}
-        filteredTransactions={filteredTransactions}
-        startIndex={startIndex}
-        itemsPerPage={itemsPerPage}
-        totalPages={totalPages}
-        paginationItems={paginationItems}
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
         loadTransactions={loadTransactions}
+        emptyStateContent={
+          <TransactionEmptyState
+            emptyState={emptyState}
+            clearForm={clearForm}
+            setEditingTransactionId={setEditingTransactionId}
+            setIsAddTransactionOpen={setIsAddTransactionOpen}
+            clearSearch={clearSearch}
+            clearFilters={clearFilters}
+          />
+        }
+        paginationFooter={
+          <TransactionPagination
+            filteredTransactionsCount={filteredTransactions.length}
+            startIndex={startIndex}
+            itemsPerPage={itemsPerPage}
+            totalPages={totalPages}
+            paginationItems={paginationItems}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
+        }
       />
     </div>
   );
