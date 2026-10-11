@@ -4,7 +4,6 @@ import {
   IconFilter,
   IconDownload,
   IconChevronDown,
-  IconPlus,
   IconX,
 } from "@tabler/icons-react";
 
@@ -19,7 +18,6 @@ function TransactionToolbar({
   isExportMenuOpen,
   setIsExportMenuOpen,
   exportTransactions,
-  onAddTransaction,
   removeActiveFilter,
   clearFilters,
 }) {
@@ -105,14 +103,6 @@ function TransactionToolbar({
             )}
           </div>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={onAddTransaction}
-          >
-            <IconPlus size={19} />
-            Add transaction
-          </button>
         </div>
       </div>
 
