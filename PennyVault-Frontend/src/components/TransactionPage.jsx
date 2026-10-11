@@ -42,6 +42,27 @@ const getCategoryClass = (category) => {
   return "miscellaneous";
 };
 
+const mapApiTransactionToViewModel = (transaction) => ({
+  id: transaction.id,
+  date: transaction.transactionDate,
+  description: transaction.description,
+  accountId: transaction.accountId ?? transaction.account?.id ?? "",
+  accountName:
+    transaction.accountName ??
+    transaction.account?.accountName ??
+    transaction.account?.name ??
+    "",
+  category: transaction.category,
+  categoryClass: getCategoryClass(transaction.category),
+  subcategory: transaction.subcategory,
+  paidBy: "R",
+  amount: Number(transaction.amount),
+  type:
+    transaction.transactionType?.toLowerCase() === "income"
+      ? "Credit"
+      : "Debit",
+});
+
 const formatTransactionAmount = (amount) => {
   const numericAmount = Number(amount);
 
@@ -322,23 +343,9 @@ function TransactionPage() {
       }
       const data = await response.json();
 
-      const formattedTransactions = data.map((transaction) => ({
-        id: transaction.id,
-        date: transaction.transactionDate,
-        description: transaction.description,
-        accountId: transaction.accountId ?? transaction.account?.id ?? "",
-        accountName:
-          transaction.accountName ?? transaction.account?.accountName ?? transaction.account?.name ?? "",
-        category: transaction.category,
-        categoryClass: getCategoryClass(transaction.category),
-        subcategory: transaction.subcategory,
-        paidBy: "R",
-        amount: Number(transaction.amount),
-        type:
-          transaction.transactionType?.toLowerCase() === "income"
-            ? "Credit"
-            : "Debit",
-      }));
+      const formattedTransactions = data.map(
+        mapApiTransactionToViewModel
+      );
 
       setTransactions(formattedTransactions);
     } catch (error) {
@@ -502,23 +509,9 @@ function TransactionPage() {
       if (transactionsResponse.ok) {
         const transactionsData = await transactionsResponse.json();
 
-        const formattedTransactions = transactionsData.map((transaction) => ({
-          id: transaction.id,
-          date: transaction.transactionDate,
-          description: transaction.description,
-          accountId: transaction.accountId ?? transaction.account?.id ?? "",
-          accountName:
-            transaction.accountName ?? transaction.account?.accountName ?? transaction.account?.name ?? "",
-          category: transaction.category,
-          categoryClass: getCategoryClass(transaction.category),
-          subcategory: transaction.subcategory,
-          paidBy: "R",
-          amount: Number(transaction.amount),
-          type:
-            transaction.transactionType?.toLowerCase() === "income"
-              ? "Credit"
-              : "Debit",
-        }));
+        const formattedTransactions = transactionsData.map(
+          mapApiTransactionToViewModel
+        );
 
         setTransactions(formattedTransactions);
       }
