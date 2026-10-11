@@ -10,7 +10,8 @@ function TransactionSummaryCards({
   periodLabel,
   totalIncome,
   totalExpenses,
-  summaryTransactions,
+  incomeTransactionCount,
+  expenseTransactionCount,
   formatTransactionAmount,
 }) {
   // Round to paise first so float noise (e.g. 0.1 + 0.2) can't flip the sign.
@@ -24,14 +25,6 @@ function TransactionSummaryCards({
   const netBalanceDisplay = `${
     roundedNetBalance < 0 ? "-" : ""
   }${formatTransactionAmount(Math.abs(roundedNetBalance))}`;
-
-  const incomeTransactionCount = summaryTransactions.filter(
-    (transaction) => transaction.type?.toLowerCase() === "credit",
-  ).length;
-
-  const expenseTransactionCount = summaryTransactions.filter(
-    (transaction) => transaction.type?.toLowerCase() === "debit",
-  ).length;
 
   return (
     <div className="transaction-summary-cards" aria-label="Transaction summary">
