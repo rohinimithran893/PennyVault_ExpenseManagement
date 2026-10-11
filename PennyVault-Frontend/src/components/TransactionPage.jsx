@@ -4,6 +4,8 @@ import { exportTransactionsCsv, exportTransactionsXlsx } from "../utils/transact
 import "../Styles/Transactions.css";
 import AdvancedFilters from "./Transactions/AdvancedFilters";
 import TransactionTable from "./Transactions/TransactionTable";
+import TransactionEmptyState from "./Transactions/TransactionEmptyState";
+import TransactionPagination from "./Transactions/TransactionPagination";
 import TransactionForm from "./Transactions/TransactionForm";
 import TransactionOverlays from "./Transactions/TransactionOverlays";
 import TransactionToolbar from "./Transactions/TransactionToolbar";
@@ -1289,25 +1291,33 @@ function TransactionPage() {
         isTransactionsLoading={isTransactionsLoading}
         transactionsError={transactionsError}
         paginatedTransactions={paginatedTransactions}
-        emptyState={emptyState}
-        clearForm={clearForm}
-        setEditingTransactionId={setEditingTransactionId}
-        setIsAddTransactionOpen={setIsAddTransactionOpen}
-        clearSearch={clearSearch}
-        clearFilters={clearFilters}
         formatTransactionDate={formatTransactionDate}
         formatTransactionAmount={formatTransactionAmount}
         handleViewTransaction={handleViewTransaction}
         handleEditTransaction={handleEditTransaction}
         handleDeleteTransaction={handleDeleteTransaction}
-        filteredTransactions={filteredTransactions}
-        startIndex={startIndex}
-        itemsPerPage={itemsPerPage}
-        totalPages={totalPages}
-        paginationItems={paginationItems}
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
         loadTransactions={loadTransactions}
+        emptyStateContent={
+          <TransactionEmptyState
+            emptyState={emptyState}
+            clearForm={clearForm}
+            setEditingTransactionId={setEditingTransactionId}
+            setIsAddTransactionOpen={setIsAddTransactionOpen}
+            clearSearch={clearSearch}
+            clearFilters={clearFilters}
+          />
+        }
+        paginationFooter={
+          <TransactionPagination
+            filteredTransactionsCount={filteredTransactions.length}
+            startIndex={startIndex}
+            itemsPerPage={itemsPerPage}
+            totalPages={totalPages}
+            paginationItems={paginationItems}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
+        }
       />
     </div>
   );

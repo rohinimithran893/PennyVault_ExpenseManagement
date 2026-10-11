@@ -1,6 +1,4 @@
 import React from "react";
-import TransactionEmptyState from "./TransactionEmptyState";
-import TransactionPagination from "./TransactionPagination";
 import {
   IconEye,
   IconPencil,
@@ -18,25 +16,16 @@ function TransactionTable({
   isTransactionsLoading,
   transactionsError,
   paginatedTransactions,
-  emptyState,
-  clearForm,
-  setEditingTransactionId,
-  setIsAddTransactionOpen,
-  clearSearch,
-  clearFilters,
   formatTransactionDate,
   formatTransactionAmount,
   handleViewTransaction,
   handleEditTransaction,
   handleDeleteTransaction,
-  filteredTransactions,
-  startIndex,
-  itemsPerPage,
-  totalPages,
-  paginationItems,
-  currentPage,
-  setCurrentPage,
   loadTransactions,
+  // Ready-made parts built by the page, so the table doesn't have to
+  // carry props it never uses just to forward them.
+  emptyStateContent,
+  paginationFooter,
 }) {
   return (
     <div className="transactions-list-card">
@@ -248,14 +237,7 @@ function TransactionTable({
                   colSpan="9"
                   className="transactions-empty-state"
                 >
-                  <TransactionEmptyState
-                    emptyState={emptyState}
-                    clearForm={clearForm}
-                    setEditingTransactionId={setEditingTransactionId}
-                    setIsAddTransactionOpen={setIsAddTransactionOpen}
-                    clearSearch={clearSearch}
-                    clearFilters={clearFilters}
-                  />
+                  {emptyStateContent}
                 </td>
               </tr>
 
@@ -389,15 +371,7 @@ function TransactionTable({
       </div>
 
       {/* PAGINATION SUMMARY AND CONTROLS */}
-      <TransactionPagination
-        filteredTransactionsCount={filteredTransactions.length}
-        startIndex={startIndex}
-        itemsPerPage={itemsPerPage}
-        totalPages={totalPages}
-        paginationItems={paginationItems}
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-      />
+      {paginationFooter}
 
     </div>
   );
