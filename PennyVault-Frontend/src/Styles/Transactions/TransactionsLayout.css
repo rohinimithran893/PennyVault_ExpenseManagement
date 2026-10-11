@@ -16,8 +16,8 @@
 .transactions-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 26px;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
 .transactions-header h1 {
@@ -31,6 +31,10 @@
   margin: 5px 0 0;
   font-size: 14px;
   color: #9290a4;
+}
+
+.transactions-header-add-button {
+  flex-shrink: 0;
 }
 
 .transactions-header-actions {
@@ -80,19 +84,11 @@
   justify-content: center;
   cursor: pointer;
 }
+
 /* =========================
    TRANSACTION SUMMARY CARDS
    Matches Dashboard summary-card styling
 ========================= */
-
-.transactions-header {
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.transactions-header-add-button {
-  flex-shrink: 0;
-}
 
 .transaction-summary-cards {
   display: grid;
