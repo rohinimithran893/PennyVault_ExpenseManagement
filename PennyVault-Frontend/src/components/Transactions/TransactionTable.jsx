@@ -64,10 +64,6 @@ function TransactionTable({
 
           <thead>
             <tr>
-              <th>
-                <input type="checkbox" />
-              </th>
-
               <th aria-sort={sortConfig.key === "date" ? (sortConfig.direction === "asc" ? "ascending" : "descending") : "none"}>
                 <button
                   type="button"
@@ -245,10 +241,6 @@ function TransactionTable({
             ) : (
               paginatedTransactions.map((transaction, index) => (
                 <tr key={transaction.id}>
-
-                  <td>
-                    <input type="checkbox" />
-                  </td>
 
                   <td className="date-cell">
                     {formatTransactionDate(transaction.date)}
