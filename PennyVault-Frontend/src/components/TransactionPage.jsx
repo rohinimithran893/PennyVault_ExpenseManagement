@@ -612,35 +612,6 @@ function TransactionPage() {
       // Open the Add/Edit transaction panel
       setIsAddTransactionOpen(true);
 
-      // Load subcategories for selected category
-      const subcategoryResponse = await fetch(
-        `http://localhost:8080/api/subcategories/category/${transaction.categoryId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!subcategoryResponse.ok) {
-        throw new Error("Failed to load subcategories");
-      }
-
-      const subcategoryData = await subcategoryResponse.json();
-
-      setSubcategories(subcategoryData);
-
-      // Find selected subcategory
-      const selectedSubcategory = subcategoryData.find(
-        (subcategory) => subcategory.name === transaction.subcategory,
-      );
-
-      if (selectedSubcategory) {
-        setSubcategoryId(String(selectedSubcategory.id));
-      } else {
-        setSubcategoryId("");
-      }
     } catch (error) {
       console.error("Error loading transaction for edit:", error);
 
