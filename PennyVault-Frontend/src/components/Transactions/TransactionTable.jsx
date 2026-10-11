@@ -6,8 +6,6 @@ import {
   IconAlertCircle,
   IconArrowDown,
   IconArrowUp,
-  IconLayoutList,
-  IconChartDonut,
 } from "@tabler/icons-react";
 
 function TransactionTable({
@@ -39,21 +37,6 @@ function TransactionTable({
 
         </div>
 
-        <div className="list-header-right">
-
-          <div className="view-toggle">
-            <button className="view-button active">
-              <IconLayoutList size={18} />
-              List view
-            </button>
-
-            <button className="view-button">
-              <IconChartDonut size={18} />
-              By category
-            </button>
-          </div>
-
-        </div>
 
       </div>
 
