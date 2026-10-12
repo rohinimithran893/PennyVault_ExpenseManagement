@@ -13,7 +13,11 @@ import {
 } from "@tabler/icons-react";
 import { getUser } from "../utils/auth";
 import { apiRequest } from "../services/apiClient";
-import { readBudgetPlan } from "../utils/budgetConfig";
+import {
+  getCategoryBudgetLimit,
+  getSubcategoryBudgetLimit,
+  readBudgetPlan,
+} from "../utils/budgetConfig";
 import "../Styles/HomeEssentials.css";
 
 const CATEGORIES = [
@@ -75,40 +79,86 @@ const formatCurrency = (amount) => {
 const normalizeName = (value) => String(value ?? "").trim().toLowerCase();
 
 const getBudgetDetails = (item, budgetPlan, transactions, today) => {
-  const subcategoryName = item?.financeSubcategoryName;
-  if (!subcategoryName) return null;
+  if (!item?.financeCategoryId || !item?.financeSubcategoryId) return null;
 
-  const budgetEntries = (budgetPlan?.categories || []).flatMap((category) =>
-    (category.subcategories || []).map((subcategory) => ({
-      ...subcategory,
-      parentCategoryName: category.name,
-      parentCategoryBudget: Number(category.allocated) || 0,
-    }))
+  const categoryLimit = getCategoryBudgetLimit(
+    budgetPlan,
+    item.financeCategoryId,
+    item.financeCategoryName,
   );
-  const budget = budgetEntries.find(
-    (entry) => normalizeName(entry.name) === normalizeName(subcategoryName)
+  const subcategoryLimit = getSubcategoryBudgetLimit(
+    budgetPlan,
+    item.financeSubcategoryId,
+    item.financeSubcategoryName,
   );
-  if (!budget) return { label: "No budget set" };
-
   const currentMonth = today.slice(0, 7);
-  const spent = (transactions || [])
-    .filter((transaction) => {
-      const date = String(transaction.transactionDate ?? transaction.date ?? "");
-      const type = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
-      return date.slice(0, 7) === currentMonth &&
-        (type === "EXPENSE" || type === "DEBIT") &&
-        normalizeName(transaction.subcategory) === normalizeName(subcategoryName);
-    })
-    .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
-  const limit = Number(budget.budget) || 0;
-  const remaining = limit - spent;
+  const currentMonthExpenses = (transactions || []).filter((transaction) => {
+    const date = String(transaction.transactionDate ?? transaction.date ?? "");
+    const type = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
+    return date.slice(0, 7) === currentMonth &&
+      (type === "EXPENSE" || type === "DEBIT");
+  });
+
+  const categoryTransactions = currentMonthExpenses.filter((transaction) =>
+    transaction.categoryId != null
+      ? String(transaction.categoryId) === String(item.financeCategoryId)
+      : normalizeName(transaction.category) === normalizeName(item.financeCategoryName)
+  );
+  const subcategoryTransactions = categoryTransactions.filter((transaction) =>
+    transaction.subcategoryId != null
+      ? String(transaction.subcategoryId) === String(item.financeSubcategoryId)
+      : normalizeName(transaction.subcategory) === normalizeName(item.financeSubcategoryName)
+  );
+  const categorySpent = categoryTransactions.reduce(
+    (sum, transaction) => sum + (Number(transaction.amount) || 0),
+    0,
+  );
+  const subcategorySpent = subcategoryTransactions.reduce(
+    (sum, transaction) => sum + (Number(transaction.amount) || 0),
+    0,
+  );
+  const categoryRemaining = categoryLimit - categorySpent;
+  const subcategoryRemaining = subcategoryLimit - subcategorySpent;
+
+  if (subcategoryLimit > 0) {
+    return {
+      label: subcategoryRemaining < 0
+        ? "Over subcategory budget"
+        : `${formatCurrency(subcategoryRemaining)} left`,
+      remaining: subcategoryRemaining,
+      categoryLimit,
+      categorySpent,
+      categoryRemaining,
+      subcategoryLimit,
+      subcategorySpent,
+      subcategoryRemaining,
+    };
+  }
+
+  if (categoryLimit > 0) {
+    return {
+      label: categoryRemaining < 0
+        ? "Over category budget"
+        : `${formatCurrency(categoryRemaining)} left`,
+      remaining: categoryRemaining,
+      categoryLimit,
+      categorySpent,
+      categoryRemaining,
+      subcategoryLimit,
+      subcategorySpent,
+      subcategoryRemaining,
+    };
+  }
+
   return {
-    label: remaining < 0 ? "Over budget" : `${formatCurrency(remaining)} left`,
-    limit,
-    spent,
-    remaining,
-    parentCategoryName: budget.parentCategoryName,
-    parentCategoryBudget: budget.parentCategoryBudget,
+    label: "No budget set",
+    remaining: 0,
+    categoryLimit,
+    categorySpent,
+    categoryRemaining,
+    subcategoryLimit,
+    subcategorySpent,
+    subcategoryRemaining,
   };
 };
 
@@ -638,43 +688,60 @@ function HomeEssentials() {
             </label>
 
             {(() => {
+              const chosenCategory = financeCategories.find(
+                (entry) => String(entry.id) === String(formData.financeCategoryId)
+              );
               const chosenSubcategory = subcategories.find(
                 (entry) => String(entry.id) === String(formData.financeSubcategoryId)
               );
-              const budgetEntries = (budgetPlan.categories || []).flatMap((category) =>
-                (category.subcategories || []).map((subcategory) => ({
-                  ...subcategory,
-                  parentCategoryName: category.name,
-                }))
+              if (!chosenCategory || !chosenSubcategory) return null;
+
+              const categoryLimit = getCategoryBudgetLimit(
+                budgetPlan,
+                chosenCategory.id,
+                chosenCategory.name,
               );
-              const matchedBudget = chosenSubcategory
-                ? budgetEntries.find((entry) =>
-                    normalizeName(entry.name) === normalizeName(chosenSubcategory.name)
-                  )
-                : null;
+              const subcategoryLimit = getSubcategoryBudgetLimit(
+                budgetPlan,
+                chosenSubcategory.id,
+                chosenSubcategory.name,
+              );
               const currentMonth = getToday().slice(0, 7);
-              const spent = chosenSubcategory
-                ? transactions.filter((transaction) => {
-                    const date = String(transaction.transactionDate ?? transaction.date ?? "");
-                    const type = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
-                    return date.slice(0, 7) === currentMonth &&
-                      (type === "EXPENSE" || type === "DEBIT") &&
-                      normalizeName(transaction.subcategory) === normalizeName(chosenSubcategory.name);
-                  }).reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0)
-                : 0;
-              return chosenSubcategory && matchedBudget ? (
+              const currentMonthExpenses = transactions.filter((transaction) => {
+                const date = String(transaction.transactionDate ?? transaction.date ?? "");
+                const type = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
+                return date.slice(0, 7) === currentMonth &&
+                  (type === "EXPENSE" || type === "DEBIT");
+              });
+              const categorySpent = currentMonthExpenses
+                .filter((transaction) => transaction.categoryId != null
+                  ? String(transaction.categoryId) === String(chosenCategory.id)
+                  : normalizeName(transaction.category) === normalizeName(chosenCategory.name))
+                .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+              const subcategorySpent = currentMonthExpenses
+                .filter((transaction) => {
+                  const categoryMatches = transaction.categoryId != null
+                    ? String(transaction.categoryId) === String(chosenCategory.id)
+                    : normalizeName(transaction.category) === normalizeName(chosenCategory.name);
+                  const subcategoryMatches = transaction.subcategoryId != null
+                    ? String(transaction.subcategoryId) === String(chosenSubcategory.id)
+                    : normalizeName(transaction.subcategory) === normalizeName(chosenSubcategory.name);
+                  return categoryMatches && subcategoryMatches;
+                })
+                .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+
+              return (
                 <div className="home-essentials-budget-preview">
-                  <strong>{matchedBudget.parentCategoryName} · {chosenSubcategory.name}</strong>
-                  <span>Category limit {formatCurrency(matchedBudget.parentCategoryBudget)} / month</span>
-                  <span>Subcategory limit {formatCurrency(matchedBudget.budget)} / month</span>
-                  <span>Spent {formatCurrency(spent)} · Subcategory remaining {formatCurrency(Number(matchedBudget.budget) - spent)}</span>
+                  <strong>{chosenCategory.name} · {chosenSubcategory.name}</strong>
+                  <span>Category limit: {categoryLimit > 0 ? formatCurrency(categoryLimit) : "Not set"}</span>
+                  <span>Category spent: {formatCurrency(categorySpent)} · Remaining: {categoryLimit > 0 ? formatCurrency(categoryLimit - categorySpent) : "—"}</span>
+                  <span>Subcategory limit: {subcategoryLimit > 0 ? formatCurrency(subcategoryLimit) : "Not set"}</span>
+                  <span>Subcategory spent: {formatCurrency(subcategorySpent)} · Remaining: {subcategoryLimit > 0 ? formatCurrency(subcategoryLimit - subcategorySpent) : "—"}</span>
+                  {categoryLimit <= 0 && subcategoryLimit <= 0 && (
+                    <span>Set a limit on the Budgets page. This purchase will still use the selected transaction category.</span>
+                  )}
                 </div>
-              ) : chosenSubcategory ? (
-                <div className="home-essentials-budget-preview">
-                  <strong>{chosenSubcategory.name}</strong>
-                  <span>No matching subcategory budget is configured on the Budgets page yet. The transaction will still be recorded with its selected category.</span>
-                </div>
-              ) : null;
+              );
             })()}
           </div>
 
