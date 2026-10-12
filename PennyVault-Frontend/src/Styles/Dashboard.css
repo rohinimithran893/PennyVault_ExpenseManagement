@@ -524,3 +524,120 @@
   }
 
 }
+
+/* =========================================
+   LIVE DASHBOARD STATES AND RECENT ACTIVITY
+========================================= */
+
+.dashboard-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border: 1px solid #e7e7ef;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #666677;
+  font-size: 14px;
+}
+
+.dashboard-error {
+  border-color: #f2caca;
+  color: #9f3030;
+}
+
+.dashboard-status button {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: #7955ed;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-empty {
+  margin: 22px 0 0;
+  color: #9292a5;
+  font-size: 14px;
+}
+
+.dashboard-budget-note {
+  padding: 0 4px 4px;
+}
+
+.dashboard-budget-note p {
+  margin: 0;
+  color: #9292a5;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.recent-transactions-card {
+  margin-top: 20px;
+  padding: 26px;
+}
+
+.recent-transactions-list {
+  margin-top: 12px;
+}
+
+.recent-transaction-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 60px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eeeeF3;
+}
+
+.recent-transaction-row:last-child {
+  border-bottom: 0;
+}
+
+.recent-transaction-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.recent-transaction-main strong {
+  overflow: hidden;
+  color: #292934;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-transaction-main span {
+  color: #9292a5;
+  font-size: 12px;
+}
+
+.recent-transaction-row > strong {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.transaction-income {
+  color: #22845d;
+}
+
+.transaction-expense {
+  color: #292934;
+}
+
+@media (max-width: 480px) {
+  .recent-transactions-card {
+    padding: 20px;
+  }
+
+  .recent-transaction-row {
+    align-items: flex-start;
+  }
+}
