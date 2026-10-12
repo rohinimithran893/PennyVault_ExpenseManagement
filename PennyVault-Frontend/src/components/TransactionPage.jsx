@@ -104,6 +104,9 @@ function TransactionPage() {
   const [transactionType, setTransactionType] = useState("debit");
   const [accountId, setAccountId] = useState("");
   const [accounts, setAccounts] = useState([]);
+  const [householdMembers, setHouseholdMembers] = useState([]);
+  const [assignmentMode, setAssignmentMode] = useState("ONE_MEMBER");
+  const [selectedMemberIds, setSelectedMemberIds] = useState([]);
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState([]);
   const [subcategoryId, setSubcategoryId] = useState("");
@@ -233,6 +236,27 @@ function TransactionPage() {
       document.removeEventListener("keydown", closeExportMenu);
     };
   }, [isExportMenuOpen]);
+
+  useEffect(() => {
+    const loadHouseholdMembers = async () => {
+      try {
+        const token = getToken();
+        const response = await fetch("http://localhost:8080/api/household/members", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error("Failed to load household members");
+        const data = await response.json();
+        setHouseholdMembers(data);
+        setSelectedMemberIds((current) => current.length ? current :
+          (data.some((member) => member.currentUser)
+            ? [data.find((member) => member.currentUser).id]
+            : data.length ? [data[0].id] : []));
+      } catch (error) {
+        console.error("Error loading household members:", error);
+      }
+    };
+    loadHouseholdMembers();
+  }, []);
 
   useEffect(() => {
     const loadAccounts = async () => {
@@ -416,6 +440,9 @@ function TransactionPage() {
     }
     if (!description.trim()) {
       errors.description = "Description is required.";
+    }
+    if (selectedMemberIds.length === 0 || (assignmentMode === "ONE_MEMBER" && selectedMemberIds.length !== 1)) {
+      errors.members = assignmentMode === "ONE_MEMBER" ? "Select one household member." : "Select at least one household member.";
     }
     const numericAmount = Number(amount);
     if (!amount || amount.trim() === "") {
@@ -608,6 +635,8 @@ function TransactionPage() {
           : "debit",
       );
       setTransactionDate(transaction.transactionDate || "");
+      setAssignmentMode(transaction.assignmentMode || "ONE_MEMBER");
+      setSelectedMemberIds(transaction.shares?.map((share) => share.memberId) || []);
       setViewingTransaction(null);
       // Open the Add/Edit transaction panel
       setIsAddTransactionOpen(true);

@@ -10,6 +10,7 @@ import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.repository.UserRepository;
 import com.pennyvault.security.JwtService;
 import com.pennyvault.service.AccountService;
+import com.pennyvault.service.HouseholdService;
 import com.pennyvault.service.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +27,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AccountService accountService;
+    private final HouseholdService householdService;
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -46,6 +48,7 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
         accountService.createDefaultAccounts(savedUser);
+        householdService.createHouseholdForOwner(savedUser);
         return mapToResponse(savedUser);
     }
 

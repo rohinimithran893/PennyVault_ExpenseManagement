@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -35,4 +36,7 @@ public class TransactionRequest {
 
     @NotNull(message = "Transaction date is required")
     private LocalDate transactionDate;
+
+    private String assignmentMode;
+    private List<Long> memberIds;
 }

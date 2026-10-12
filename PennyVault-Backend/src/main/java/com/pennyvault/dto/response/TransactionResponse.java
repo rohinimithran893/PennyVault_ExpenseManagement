@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -31,6 +32,9 @@ public class TransactionResponse {
     private String transactionType;
 
     private LocalDate transactionDate;
+
+    private String assignmentMode;
+    private List<TransactionShareResponse> shares;
 
     
 
