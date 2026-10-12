@@ -295,7 +295,22 @@ function HomeEssentials() {
         const transaction = transactions.find(
           (entry) => String(entry.id) === String(item.transactionId)
         );
-        if (!transaction) return item;
+        if (!transaction) {
+          // A transaction removed on the Transactions page must not remain
+          // displayed as a live linked purchase in Home Inventory.
+          changed = true;
+          return {
+            ...item,
+            transactionId: null,
+            transactionManagedByInventory: false,
+            purchaseAmount: "",
+            accountId: "",
+            financeCategoryId: "",
+            financeSubcategoryId: "",
+            financeCategoryName: "",
+            financeSubcategoryName: "",
+          };
+        }
 
         const categoryName = transaction.category ||
           financeCategories.find((entry) => String(entry.id) === String(transaction.categoryId))?.name ||
