@@ -29,6 +29,11 @@ function Budgets() {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const normalizeName = (value) => String(value ?? "").trim().toLowerCase();
+  const getPercent = (spent, limit) => {
+    const amount = Number(spent) || 0;
+    const budget = Number(limit) || 0;
+    return budget > 0 ? Math.round((amount / budget) * 100) : amount > 0 ? 100 : 0;
+  };
   const isCurrentMonthExpense = (transaction) => {
     const transactionDate = transaction.transactionDate ?? transaction.date ?? "";
     const transactionType = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
@@ -260,9 +265,7 @@ function Budgets() {
 
         <div className="category-grid">
           {categories.map((category) => {
-            const percentage = Math.round(
-              (category.spent / category.allocated) * 100
-            );
+            const percentage = getPercent(category.spent, category.allocated);
 
             const remainingAmount =
               category.allocated - category.spent;
@@ -440,11 +443,7 @@ function Budgets() {
               </strong>
               <span>
                 Spent (
-                {Math.round(
-                  (selectedCategory.spent /
-                    selectedCategory.allocated) *
-                    100
-                )}
+                {getPercent(selectedCategory.spent, selectedCategory.allocated)}
                 %)
               </span>
             </div>
@@ -464,21 +463,12 @@ function Budgets() {
             <div
               className="panel-progress-fill"
               style={{
-                width: `${Math.min(
-                  (selectedCategory.spent /
-                    selectedCategory.allocated) *
-                    100,
-                  100
-                )}%`,
+                width: `${Math.min(getPercent(selectedCategory.spent, selectedCategory.allocated), 100)}%`,
               }}
             />
 
             <strong>
-              {Math.round(
-                (selectedCategory.spent /
-                  selectedCategory.allocated) *
-                  100
-              )}
+              {getPercent(selectedCategory.spent, selectedCategory.allocated)}
               %
             </strong>
           </div>
@@ -700,9 +690,7 @@ function Budgets() {
               <div className="subcategory-list">
                 {selectedCategory.subcategories.map(
                   (sub) => {
-                    const percentage = Math.round(
-                      (sub.spent / sub.budget) * 100
-                    );
+                    const percentage = getPercent(sub.spent, sub.budget);
 
                     return (
                       <div
