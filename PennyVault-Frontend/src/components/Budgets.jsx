@@ -23,6 +23,8 @@ function Budgets() {
   const [budgetEditMode, setBudgetEditMode] = useState(false);
   const [draftAllocated, setDraftAllocated] = useState("");
   const [draftMonthlyBudget, setDraftMonthlyBudget] = useState("");
+  const [editingSubcategoryName, setEditingSubcategoryName] = useState(null);
+  const [draftSubcategoryBudget, setDraftSubcategoryBudget] = useState("");
 
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -121,6 +123,29 @@ function Budgets() {
     setBudgetEditMode(true);
   };
 
+  const saveSubcategoryBudget = () => {
+    const budget = Number(draftSubcategoryBudget);
+    if (!Number.isFinite(budget) || budget < 0 || !selectedCategoryName || !editingSubcategoryName) {
+      return;
+    }
+    setBudgetPlan((current) => ({
+      ...current,
+      categories: (current.categories || DEFAULT_BUDGET_CATEGORIES).map((category) =>
+        category.name !== selectedCategoryName
+          ? category
+          : {
+              ...category,
+              subcategories: (category.subcategories || []).map((subcategory) =>
+                subcategory.name === editingSubcategoryName
+                  ? { ...subcategory, budget }
+                  : subcategory
+              ),
+            }
+      ),
+    }));
+    setEditingSubcategoryName(null);
+  };
+
   const saveBudgetEdits = () => {
     const allocated = Number(draftAllocated);
     const monthly = Number(draftMonthlyBudget);
@@ -150,9 +175,9 @@ function Budgets() {
         </div>
 
         <div className="budget-header-actions">
-          <button className="month-selector">
+          <button className="month-selector" type="button">
             <span>▣</span>
-            July 2026
+            {now.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
             <span className="chevron">⌄</span>
           </button>
 
@@ -174,7 +199,19 @@ function Budgets() {
             <span className="summary-label">Monthly Budget</span>
             <strong>{formatCurrency(totalBudget)}</strong>
 
-            <button className="edit-budget">
+            <button
+              className="edit-budget"
+              type="button"
+              onClick={() => {
+                const firstCategory = categories[0];
+                if (!firstCategory) return;
+                setSelectedCategoryName(firstCategory.name);
+                setPanelMode("details");
+                setDraftAllocated(String(firstCategory.allocated));
+                setDraftMonthlyBudget(String(totalBudget));
+                setBudgetEditMode(true);
+              }}
+            >
               ✎ Edit Budget
             </button>
           </div>
@@ -190,7 +227,7 @@ function Budgets() {
             <strong>{formatCurrency(totalAllocated)}</strong>
 
             <small className="positive">
-              98.8% of budget
+              {totalBudget > 0 ? ((totalAllocated / totalBudget) * 100).toFixed(1) : "0"}% allocated
             </small>
           </div>
         </div>
@@ -204,8 +241,8 @@ function Budgets() {
             <span className="summary-label">Remaining</span>
             <strong>{formatCurrency(remaining)}</strong>
 
-            <small className="negative">
-              1.2% of budget
+            <small className={remaining >= 0 ? "positive" : "negative"}>
+              {totalBudget > 0 ? ((Math.abs(remaining) / totalBudget) * 100).toFixed(1) : "0"}% {remaining >= 0 ? "remaining" : "over allocated"}
             </small>
           </div>
         </div>
@@ -465,7 +502,7 @@ function Budgets() {
 
                 <div className="form-grid">
                   <div>
-                    <label>Monthly Budget</label>
+                    <label>Category Budget</label>
 
                     {budgetEditMode ? (
                       <div className="fake-input">
@@ -487,7 +524,7 @@ function Budgets() {
                   </div>
 
                   <div>
-                    <label>Budget Period</label>
+                    <label>Total Monthly Budget</label>
 
                     {budgetEditMode ? (
                       <div className="fake-input">
@@ -682,15 +719,40 @@ function Budgets() {
                           <div className="subcategory-title">
                             <strong>{sub.name}</strong>
 
-                            <button className="edit-subcategory">
+                            <button
+                              className="edit-subcategory"
+                              type="button"
+                              aria-label={`Edit ${sub.name} budget`}
+                              onClick={() => {
+                                setEditingSubcategoryName(sub.name);
+                                setDraftSubcategoryBudget(String(sub.budget));
+                              }}
+                            >
                               ✎
                             </button>
                           </div>
 
-                          <span>
-                            {formatCurrency(sub.spent)} of{" "}
-                            {formatCurrency(sub.budget)}
-                          </span>
+                          {editingSubcategoryName === sub.name ? (
+                            <div className="subcategory-budget-editor">
+                              <label>
+                                Monthly limit (₹)
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={draftSubcategoryBudget}
+                                  onChange={(event) => setDraftSubcategoryBudget(event.target.value)}
+                                  aria-label={`${sub.name} monthly budget`}
+                                />
+                              </label>
+                              <button type="button" onClick={saveSubcategoryBudget}>Save</button>
+                              <button type="button" onClick={() => setEditingSubcategoryName(null)}>Cancel</button>
+                            </div>
+                          ) : (
+                            <span>
+                              {formatCurrency(sub.spent)} of{" "}
+                              {formatCurrency(sub.budget)}
+                            </span>
+                          )}
 
                           <div className="subcategory-progress">
                             <div
