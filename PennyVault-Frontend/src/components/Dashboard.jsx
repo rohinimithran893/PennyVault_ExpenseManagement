@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { getToken } from "../utils/auth";
 import {
   IconSearch,
   IconBell,
@@ -41,56 +42,110 @@ const summaryCards = [
   },
 ];
 
-const spendingCategories = [
-  {
-    name: "Home & Utilities",
-    amount: "₹6,800",
-    percentage: 100,
-    type: "purple",
-  },
-  {
-    name: "Food & Groceries",
-    amount: "₹293",
-    percentage: 4.3,
-    type: "green",
-  },
-  {
-    name: "Transport",
-    amount: "₹0",
-    percentage: 0,
-    type: "empty",
-  },
-  {
-    name: "Health",
-    amount: "₹0",
-    percentage: 0,
-    type: "empty",
-  },
-  {
-    name: "Education & Kids",
-    amount: "₹0",
-    percentage: 0,
-    type: "empty",
-  },
-  {
-    name: "Entertainment & Lifestyle",
-    amount: "₹0",
-    percentage: 0,
-    type: "empty",
-  },
-  {
-    name: "Finance & Others",
-    amount: "₹0",
-    percentage: 0,
-    type: "empty",
-  },
-];
-
 const budgetUsedPercent = 12;
 
 function Dashboard() {
+  const [transactions, setTransactions] = useState([]);
+  const [isSpendingCategoriesLoading, setIsSpendingCategoriesLoading] = useState(true);
+  const [spendingCategoriesError, setSpendingCategoriesError] = useState("");
 
-    const donutRadius = 44;
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTransactions = async () => {
+      setIsSpendingCategoriesLoading(true);
+      setSpendingCategoriesError("");
+
+      try {
+        const token = getToken();
+        const response = await fetch("http://localhost:8080/api/transactions", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            response.status === 401
+              ? "Please log in again to view spending categories."
+              : "Unable to load spending categories."
+          );
+        }
+
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error("The transactions response was not in the expected format.");
+        }
+
+        if (isMounted) setTransactions(data);
+      } catch (error) {
+        if (isMounted) {
+          setSpendingCategoriesError(error.message || "Unable to load spending categories.");
+        }
+      } finally {
+        if (isMounted) setIsSpendingCategoriesLoading(false);
+      }
+    };
+
+    loadTransactions();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const spendingCategories = useMemo(() => {
+    const now = new Date();
+    const totalsByCategory = new Map();
+
+    transactions.forEach((transaction) => {
+      const type = String(transaction.transactionType ?? transaction.type ?? "").toLowerCase();
+      const dateValue = transaction.transactionDate ?? transaction.date;
+      const amount = Number(transaction.amount);
+
+      if (type !== "expense" && type !== "debit") return;
+      if (!dateValue || !Number.isFinite(amount) || amount <= 0) return;
+
+      // Parse date-only API values in local time to avoid timezone shifts.
+      const transactionDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(dateValue))
+        ? new Date(`${dateValue}T00:00:00`)
+        : new Date(dateValue);
+
+      if (
+        Number.isNaN(transactionDate.getTime()) ||
+        transactionDate.getFullYear() !== now.getFullYear() ||
+        transactionDate.getMonth() !== now.getMonth()
+      ) {
+        return;
+      }
+
+      const categoryName = String(
+        typeof transaction.category === "string"
+          ? transaction.category
+          : transaction.category?.name ?? ""
+      ).trim() || "Uncategorized";
+
+      totalsByCategory.set(
+        categoryName,
+        (totalsByCategory.get(categoryName) || 0) + amount
+      );
+    });
+
+    const sortedCategories = [...totalsByCategory.entries()]
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total);
+
+    const maxAmount = sortedCategories[0]?.total || 0;
+    const colors = ["purple", "green", "blue", "pink", "orange", "teal"];
+
+    return sortedCategories.map((category, index) => ({
+      name: category.name,
+      amount: `₹${category.total.toLocaleString("en-IN", {
+        maximumFractionDigits: 2,
+      })}`,
+      percentage: maxAmount > 0 ? (category.total / maxAmount) * 100 : 0,
+      type: colors[index % colors.length],
+    }));
+  }, [transactions]);
+
+  const donutRadius = 44;
     const donutCircumference = 2 * Math.PI * donutRadius;
     
   return (
@@ -167,32 +222,39 @@ function Dashboard() {
             </div>
 
             <div className="category-list">
-              {spendingCategories.map((category) => (
-                <div
-                  className="category-row"
-                  key={category.name}
-                >
-                  <div className="category-name">
-                    {category.name}
-                  </div>
+              {isSpendingCategoriesLoading ? (
+                <p>Loading spending categories...</p>
+              ) : spendingCategoriesError ? (
+                <p role="status">{spendingCategoriesError}</p>
+              ) : spendingCategories.length === 0 ? (
+                <p>No expense transactions for this month yet.</p>
+              ) : (
+                spendingCategories.map((category) => (
+                  <div
+                    className="category-row"
+                    key={category.name}
+                  >
+                    <div className="category-name">
+                      {category.name}
+                    </div>
 
-                  <div className="category-progress">
-                    <div className="progress-background">
-                      <div
-                        className={`progress-fill ${category.type}`}
-                        style={{
-                          width: `${category.percentage}%`,
-                        }}
-                      />
+                    <div className="category-progress">
+                      <div className="progress-background">
+                        <div
+                          className={`progress-fill ${category.type}`}
+                          style={{
+                            width: `${category.percentage}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="category-amount">
+                      {category.amount}
                     </div>
                   </div>
-
-                  <div className="category-amount">
-                    {category.amount}
-                  </div>
-
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
