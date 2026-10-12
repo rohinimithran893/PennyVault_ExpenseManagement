@@ -483,6 +483,8 @@ function TransactionPage() {
         amount: Number(amount),
         transactionType: transactionType === "debit" ? "EXPENSE" : "INCOME",
         transactionDate,
+        assignmentMode,
+        memberIds: selectedMemberIds.map(Number),
       };
       const isEditing = editingTransactionId !== null;
       const url = isEditing
@@ -1300,6 +1302,11 @@ function TransactionPage() {
         saveTransaction={saveTransaction}
         isSavingTransaction={isSavingTransaction}
         cancelEdit={cancelEdit}
+        householdMembers={householdMembers}
+        assignmentMode={assignmentMode}
+        setAssignmentMode={setAssignmentMode}
+        selectedMemberIds={selectedMemberIds}
+        setSelectedMemberIds={setSelectedMemberIds}
       />
 
       {/* TRANSACTION OVERLAYS */}
