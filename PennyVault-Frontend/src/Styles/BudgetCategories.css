@@ -1095,3 +1095,587 @@
   border-color: #ad93f3;
   box-shadow: 0 0 0 3px rgba(117, 68, 237, 0.08);
 }
+
+
+/* Transaction-backed budget overview */
+.finance-budgets-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 26px 28px 32px;
+  color: #292637;
+  background: #f7f6fa;
+}
+
+.finance-budgets-page button,
+.finance-budgets-page input {
+  font: inherit;
+}
+
+.finance-budgets-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.finance-budgets-header h1 {
+  margin: 0;
+  color: #171625;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.finance-budgets-header p {
+  max-width: 680px;
+  margin: 7px 0 0;
+  color: #9290a4;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.finance-budgets-header-date,
+.finance-budgets-month-pill {
+  min-height: 38px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #e5e2ee;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #6c687e;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.finance-budgets-alert {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #f1d2a2;
+  border-radius: 10px;
+  background: #fff9ec;
+  color: #8e5d0e;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.finance-budgets-alert span {
+  flex: 1;
+}
+
+.finance-budgets-alert button {
+  min-height: 32px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #edd7ad;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #8e5d0e;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.finance-budgets-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.finance-budgets-summary-card {
+  min-width: 0;
+  min-height: 105px;
+  padding: 17px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e9e7f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 5px rgba(30, 30, 50, 0.035);
+}
+
+.finance-budgets-summary-icon {
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f1edff;
+  color: #7544ed;
+}
+
+.summary-budget-spent .finance-budgets-summary-icon {
+  background: #fff2e4;
+  color: #d98919;
+}
+
+.summary-budget-remaining .finance-budgets-summary-icon {
+  background: #e9f8f1;
+  color: #15945e;
+}
+
+.summary-budget-allocated .finance-budgets-summary-icon {
+  background: #eaf2ff;
+  color: #397bd5;
+}
+
+.finance-budgets-summary-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.finance-budgets-summary-content p {
+  margin: 0 0 5px;
+  color: #858196;
+  font-size: 12px;
+}
+
+.finance-budgets-summary-content > strong,
+.finance-budgets-summary-value-row > strong {
+  display: block;
+  color: #252334;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.finance-budgets-summary-content > span {
+  display: block;
+  margin-top: 5px;
+  color: #a09caf;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.finance-budgets-summary-value-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.finance-budgets-summary-value-row > button {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #8f8a9f;
+  cursor: pointer;
+}
+
+.finance-budgets-summary-value-row > button:hover {
+  border-color: #e5ddfb;
+  background: #f5f1ff;
+  color: #7544ed;
+}
+
+.finance-budgets-inline-edit {
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #777386;
+}
+
+.finance-budgets-inline-edit input {
+  width: 104px;
+  min-width: 0;
+  height: 31px;
+  padding: 0 7px;
+  border: 1px solid #ddd8eb;
+  border-radius: 7px;
+  outline: none;
+  color: #292637;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.finance-budgets-inline-edit input:focus {
+  border-color: #ad93f3;
+  box-shadow: 0 0 0 3px rgba(117, 68, 237, 0.08);
+}
+
+.finance-budgets-inline-edit button {
+  width: 28px;
+  height: 29px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e0eb;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #716c81;
+  cursor: pointer;
+}
+
+.finance-budgets-inline-edit button:first-of-type {
+  border-color: #cdeede;
+  background: #effaf4;
+  color: #168756;
+}
+
+.finance-budgets-category-section {
+  overflow: hidden;
+  border: 1px solid #e8e6f0;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 2px 5px rgba(30, 30, 50, 0.025);
+}
+
+.finance-budgets-section-header {
+  padding: 19px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #eeeef4;
+}
+
+.finance-budgets-section-header h2 {
+  margin: 0;
+  color: #292637;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.finance-budgets-section-header p {
+  margin: 5px 0 0;
+  color: #9290a4;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.finance-budgets-category-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.finance-budgets-category-card {
+  padding: 0 20px;
+  border-bottom: 1px solid #f0eff4;
+}
+
+.finance-budgets-category-card:last-child {
+  border-bottom: 0;
+}
+
+.finance-budgets-category-main {
+  min-height: 87px;
+  display: grid;
+  grid-template-columns: 42px minmax(145px, 1.4fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) 76px;
+  align-items: center;
+  gap: 14px;
+}
+
+.finance-budgets-category-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: #f1edff;
+  color: #7544ed;
+  font-size: 19px;
+}
+
+.finance-budgets-category-name h3 {
+  margin: 0;
+  color: #292637;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.finance-budgets-category-name p {
+  margin: 5px 0 0;
+  color: #9b98aa;
+  font-size: 10px;
+}
+
+.finance-budgets-category-metric {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.finance-budgets-category-metric > span {
+  color: #9390a4;
+  font-size: 10px;
+}
+
+.finance-budgets-category-metric > strong {
+  color: #2c293b;
+  font-size: 13px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.finance-budgets-category-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.finance-budgets-category-actions button,
+.finance-budgets-subcategory-edit {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #8a869b;
+  cursor: pointer;
+}
+
+.finance-budgets-category-actions button:hover,
+.finance-budgets-subcategory-edit:hover {
+  border-color: #e8e1fb;
+  background: #f5f1ff;
+  color: #7544ed;
+}
+
+.finance-budgets-progress-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f0eef6;
+}
+
+.finance-budgets-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #7c4fe5;
+  transition: width 0.2s ease;
+}
+
+.finance-budgets-progress-fill.progress-over {
+  background: #dc4e4e;
+}
+
+.finance-budgets-category-footer {
+  padding: 8px 0 13px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #9894a9;
+  font-size: 10px;
+}
+
+.finance-budgets-subcategory-list {
+  margin: 0 0 15px 55px;
+  padding: 7px 14px;
+  border: 1px solid #eeeaf7;
+  border-radius: 10px;
+  background: #fcfbff;
+}
+
+.finance-budgets-subcategory-row {
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: minmax(170px, 1.2fr) minmax(190px, 1fr) 100px 32px;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid #f0edf7;
+}
+
+.finance-budgets-subcategory-row:last-child {
+  border-bottom: 0;
+}
+
+.finance-budgets-subcategory-name {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #514c64;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.finance-budgets-subcategory-name > strong {
+  color: #777386;
+  font-size: 11px;
+}
+
+.finance-budgets-subcategory-spend {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #9995a9;
+  font-size: 10px;
+}
+
+.finance-budgets-subcategory-progress {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #eeeaf6;
+}
+
+.finance-budgets-subcategory-empty {
+  padding: 12px 0;
+  color: #9290a4;
+  font-size: 12px;
+}
+
+.finance-budgets-empty-state {
+  min-height: 260px;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.finance-budgets-loading-mark {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  background: #f1edff;
+  color: #7544ed;
+}
+
+.finance-budgets-empty-state h3 {
+  margin: 0;
+  color: #292637;
+  font-size: 15px;
+}
+
+.finance-budgets-empty-state p {
+  max-width: 440px;
+  margin: 8px 0 0;
+  color: #9290a4;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.is-over-budget {
+  color: #d53e3e !important;
+}
+
+@media (max-width: 1200px) {
+  .finance-budgets-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .finance-budgets-category-main {
+    grid-template-columns: 42px minmax(125px, 1.5fr) repeat(3, minmax(95px, 1fr)) 70px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 850px) {
+  .finance-budgets-page {
+    padding: 20px 16px 26px;
+  }
+
+  .finance-budgets-header {
+    flex-direction: column;
+  }
+
+  .finance-budgets-category-main {
+    padding: 14px 0 8px;
+    grid-template-columns: 42px minmax(0, 1fr) 70px;
+    gap: 10px;
+  }
+
+  .finance-budgets-category-name {
+    grid-column: 2;
+  }
+
+  .finance-budgets-category-metric {
+    grid-column: span 1;
+    padding: 6px 0 8px;
+  }
+
+  .finance-budgets-category-metric:nth-of-type(3) {
+    grid-column: 2;
+  }
+
+  .finance-budgets-category-actions {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .finance-budgets-progress-track {
+    margin-top: 4px;
+  }
+
+  .finance-budgets-subcategory-list {
+    margin-left: 0;
+  }
+
+  .finance-budgets-subcategory-row {
+    grid-template-columns: minmax(0, 1fr) 34px;
+    gap: 9px;
+  }
+
+  .finance-budgets-subcategory-spend,
+  .finance-budgets-subcategory-progress {
+    grid-column: 1;
+  }
+
+  .finance-budgets-subcategory-edit {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 540px) {
+  .finance-budgets-summary {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .finance-budgets-summary-card {
+    min-height: 84px;
+  }
+
+  .finance-budgets-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .finance-budgets-category-card {
+    padding: 0 14px;
+  }
+
+  .finance-budgets-category-metric {
+    font-size: 11px;
+  }
+
+  .finance-budgets-inline-edit input {
+    width: 80px;
+  }
+
+  .finance-budgets-subcategory-list {
+    padding: 8px 10px;
+  }
+}
