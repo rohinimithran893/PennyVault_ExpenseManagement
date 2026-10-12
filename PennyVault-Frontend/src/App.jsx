@@ -6,6 +6,7 @@ import Signup from "./pages/Signup";
 import MainLayout from "./layouts/MainLayout";
 import DashboardPage from "./pages/DashboardPage";
 import Transaction from "./pages/Transaction";
+import HomeEssentials from "./pages/HomeEssentials";
 import BudgetCategories from "./pages/BudgetCategories";
 import Reports from "./pages/ReportPages";
 import Messages from "./pages/Messages";
@@ -23,7 +24,7 @@ import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
   return isAuthenticated() ? children : <Navigate to="/login" replace />;
-};  
+};
 
 function App() {
   return (
@@ -40,20 +41,21 @@ function App() {
           </ProtectedRoute>
         }>
           <Route path="/" element={<DashboardPage />} />
-          <Route path="/transactions" element={ <Transaction/>} />
+          <Route path="/transactions" element={<Transaction />} />
+          <Route path="/home-essentials" element={<HomeEssentials />} />
           <Route path="/budget-categories" element={<BudgetCategories />} />
-          <Route path="/reports" element={<Reports /> } />
-          <Route path="/messages" element={<Messages /> } />
-          <Route path="/accounts" element={<Accounts /> } />
-          <Route path="/goals" element={ <Goals /> } />
-          <Route path="/recurring" element={<Recurring /> } />
-          <Route path="/bills" element={<Bills/> } />
-          <Route path="/peopleAccess" element={ <PeopleAccess /> } />
-          <Route path="/notifications" element={ <Notifications /> } />
-          <Route path="/preferences" element={ <Preferences /> } />
-          <Route path="/security" element={ <Security /> } />
-          <Route path="/helpAndSupport" element={<HelpAndSupport/> } />
-        </Route>     
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/accounts" element={<Accounts />} />
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/recurring" element={<Recurring />} />
+          <Route path="/bills" element={<Bills />} />
+          <Route path="/peopleAccess" element={<PeopleAccess />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/preferences" element={<Preferences />} />
+          <Route path="/security" element={<Security />} />
+          <Route path="/helpAndSupport" element={<HelpAndSupport />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
