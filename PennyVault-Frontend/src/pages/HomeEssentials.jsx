@@ -209,6 +209,8 @@ const createEmptyForm = () => ({
   accountId: "",
   financeCategoryId: "",
   financeSubcategoryId: "",
+  transactionMode: "create",
+  linkedTransactionId: "",
 });
 
 function HomeEssentials() {
@@ -225,6 +227,7 @@ function HomeEssentials() {
   const [financeCategories, setFinanceCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [transactionsLoaded, setTransactionsLoaded] = useState(false);
   const [budgetPlan] = useState(readBudgetPlan);
   const [isSavingItem, setIsSavingItem] = useState(false);
 
@@ -252,6 +255,7 @@ function HomeEssentials() {
       setAccounts(accountData);
       setFinanceCategories(categoryData);
       setTransactions(transactionData);
+      setTransactionsLoaded(true);
     };
     loadFinanceReferenceData();
     return () => { isMounted = false; };
@@ -279,6 +283,44 @@ function HomeEssentials() {
     loadSubcategories();
     return () => { isMounted = false; };
   }, [formData.financeCategoryId]);
+
+  useEffect(() => {
+    if (!transactionsLoaded) return;
+
+    setItems((current) => {
+      let changed = false;
+      const updatedItems = current.map((item) => {
+        if (!item.transactionId) return item;
+
+        const transaction = transactions.find(
+          (entry) => String(entry.id) === String(item.transactionId)
+        );
+        if (!transaction) return item;
+
+        const categoryName = transaction.category ||
+          financeCategories.find((entry) => String(entry.id) === String(transaction.categoryId))?.name ||
+          item.financeCategoryName || "";
+        const subcategoryName = transaction.subcategory ||
+          item.financeSubcategoryName || "";
+        const nextValues = {
+          purchaseAmount: Number(transaction.amount) || 0,
+          accountId: String(transaction.accountId ?? item.accountId ?? ""),
+          financeCategoryId: String(transaction.categoryId ?? item.financeCategoryId ?? ""),
+          financeSubcategoryId: String(transaction.subcategoryId ?? item.financeSubcategoryId ?? ""),
+          financeCategoryName: categoryName,
+          financeSubcategoryName: subcategoryName,
+          purchasedDate: transaction.transactionDate || item.purchasedDate,
+        };
+        const didChange = Object.keys(nextValues).some(
+          (key) => String(item[key] ?? "") !== String(nextValues[key] ?? "")
+        );
+        if (!didChange) return item;
+        changed = true;
+        return { ...item, ...nextValues };
+      });
+      return changed ? updatedItems : current;
+    });
+  }, [transactions, transactionsLoaded, financeCategories]);
 
   useEffect(() => {
     try {
@@ -342,6 +384,10 @@ function HomeEssentials() {
       accountId: item.accountId ?? "",
       financeCategoryId: item.financeCategoryId ?? "",
       financeSubcategoryId: item.financeSubcategoryId ?? "",
+      transactionMode: item.transactionId && item.transactionManagedByInventory === false
+        ? "link"
+        : "create",
+      linkedTransactionId: item.transactionId ? String(item.transactionId) : "",
     });
     setFormError("");
     setIsFormOpen(true);
@@ -356,6 +402,38 @@ function HomeEssentials() {
 
   const updateFormField = (field, value) => {
     setFormData((current) => ({ ...current, [field]: value }));
+  };
+
+  const changeTransactionMode = (mode) => {
+    setFormData((current) => ({
+      ...current,
+      transactionMode: mode,
+      linkedTransactionId: "",
+      purchaseAmount: "",
+      accountId: "",
+      financeCategoryId: "",
+      financeSubcategoryId: "",
+    }));
+  };
+
+  const chooseExistingTransaction = (transactionId) => {
+    const transaction = transactions.find(
+      (entry) => String(entry.id) === String(transactionId)
+    );
+    if (!transaction) {
+      updateFormField("linkedTransactionId", transactionId);
+      return;
+    }
+    setFormData((current) => ({
+      ...current,
+      transactionMode: "link",
+      linkedTransactionId: String(transaction.id),
+      purchaseAmount: String(transaction.amount ?? ""),
+      accountId: String(transaction.accountId ?? ""),
+      financeCategoryId: String(transaction.categoryId ?? ""),
+      financeSubcategoryId: String(transaction.subcategoryId ?? ""),
+      purchasedDate: transaction.transactionDate || current.purchasedDate,
+    }));
   };
 
   const handleSubmit = async (event) => {
@@ -375,11 +453,10 @@ function HomeEssentials() {
       return;
     }
 
+    const existingItem = items.find((item) => item.id === editingItemId);
     const amountText = String(formData.purchaseAmount ?? "").trim();
     const purchaseAmount = amountText === "" ? null : Number(amountText);
-    const alreadyLinked = items.some(
-      (item) => item.id === editingItemId && item.transactionId
-    );
+    const alreadyLinked = Boolean(existingItem?.transactionId);
     if (alreadyLinked && purchaseAmount === null) {
       setFormError("This item already has a linked expense. Enter its amount to keep or update the linked transaction. Deleting the inventory item will not delete the transaction.");
       return;
@@ -388,7 +465,11 @@ function HomeEssentials() {
       setFormError("Purchase amount must be greater than zero.");
       return;
     }
-    if (purchaseAmount !== null &&
+    if (formData.transactionMode === "link" && !formData.linkedTransactionId) {
+      setFormError("Choose an existing expense transaction to link to this item.");
+      return;
+    }
+    if (purchaseAmount !== null && formData.transactionMode === "create" &&
         (!formData.accountId || !formData.financeCategoryId || !formData.financeSubcategoryId)) {
       setFormError("To send the purchase to Transactions and Budgets, choose an account, expense category, and subcategory.");
       return;
@@ -397,10 +478,10 @@ function HomeEssentials() {
     setIsSavingItem(true);
     setFormError("");
     try {
-      const existingItem = items.find((item) => item.id === editingItemId);
       let linkedPurchase = existingItem?.transactionId
         ? {
             transactionId: existingItem.transactionId,
+            transactionManagedByInventory: existingItem.transactionManagedByInventory !== false,
             purchaseAmount: existingItem.purchaseAmount,
             accountId: existingItem.accountId ?? "",
             financeCategoryId: existingItem.financeCategoryId ?? "",
@@ -410,7 +491,29 @@ function HomeEssentials() {
           }
         : {};
 
-      if (purchaseAmount !== null) {
+      if (purchaseAmount !== null && formData.transactionMode === "link") {
+        const linkedTransaction = transactions.find(
+          (entry) => String(entry.id) === String(formData.linkedTransactionId)
+        );
+        if (!linkedTransaction) {
+          setFormError("The selected transaction is no longer available. Refresh and choose it again.");
+          return;
+        }
+        linkedPurchase = {
+          transactionId: linkedTransaction.id,
+          transactionManagedByInventory: false,
+          purchaseAmount: Number(linkedTransaction.amount) || purchaseAmount,
+          accountId: String(linkedTransaction.accountId ?? formData.accountId ?? ""),
+          financeCategoryId: String(linkedTransaction.categoryId ?? formData.financeCategoryId ?? ""),
+          financeSubcategoryId: String(linkedTransaction.subcategoryId ?? formData.financeSubcategoryId ?? ""),
+          financeCategoryName: linkedTransaction.category ||
+            financeCategories.find((entry) => String(entry.id) === String(linkedTransaction.categoryId))?.name ||
+            "",
+          financeSubcategoryName: linkedTransaction.subcategory ||
+            subcategories.find((entry) => String(entry.id) === String(linkedTransaction.subcategoryId))?.name ||
+            "",
+        };
+      } else if (purchaseAmount !== null && formData.transactionMode === "create") {
         const category = financeCategories.find(
           (entry) => String(entry.id) === String(formData.financeCategoryId)
         );
@@ -431,8 +534,11 @@ function HomeEssentials() {
           transactionType: "EXPENSE",
           transactionDate: formData.purchasedDate,
         };
-        const method = existingItem?.transactionId ? "PUT" : "POST";
-        const endpoint = existingItem?.transactionId
+        const shouldUpdateExistingTransaction =
+          Boolean(existingItem?.transactionId) &&
+          existingItem.transactionManagedByInventory !== false;
+        const method = shouldUpdateExistingTransaction ? "PUT" : "POST";
+        const endpoint = shouldUpdateExistingTransaction
           ? `/transactions/${existingItem.transactionId}`
           : "/transactions";
         const response = await apiRequest(endpoint, {
@@ -450,7 +556,8 @@ function HomeEssentials() {
         }
 
         linkedPurchase = {
-          transactionId: responseData.id ?? existingItem?.transactionId ?? null,
+          transactionId: responseData.id ?? (shouldUpdateExistingTransaction ? existingItem?.transactionId : null),
+          transactionManagedByInventory: true,
           purchaseAmount,
           accountId: String(formData.accountId),
           financeCategoryId: String(formData.financeCategoryId),
