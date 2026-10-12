@@ -1,0 +1,264 @@
+/* =========================
+   FILTER BAR
+========================= */
+
+.transaction-filter-bar {
+  min-height: 76px;
+  padding: 15px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e8e6f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+}
+
+.filter-select {
+  height: 43px;
+  min-width: 155px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #e2e0eb;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #333142;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.filter-select svg:last-child {
+  margin-left: auto;
+  color: #9290a4;
+}
+
+.filter-search {
+  width: 205px;
+  height: 43px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e2e0eb;
+  border-radius: 9px;
+  box-sizing: border-box;
+}
+
+.filter-search svg {
+  color: #9997aa;
+}
+
+.filter-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 13px;
+}
+
+.filter-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.secondary-button,
+.primary-button,
+.clear-filters-button {
+  height: 43px;
+  padding: 0 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.secondary-button {
+  border: 1px solid #e2e0eb;
+  background: #ffffff;
+  color: #555265;
+}
+
+.clear-filters-button {
+  border: 1px solid #e2e0eb;
+  background: #ffffff;
+  color: #555265;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-button:hover {
+  border-color: #7443ec;
+  color: #7443ec;
+  background: #faf8ff;
+}
+
+.clear-filters-button:active {
+  transform: translateY(1px);
+}
+
+.primary-button {
+  border: none;
+  background: linear-gradient(135deg, #7544ed, #6933dc);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(112, 63, 225, 0.18);
+}
+
+/* Active filter chips */
+.active-filters {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: -6px 0 20px;
+  flex-wrap: wrap;
+}
+
+.active-filters-title {
+  padding-top: 6px;
+  color: #777589;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.active-filter-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.active-filter-chip {
+  min-height: 30px;
+  padding: 4px 7px 4px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #ddd3fb;
+  border-radius: 999px;
+  background: #f7f4ff;
+  color: #5d3bb6;
+  font-size: 12px;
+  line-height: 1.35;
+  box-sizing: border-box;
+}
+
+.active-filter-chip button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #7658c6;
+  cursor: pointer;
+}
+
+.active-filter-chip button:hover {
+  background: #e9e0ff;
+  color: #4d2ca4;
+}
+
+.active-filters-clear {
+  min-height: 28px;
+  padding: 0 5px;
+  border: 0;
+  background: transparent;
+  color: #6b48cf;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.active-filters-clear:hover {
+  color: #4d2ca4;
+  text-decoration: underline;
+}
+
+@media (max-width: 650px) {
+  .active-filters {
+    gap: 7px;
+    margin-top: -10px;
+  }
+
+  .active-filters-title {
+    width: 100%;
+    padding-top: 0;
+  }
+}
+
+
+/* Export menu */
+.export-menu-container {
+  position: relative;
+}
+
+.export-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: 220px;
+  padding: 6px;
+  border: 1px solid #e8e6f0;
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(35, 26, 65, 0.14);
+}
+
+.export-menu > button {
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #393548;
+  text-align: left;
+  cursor: pointer;
+}
+
+.export-menu > button:hover,
+.export-menu > button:focus-visible {
+  background: #f7f4ff;
+  outline: none;
+}
+
+.export-menu > button > svg {
+  flex: 0 0 auto;
+  color: #7443ec;
+}
+
+.export-menu > button span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.export-menu > button strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.export-menu > button small {
+  color: #858196;
+  font-size: 11px;
+}
+
+@media (max-width: 650px) {
+  .export-menu {
+    right: 0;
+    width: 210px;
+  }
+}
