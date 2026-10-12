@@ -31,7 +31,7 @@ const getToday = () => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return \`\${year}-\${month}-\${day}\`;
+  return `${year}-${month}-${day}`;
 };
 
 const getStorageKey = () => {
@@ -48,7 +48,7 @@ const getStorageKey = () => {
     .toLowerCase()
     .replace(/[^a-z0-9_-]+/g, "_");
 
-  return \`pennyvault:home-essentials:\${safeIdentity}\`;
+  return `pennyvault:home-essentials:${safeIdentity}`;
 };
 
 const readInventory = (storageKey) => {
@@ -84,8 +84,8 @@ const getExpiryStatus = (expiryDate) => {
     return { key: "expired", label: "Expired" };
   }
 
-  const todayTime = new Date(\`\${today}T00:00:00\`).getTime();
-  const expiryTime = new Date(\`\${expiryDate}T00:00:00\`).getTime();
+  const todayTime = new Date(`${today}T00:00:00`).getTime();
+  const expiryTime = new Date(`${expiryDate}T00:00:00`).getTime();
   const daysRemaining = Math.round(
     (expiryTime - todayTime) / (24 * 60 * 60 * 1000),
   );
@@ -212,7 +212,7 @@ function HomeEssentials() {
       productName: formData.productName.trim(),
       quantity: formData.quantity.trim(),
       notes: formData.notes.trim(),
-      id: editingItemId || \`\${Date.now()}-\${Math.random().toString(36).slice(2, 9)}\`,
+      id: editingItemId || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     };
 
     setItems((current) =>
@@ -225,7 +225,7 @@ function HomeEssentials() {
 
   const handleDelete = (item) => {
     const shouldDelete = window.confirm(
-      \`Delete "\${item.productName}" from Home & Essentials?\`,
+      `Delete "${item.productName}" from Home & Essentials?`,
     );
 
     if (shouldDelete) {
@@ -523,7 +523,7 @@ function HomeEssentials() {
                       <td>{formatDate(item.expiryDate)}</td>
                       <td>
                         <span
-                          className={\`home-essentials-status status-\${status.key}\`}
+                          className={`home-essentials-status status-${status.key}`}
                         >
                           <span aria-hidden="true" />
                           {status.label}
@@ -535,7 +535,7 @@ function HomeEssentials() {
                             type="button"
                             className="home-essentials-row-action"
                             onClick={() => openEditForm(item)}
-                            aria-label={\`Edit \${item.productName}\`}
+                            aria-label={`Edit ${item.productName}`}
                             title="Edit item"
                           >
                             <IconPencil size={17} />
@@ -544,7 +544,7 @@ function HomeEssentials() {
                             type="button"
                             className="home-essentials-row-action delete-action"
                             onClick={() => handleDelete(item)}
-                            aria-label={\`Delete \${item.productName}\`}
+                            aria-label={`Delete ${item.productName}`}
                             title="Delete item"
                           >
                             <IconTrash size={17} />
