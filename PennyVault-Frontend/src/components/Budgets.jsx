@@ -1,96 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../Styles/BudgetCategories.css";
+import { getToken } from "../utils/auth";
+import { DEFAULT_BUDGET_CATEGORIES, readBudgetPlan, saveBudgetPlan } from "../utils/budgetConfig";
 
-const categories = [
-  {
-    name: "Home & Utilities",
-    icon: "⌂",
-    color: "purple",
-    allocated: 25000,
-    spent: 20000,
-    subcategories: [
-      { name: "Rent / EMI", spent: 12000, budget: 20000, color: "purple" },
-      { name: "Electricity", spent: 950, budget: 1500, color: "orange" },
-      { name: "Water", spent: 500, budget: 800, color: "blue" },
-      { name: "Internet", spent: 600, budget: 1200, color: "green" },
-      { name: "Mobile", spent: 300, budget: 1000, color: "purple" },
-      { name: "Household", spent: 900, budget: 2000, color: "pink" },
-      { name: "Maintenance", spent: 750, budget: 1500, color: "purple" },
-    ],
-  },
-  {
-    name: "Food & Groceries",
-    icon: "🛒",
-    color: "green",
-    allocated: 16000,
-    spent: 12500,
-    subcategories: [
-      { name: "Groceries", spent: 8000, budget: 10000, color: "green" },
-      { name: "Dining Out", spent: 3000, budget: 4000, color: "orange" },
-      { name: "Snacks", spent: 1500, budget: 2000, color: "pink" },
-    ],
-  },
-  {
-    name: "Transport",
-    icon: "🚗",
-    color: "blue",
-    allocated: 8000,
-    spent: 3200,
-    subcategories: [
-      { name: "Fuel", spent: 1800, budget: 3000, color: "blue" },
-      { name: "Cab", spent: 900, budget: 1500, color: "purple" },
-      { name: "Public Transport", spent: 500, budget: 1000, color: "green" },
-    ],
-  },
-  {
-    name: "Health",
-    icon: "♥",
-    color: "pink",
-    allocated: 6000,
-    spent: 2400,
-    subcategories: [
-      { name: "Medicines", spent: 1200, budget: 2500, color: "pink" },
-      { name: "Doctor", spent: 800, budget: 2000, color: "red" },
-      { name: "Fitness", spent: 400, budget: 1500, color: "green" },
-    ],
-  },
-  {
-    name: "Education & Kids",
-    icon: "🎓",
-    color: "orange",
-    allocated: 10000,
-    spent: 7000,
-    subcategories: [
-      { name: "School Fees", spent: 5000, budget: 6000, color: "orange" },
-      { name: "Books", spent: 1200, budget: 2000, color: "purple" },
-      { name: "Activities", spent: 800, budget: 2000, color: "blue" },
-    ],
-  },
-  {
-    name: "Entertainment",
-    icon: "▣",
-    color: "purple",
-    allocated: 6000,
-    spent: 3600,
-    subcategories: [
-      { name: "Movies", spent: 1200, budget: 2000, color: "purple" },
-      { name: "Subscriptions", spent: 1500, budget: 2000, color: "blue" },
-      { name: "Events", spent: 900, budget: 2000, color: "pink" },
-    ],
-  },
-  {
-    name: "Finance & Others",
-    icon: "▰",
-    color: "teal",
-    allocated: 10000,
-    spent: 5400,
-    subcategories: [
-      { name: "Insurance", spent: 2500, budget: 4000, color: "teal" },
-      { name: "Investments", spent: 2000, budget: 4000, color: "green" },
-      { name: "Other", spent: 900, budget: 2000, color: "purple" },
-    ],
-  },
-];
+
 
 const members = [
   { name: "Rohini (You)", amount: 10000, percent: 50, initial: "R" },
@@ -102,20 +15,129 @@ const formatCurrency = (value) =>
   `₹${value.toLocaleString("en-IN")}`;
 
 function Budgets() {
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState(null);
   const [panelMode, setPanelMode] = useState("details");
+  const [budgetPlan, setBudgetPlan] = useState(readBudgetPlan);
+  const [transactions, setTransactions] = useState([]);
+  const [transactionsLoaded, setTransactionsLoaded] = useState(false);
+  const [budgetEditMode, setBudgetEditMode] = useState(false);
+  const [draftAllocated, setDraftAllocated] = useState("");
+  const [draftMonthlyBudget, setDraftMonthlyBudget] = useState("");
 
-  const totalBudget = 80000;
-  const totalAllocated = 79000;
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const normalizeName = (value) => String(value ?? "").trim().toLowerCase();
+  const isCurrentMonthExpense = (transaction) => {
+    const transactionDate = transaction.transactionDate ?? transaction.date ?? "";
+    const transactionType = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
+    return String(transactionDate).slice(0, 7) === currentMonth &&
+      (transactionType === "EXPENSE" || transactionType === "DEBIT");
+  };
+
+  useEffect(() => {
+    saveBudgetPlan(budgetPlan);
+  }, [budgetPlan]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadTransactions = async () => {
+      try {
+        const token = getToken();
+        const response = await fetch("http://localhost:8080/api/transactions", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) {
+          throw new Error("Unable to load transactions for budget totals.");
+        }
+        const data = await response.json();
+        if (isMounted) {
+          setTransactions(Array.isArray(data) ? data : []);
+          setTransactionsLoaded(true);
+        }
+      } catch (error) {
+        console.error("Error loading transactions for budget totals:", error);
+        if (isMounted) setTransactionsLoaded(false);
+      }
+    };
+    loadTransactions();
+    return () => { isMounted = false; };
+  }, []);
+
+  const configuredCategories = Array.isArray(budgetPlan.categories)
+    ? budgetPlan.categories
+    : DEFAULT_BUDGET_CATEGORIES;
+
+  const categories = configuredCategories.map((category) => {
+    const subcategories = (category.subcategories || []).map((subcategory) => {
+      const actualSpend = transactions
+        .filter((transaction) =>
+          isCurrentMonthExpense(transaction) &&
+          normalizeName(transaction.subcategory) === normalizeName(subcategory.name)
+        )
+        .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+      return {
+        ...subcategory,
+        spent: transactionsLoaded ? actualSpend : Number(subcategory.spent) || 0,
+      };
+    });
+    const categorySpend = subcategories.reduce(
+      (sum, subcategory) => sum + (Number(subcategory.spent) || 0),
+      0
+    );
+    return {
+      ...category,
+      allocated: Number(category.allocated) || 0,
+      spent: transactionsLoaded ? categorySpend : Number(category.spent) || 0,
+      subcategories,
+    };
+  });
+
+  const selectedCategory = categories.find(
+    (category) => category.name === selectedCategoryName
+  ) || null;
+  const totalBudget = Number(budgetPlan.monthlyBudget) || 80000;
+  const totalAllocated = configuredCategories.reduce(
+    (sum, category) => sum + (Number(category.allocated) || 0),
+    0
+  );
   const remaining = totalBudget - totalAllocated;
 
   const openPanel = (category, mode) => {
-    setSelectedCategory(category);
+    setSelectedCategoryName(category.name);
     setPanelMode(mode);
+    setBudgetEditMode(false);
   };
 
   const closePanel = () => {
-    setSelectedCategory(null);
+    setSelectedCategoryName(null);
+    setBudgetEditMode(false);
+  };
+
+  const beginBudgetEdit = () => {
+    if (!selectedCategory) return;
+    setDraftAllocated(String(selectedCategory.allocated));
+    setDraftMonthlyBudget(String(totalBudget));
+    setBudgetEditMode(true);
+  };
+
+  const saveBudgetEdits = () => {
+    const allocated = Number(draftAllocated);
+    const monthly = Number(draftMonthlyBudget);
+    if (!Number.isFinite(allocated) || allocated < 0 ||
+        !Number.isFinite(monthly) || monthly <= 0) {
+      return;
+    }
+    setBudgetPlan((current) => ({
+      ...current,
+      monthlyBudget: monthly,
+      categories: (current.categories || DEFAULT_BUDGET_CATEGORIES).map((category) =>
+        category.name === selectedCategoryName
+          ? { ...category, allocated }
+          : category
+      ),
+    }));
+    setBudgetEditMode(false);
   };
 
   return (
@@ -431,8 +453,13 @@ function Budgets() {
                 <div className="panel-section-heading">
                   <h3>Budget Details</h3>
 
-                  <button className="icon-button">
-                    ✎
+                  <button
+                    className="icon-button"
+                    type="button"
+                    onClick={budgetEditMode ? saveBudgetEdits : beginBudgetEdit}
+                    aria-label={budgetEditMode ? "Save budget limits" : "Edit budget limits"}
+                  >
+                    {budgetEditMode ? "✓" : "✎"}
                   </button>
                 </div>
 
@@ -440,24 +467,55 @@ function Budgets() {
                   <div>
                     <label>Monthly Budget</label>
 
-                    <div className="fake-input">
-                      <span>₹</span>
-                      {selectedCategory.allocated.toLocaleString(
-                        "en-IN"
-                      )}
-                    </div>
+                    {budgetEditMode ? (
+                      <div className="fake-input">
+                        <span>₹</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={draftAllocated}
+                          onChange={(event) => setDraftAllocated(event.target.value)}
+                          aria-label="Monthly category budget"
+                        />
+                      </div>
+                    ) : (
+                      <div className="fake-input">
+                        <span>₹</span>
+                        {selectedCategory.allocated.toLocaleString("en-IN")}
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <label>Budget Period</label>
 
-                    <div className="fake-input">
-                      Monthly
-                      <span>⌄</span>
-                    </div>
+                    {budgetEditMode ? (
+                      <div className="fake-input">
+                        <span>₹</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={draftMonthlyBudget}
+                          onChange={(event) => setDraftMonthlyBudget(event.target.value)}
+                          aria-label="Total monthly budget"
+                        />
+                      </div>
+                    ) : (
+                      <div className="fake-input">
+                        Monthly
+                        <span>⌄</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
+
+              {budgetEditMode && (
+                <div className="budget-edit-actions">
+                  <button type="button" onClick={() => setBudgetEditMode(false)}>Cancel</button>
+                  <button type="button" onClick={saveBudgetEdits}>Save budget</button>
+                </div>
+              )}
 
               <section className="panel-section">
                 <h3>Budget Controls</h3>
