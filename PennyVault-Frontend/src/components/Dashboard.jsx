@@ -133,7 +133,7 @@ function Dashboard() {
       .sort((a, b) => b.total - a.total);
 
     const maxAmount = sortedCategories[0]?.total || 0;
-    const colors = ["purple", "green", "blue", "pink", "orange", "teal"];
+    const colors = ["purple", "green"];
 
     return sortedCategories.map((category, index) => ({
       name: category.name,
