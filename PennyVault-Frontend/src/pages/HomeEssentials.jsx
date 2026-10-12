@@ -82,6 +82,7 @@ const getBudgetDetails = (item, budgetPlan, transactions, today) => {
     (category.subcategories || []).map((subcategory) => ({
       ...subcategory,
       parentCategoryName: category.name,
+      parentCategoryBudget: Number(category.allocated) || 0,
     }))
   );
   const budget = budgetEntries.find(
@@ -107,6 +108,7 @@ const getBudgetDetails = (item, budgetPlan, transactions, today) => {
     spent,
     remaining,
     parentCategoryName: budget.parentCategoryName,
+    parentCategoryBudget: budget.parentCategoryBudget,
   };
 };
 
@@ -663,8 +665,9 @@ function HomeEssentials() {
               return chosenSubcategory && matchedBudget ? (
                 <div className="home-essentials-budget-preview">
                   <strong>{matchedBudget.parentCategoryName} · {chosenSubcategory.name}</strong>
-                  <span>Limit {formatCurrency(matchedBudget.budget)} / month</span>
-                  <span>Spent {formatCurrency(spent)} · Remaining {formatCurrency(Number(matchedBudget.budget) - spent)}</span>
+                  <span>Category limit {formatCurrency(matchedBudget.parentCategoryBudget)} / month</span>
+                  <span>Subcategory limit {formatCurrency(matchedBudget.budget)} / month</span>
+                  <span>Spent {formatCurrency(spent)} · Subcategory remaining {formatCurrency(Number(matchedBudget.budget) - spent)}</span>
                 </div>
               ) : chosenSubcategory ? (
                 <div className="home-essentials-budget-preview">
