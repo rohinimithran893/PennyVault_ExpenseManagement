@@ -46,6 +46,7 @@ const budgetUsedPercent = 12;
 
 function Dashboard() {
   const [transactions, setTransactions] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
   const [isSpendingCategoriesLoading, setIsSpendingCategoriesLoading] = useState(true);
   const [spendingCategoriesError, setSpendingCategoriesError] = useState("");
 
@@ -91,6 +92,36 @@ function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAvailableCategories = async () => {
+      try {
+        const token = getToken();
+        const response = await fetch("http://localhost:8080/api/categories", {
+          method: "GET",
+          headers: token ? { Authorization: "Bearer " + token } : {},
+        });
+
+        if (!response.ok) throw new Error("Failed to load categories");
+
+        const data = await response.json();
+        if (Array.isArray(data) && isMounted) {
+          const names = data.map((category) => {
+            if (typeof category === "string") return category.trim();
+            return String(category.categoryName ?? category.name ?? category.category ?? "").trim();
+          }).filter(Boolean);
+          setAvailableCategories(names);
+        }
+      } catch (error) {
+        // Keep default categories and categories found in transactions if this request fails.
+        console.error("Error loading Dashboard categories:", error);
+      }
+    };
+
+    loadAvailableCategories();
+    return () => { isMounted = false; };
+  }, []);
   const spendingCategories = useMemo(() => {
     const now = new Date();
     const totalsByCategory = new Map();
@@ -140,12 +171,18 @@ function Dashboard() {
     ];
     const allCategoryNames = [
       ...defaultCategories,
-      ...[...totalsByCategory.keys()].filter(
-        (name) => !defaultCategories.some(
-          (defaultName) => defaultName.toLowerCase() === name.toLowerCase()
-        )
-      ),
-    ];
+      ...availableCategories,
+      ...totalsByCategory.keys(),
+    ].reduce((uniqueNames, name) => {
+      const trimmedName = name.trim();
+      const normalizedName = trimmedName.toLowerCase();
+      if (normalizedName && !uniqueNames.some(
+        (existingName) => existingName.toLowerCase() === normalizedName
+      )) {
+        uniqueNames.push(trimmedName);
+      }
+      return uniqueNames;
+    }, []);
     const categoryTotals = allCategoryNames.map((name) => {
       const matchingTotal = [...totalsByCategory.entries()].find(
         ([categoryName]) => categoryName.toLowerCase() === name.toLowerCase()
@@ -164,7 +201,7 @@ function Dashboard() {
       percentage: maxAmount > 0 ? (category.total / maxAmount) * 100 : 0,
       type: category.total > 0 ? colors[index % colors.length] : "empty",
     }));
-  }, [transactions]);
+  }, [transactions, availableCategories]);
 
   const donutRadius = 44;
     const donutCircumference = 2 * Math.PI * donutRadius;
