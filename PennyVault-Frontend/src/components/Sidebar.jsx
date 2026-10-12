@@ -31,7 +31,7 @@ const menuItems = [
 
 const financeItems = [
   { label: "Transactions", icon: IconArrowsExchange, path: "/transactions", badge: "12" },
-  { label: "Home & Essentials", icon: IconPackage, path: "/home-essentials" },
+  { label: "Home Inventory", icon: IconPackage, path: "/home-essentials" },
   { label: "Budgets", icon: IconWallet, path: "/budget-categories" },
   { label: "Reports", icon: IconReportAnalytics, path: "/reports" },
   { label: "Messages", icon: IconMail, path: "/messages", badge: 4 },
