@@ -683,9 +683,28 @@ function TransactionPage() {
     if (dateFilter === "all") {
       return true;
     }
-    const today = new Date();
+
+    // Ignore missing, malformed, or impossible dates when a date filter is active.
+    // Keep the all-time behavior above unchanged.
+    if (
+      typeof transaction.date !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(transaction.date)
+    ) {
+      return false;
+    }
+
     const [year, month, day] = transaction.date.split("-").map(Number);
     const transactionDate = new Date(year, month - 1, day);
+
+    if (
+      transactionDate.getFullYear() !== year ||
+      transactionDate.getMonth() !== month - 1 ||
+      transactionDate.getDate() !== day
+    ) {
+      return false;
+    }
+
+    const today = new Date();
 
     if (dateFilter === "today") {
       return (
