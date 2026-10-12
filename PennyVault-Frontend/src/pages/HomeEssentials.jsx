@@ -342,7 +342,7 @@ function HomeEssentials() {
     const query = searchTerm.trim().toLowerCase();
     const matchesSearch =
       !query ||
-      [item.productName, item.category, item.quantity, item.notes]
+      [item.productName, item.category, item.financeCategoryName, item.financeSubcategoryName, item.quantity, item.notes]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query));
     const matchesCategory =
@@ -705,6 +705,7 @@ function HomeEssentials() {
                 onChange={(event) =>
                   updateFormField("purchasedDate", event.target.value)
                 }
+                disabled={formData.transactionMode === "link"}
                 required
               />
             </label>
@@ -762,7 +763,12 @@ function HomeEssentials() {
                   {transactions
                     .filter((transaction) => {
                       const type = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
-                      return type === "EXPENSE" || type === "DEBIT";
+                      const isExpense = type === "EXPENSE" || type === "DEBIT";
+                      const alreadyUsed = items.some(
+                        (item) => item.id !== editingItemId &&
+                          String(item.transactionId) === String(transaction.id)
+                      );
+                      return isExpense && !alreadyUsed;
                     })
                     .map((transaction) => (
                       <option key={transaction.id} value={transaction.id}>
