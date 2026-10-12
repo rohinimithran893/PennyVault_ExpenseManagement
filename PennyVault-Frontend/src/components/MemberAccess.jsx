@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getToken } from "../utils/auth";
 import "../Styles/PeopleAccess.css";
 import {
   IconUsers,
@@ -115,6 +116,10 @@ const invitations = [
 function PeopleAccess() {
   const [search, setSearch] = useState("");
   const [activeMenu, setActiveMenu] = useState(null);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [memberEmail, setMemberEmail] = useState("");
+  const [memberRequestBusy, setMemberRequestBusy] = useState(false);
+  const [memberRequestMessage, setMemberRequestMessage] = useState("");
 
   const filteredMembers = members.filter((member) =>
     `${member.name} ${member.email}`
@@ -131,7 +136,7 @@ function PeopleAccess() {
           <p>Manage members, invitations, roles and access to SpendNest.</p>
         </div>
 
-        <button className="invite-button">
+        <button className="invite-button" onClick={() => { setShowAddMember(true); setMemberRequestMessage(""); }}>
           <IconPlus size={16} stroke={2.5} />
           Invite Member
         </button>
@@ -227,6 +232,42 @@ function PeopleAccess() {
           ))}
         </div>
       </section>
+      {showAddMember && (
+        <div role="dialog" aria-modal="true" aria-labelledby="add-household-member-title"
+          style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(15, 23, 42, 0.45)", display: "grid", placeItems: "center", padding: 20 }}>
+          <form onSubmit={async (event) => {
+            event.preventDefault();
+            setMemberRequestBusy(true);
+            setMemberRequestMessage("");
+            try {
+              const response = await fetch("http://localhost:8080/api/household/members", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+                body: JSON.stringify({ email: memberEmail.trim() }),
+              });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(data.message || data.error || "Unable to add this member.");
+              setMemberRequestMessage(`${data.fullName} was added to your household. Refresh Transactions to select them.`);
+              setMemberEmail("");
+            } catch (error) {
+              setMemberRequestMessage(error.message || "Unable to add this member.");
+            } finally {
+              setMemberRequestBusy(false);
+            }
+          }} style={{ width: "min(100%, 420px)", background: "white", borderRadius: 14, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
+          <h2 id="add-household-member-title">Add household member</h2>
+          <p>Enter the email address of someone who has already registered for PennyVault.</p>
+          <label htmlFor="household-member-email">Member email</label>
+          <input id="household-member-email" type="email" required value={memberEmail} onChange={(event) => setMemberEmail(event.target.value)}
+            placeholder="member@example.com" style={{ display: "block", width: "100%", margin: "8px 0 14px", padding: 10, boxSizing: "border-box" }} />
+          {memberRequestMessage && <p role="status">{memberRequestMessage}</p>}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+            <button type="button" onClick={() => setShowAddMember(false)}>Close</button>
+            <button type="submit" disabled={memberRequestBusy}>{memberRequestBusy ? "Adding..." : "Add member"}</button>
+          </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
