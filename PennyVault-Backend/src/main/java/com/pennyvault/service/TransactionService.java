@@ -25,7 +25,7 @@ public class TransactionService {
     private final TransactionShareRepository shareRepository;
 
     @Transactional
-    public TransactionResponse createTransaction(TransactionRequest request, String userEmail) {
+    @Transactional\n    public TransactionResponse createTransaction(TransactionRequest request, String userEmail) {
         User user = findUser(userEmail);
         Account account = accountRepository.findById(request.getAccountId()).orElseThrow(() -> new RuntimeException("Account not found"));
         verifyAccountOwner(account, user);
@@ -61,7 +61,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionResponse updateTransaction(Long transactionId, TransactionRequest request, String userEmail) {
+    @Transactional\n    public TransactionResponse updateTransaction(Long transactionId, TransactionRequest request, String userEmail) {
         User user = findUser(userEmail);
         Transaction transaction = transactionRepository.findById(transactionId).orElseThrow(() -> new RuntimeException("Transaction not found"));
         if (!isOwner(transaction, user)) throw new RuntimeException("You do not have permission to update this transaction");

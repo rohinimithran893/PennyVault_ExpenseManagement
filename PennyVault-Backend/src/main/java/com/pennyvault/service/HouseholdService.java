@@ -57,7 +57,7 @@ public class HouseholdService {
         User owner = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         Household household = householdRepository.findByOwner(owner)
             .orElseThrow(() -> new RuntimeException("Only the household owner can add members"));
-        User member = userRepository.findByEmail(request.getEmail().trim().toLowerCase())
+        User member = userRepository.findByEmailIgnoreCase(request.getEmail().trim())
             .orElseThrow(() -> new RuntimeException("This email is not registered yet. Ask the person to create an account first."));
         if (member.getId().equals(owner.getId())) throw new RuntimeException("You are already the household owner");
         if (membershipRepository.existsByHouseholdAndUser(household, member)) throw new RuntimeException("This person is already a household member");
