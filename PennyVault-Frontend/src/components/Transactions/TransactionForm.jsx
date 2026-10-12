@@ -32,6 +32,11 @@ function TransactionForm({
   saveTransaction,
   isSavingTransaction,
   cancelEdit,
+  householdMembers = [],
+  assignmentMode = "ONE_MEMBER",
+  setAssignmentMode = () => {},
+  selectedMemberIds = [],
+  setSelectedMemberIds = () => {},
 }) {
   if (!isAddTransactionOpen) {
     return null;
@@ -64,7 +69,28 @@ function TransactionForm({
         </div>
       </div>
 
-      <div className="transaction-form">\n        <div className="form-field member-assignment-field">\n          <label>{assignmentMode === "ONE_MEMBER" ? "Assign to member" : "Split equally between"}</label>\n          {assignmentMode === "ONE_MEMBER" ? (\n            <select value={selectedMemberIds[0] ?? ""} onChange={(e) => { setSelectedMemberIds(e.target.value ? [Number(e.target.value)] : []); setFormErrors((errors) => ({ ...errors, members: "" })); }}>\n              <option value="">Select household member</option>\n              {householdMembers.map((member) => <option key={member.id} value={member.id}>{member.fullName}{member.currentUser ? " (You)" : ""}</option>)}\n            </select>\n          ) : (\n            <div className="household-member-options">\n              {householdMembers.map((member) => (\n                <label key={member.id} className="household-member-option">\n                  <input type="checkbox" checked={selectedMemberIds.includes(member.id)} onChange={(e) => { setSelectedMemberIds((ids) => e.target.checked ? [...ids, member.id] : ids.filter((id) => id !== member.id)); setFormErrors((errors) => ({ ...errors, members: "" })); }} />\n                  <span>{member.fullName}{member.currentUser ? " (You)" : ""}</span>\n                </label>\n              ))}\n            </div>\n          )}\n          {assignmentMode === "SPLIT_EQUALLY" && selectedMemberIds.length > 0 && Number(amount) > 0 && <small>Each share: ₹{(Math.floor((Number(amount) * 100) / selectedMemberIds.length) / 100).toFixed(2)} approx.</small>}\n          {formErrors.members && <span className="field-error">{formErrors.members}</span>}\n          {householdMembers.length === 0 && <span className="field-error">No household members loaded. Please refresh or check the backend.</span>}\n        </div>
+      <div className="transaction-form">
+        <div className="form-field member-assignment-field">
+          <label>{assignmentMode === "ONE_MEMBER" ? "Assign to member" : "Split equally between"}</label>
+          {assignmentMode === "ONE_MEMBER" ? (
+            <select value={selectedMemberIds[0] ?? ""} onChange={(e) => { setSelectedMemberIds(e.target.value ? [Number(e.target.value)] : []); setFormErrors((errors) => ({ ...errors, members: "" })); }}>
+              <option value="">Select household member</option>
+              {householdMembers.map((member) => <option key={member.id} value={member.id}>{member.fullName}{member.currentUser ? " (You)" : ""}</option>)}
+            </select>
+          ) : (
+            <div className="household-member-options">
+              {householdMembers.map((member) => (
+                <label key={member.id} className="household-member-option">
+                  <input type="checkbox" checked={selectedMemberIds.includes(member.id)} onChange={(e) => { setSelectedMemberIds((ids) => e.target.checked ? [...ids, member.id] : ids.filter((id) => id !== member.id)); setFormErrors((errors) => ({ ...errors, members: "" })); }} />
+                  <span>{member.fullName}{member.currentUser ? " (You)" : ""}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          {assignmentMode === "SPLIT_EQUALLY" && selectedMemberIds.length > 0 && Number(amount) > 0 && <small>Each share: ₹{(Math.floor((Number(amount) * 100) / selectedMemberIds.length) / 100).toFixed(2)} approx.</small>}
+          {formErrors.members && <span className="field-error">{formErrors.members}</span>}
+          {householdMembers.length === 0 && <span className="field-error">No household members loaded. Please refresh or check the backend.</span>}
+        </div>
 
         {/* DATE */}
         <div className="form-field">
