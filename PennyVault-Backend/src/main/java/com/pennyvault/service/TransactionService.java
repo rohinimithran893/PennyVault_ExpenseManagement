@@ -47,7 +47,7 @@ public class TransactionService {
         Map<Long, Transaction> visible = new LinkedHashMap<>();
         accountRepository.findByUser(user).forEach(account -> transactionRepository.findByAccount(account).forEach(t -> visible.put(t.getId(), t)));
         shareRepository.findByMember(user).forEach(share -> visible.put(share.getTransaction().getId(), share.getTransaction()));
-        return visible.values().stream().map(this::mapToResponse).toList();
+        return visible.values().stream().map(transaction -> mapToResponse(transaction, user)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -111,13 +111,23 @@ public class TransactionService {
     }
 
     private TransactionResponse mapToResponse(Transaction t) {
+        return mapToResponse(t, t.getAccount().getUser());
+    }
+
+    private TransactionResponse mapToResponse(Transaction t, User viewer) {
         List<TransactionShare> shares = shareRepository.findByTransaction(t);
+        BigDecimal visibleAmount = t.getAmount();
+        if (!isOwner(t, viewer)) {
+            visibleAmount = shares.stream().filter(s -> s.getMember().getId().equals(viewer.getId()))
+                .map(TransactionShare::getShareAmount).findFirst()
+                .orElseThrow(() -> new RuntimeException("You do not have permission to access this transaction"));
+        }
         String mode = shares.isEmpty() ? null : shares.get(0).getAssignmentMode();
         return TransactionResponse.builder().id(t.getId()).accountId(t.getAccount().getId())
             .categoryId(t.getCategory().getId()).subcategoryId(t.getSubcategory() != null ? t.getSubcategory().getId() : null)
             .account(t.getAccount().getAccountName()).category(t.getCategory().getName())
             .subcategory(t.getSubcategory() != null ? t.getSubcategory().getName() : null)
-            .description(t.getDescription()).amount(t.getAmount()).transactionType(t.getTransactionType())
+            .description(t.getDescription()).amount(visibleAmount).transactionType(t.getTransactionType())
             .transactionDate(t.getTransactionDate()).assignmentMode(mode)
             .shares(shares.stream().map(s -> TransactionShareResponse.builder().memberId(s.getMember().getId())
                 .memberName(s.getMember().getFullName()).memberEmail(s.getMember().getEmail()).shareAmount(s.getShareAmount()).build()).toList())
