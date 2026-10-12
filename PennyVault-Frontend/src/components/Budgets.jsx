@@ -1,45 +1,78 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  IconAlertTriangle,
+  IconCalendar,
+  IconCheck,
+  IconChevronDown,
+  IconChevronUp,
+  IconClock,
+  IconPencil,
+  IconRefresh,
+  IconWallet,
+  IconX,
+} from "@tabler/icons-react";
+import { apiRequest } from "../services/apiClient";
+import {
+  getCategoryBudgetLimit,
+  getSubcategoryBudgetLimit,
+  readBudgetPlan,
+  saveBudgetPlan,
+} from "../utils/budgetConfig";
 import "../Styles/BudgetCategories.css";
-import { getToken } from "../utils/auth";
-import { DEFAULT_BUDGET_CATEGORIES, readBudgetPlan, saveBudgetPlan } from "../utils/budgetConfig";
 
+const formatCurrency = (value) => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "₹0";
+  return `₹${amount.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+  })}`;
+};
 
+const normaliseName = (value) => String(value ?? "").trim().toLowerCase();
 
-const members = [
-  { name: "Rohini (You)", amount: 10000, percent: 50, initial: "R" },
-  { name: "Varun", amount: 6000, percent: 30, initial: "V" },
-  { name: "Meera", amount: 4000, percent: 20, initial: "M" },
-];
+const getCurrentMonthKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
 
-const formatCurrency = (value) =>
-  `₹${value.toLocaleString("en-IN")}`;
+const isCurrentMonthExpense = (transaction, currentMonth) => {
+  const transactionDate = String(transaction.transactionDate ?? transaction.date ?? "");
+  const transactionType = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
+  return transactionDate.slice(0, 7) === currentMonth &&
+    (transactionType === "EXPENSE" || transactionType === "DEBIT");
+};
+
+const getPercent = (spent, limit) => {
+  const amount = Number(spent) || 0;
+  const budget = Number(limit) || 0;
+  if (budget <= 0) return amount > 0 ? 100 : 0;
+  return Math.round((amount / budget) * 100);
+};
 
 function Budgets() {
-  const [selectedCategoryName, setSelectedCategoryName] = useState(null);
-  const [panelMode, setPanelMode] = useState("details");
   const [budgetPlan, setBudgetPlan] = useState(readBudgetPlan);
+  const [categories, setCategories] = useState([]);
+  const [subcategoriesByCategory, setSubcategoriesByCategory] = useState({});
   const [transactions, setTransactions] = useState([]);
-  const [transactionsLoaded, setTransactionsLoaded] = useState(false);
-  const [budgetEditMode, setBudgetEditMode] = useState(false);
-  const [draftAllocated, setDraftAllocated] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [expandedCategoryId, setExpandedCategoryId] = useState(null);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [draftCategoryLimit, setDraftCategoryLimit] = useState("");
+  const [editingSubcategoryId, setEditingSubcategoryId] = useState(null);
+  const [draftSubcategoryLimit, setDraftSubcategoryLimit] = useState("");
+  const [isEditingMonthlyBudget, setIsEditingMonthlyBudget] = useState(false);
   const [draftMonthlyBudget, setDraftMonthlyBudget] = useState("");
-  const [editingSubcategoryName, setEditingSubcategoryName] = useState(null);
-  const [draftSubcategoryBudget, setDraftSubcategoryBudget] = useState("");
 
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const normalizeName = (value) => String(value ?? "").trim().toLowerCase();
-  const getPercent = (spent, limit) => {
-    const amount = Number(spent) || 0;
-    const budget = Number(limit) || 0;
-    return budget > 0 ? Math.round((amount / budget) * 100) : amount > 0 ? 100 : 0;
-  };
-  const isCurrentMonthExpense = (transaction) => {
-    const transactionDate = transaction.transactionDate ?? transaction.date ?? "";
-    const transactionType = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
-    return String(transactionDate).slice(0, 7) === currentMonth &&
-      (transactionType === "EXPENSE" || transactionType === "DEBIT");
-  };
+  const currentMonth = getCurrentMonthKey();
+  const monthLabel = useMemo(
+    () => new Date(`${currentMonth}-01T00:00:00`).toLocaleDateString("en-IN", {
+      month: "long",
+      year: "numeric",
+    }),
+    [currentMonth],
+  );
 
   useEffect(() => {
     saveBudgetPlan(budgetPlan);
@@ -47,744 +80,436 @@ function Budgets() {
 
   useEffect(() => {
     let isMounted = true;
-    const loadTransactions = async () => {
+
+    const loadBudgetSources = async () => {
+      setIsLoading(true);
+      setLoadError("");
+
+      let categoryData = [];
+      let transactionData = [];
+      const errors = [];
+
       try {
-        const token = getToken();
-        const response = await fetch("http://localhost:8080/api/transactions", {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) {
-          throw new Error("Unable to load transactions for budget totals.");
-        }
-        const data = await response.json();
-        if (isMounted) {
-          setTransactions(Array.isArray(data) ? data : []);
-          setTransactionsLoaded(true);
-        }
+        const response = await apiRequest("/categories");
+        if (!response.ok) throw new Error("Could not load the transaction categories.");
+        const result = await response.json();
+        categoryData = Array.isArray(result) ? result : [];
       } catch (error) {
-        console.error("Error loading transactions for budget totals:", error);
-        if (isMounted) setTransactionsLoaded(false);
+        errors.push(error.message || "Could not load categories.");
+      }
+
+      try {
+        const response = await apiRequest("/transactions");
+        if (!response.ok) throw new Error("Could not load transactions.");
+        const result = await response.json();
+        transactionData = Array.isArray(result) ? result : [];
+      } catch (error) {
+        errors.push(error.message || "Could not load transactions.");
+      }
+
+      const subcategoryEntries = await Promise.all(
+        categoryData.map(async (category) => {
+          try {
+            const response = await apiRequest(`/subcategories/category/${category.id}`);
+            if (!response.ok) return [String(category.id), []];
+            const result = await response.json();
+            return [String(category.id), Array.isArray(result) ? result : []];
+          } catch (error) {
+            console.error("Could not load budget subcategories:", error);
+            return [String(category.id), []];
+          }
+        }),
+      );
+
+      if (isMounted) {
+        setCategories(categoryData);
+        setTransactions(transactionData);
+        setSubcategoriesByCategory(Object.fromEntries(subcategoryEntries));
+        setLoadError(errors.join(" "));
+        setIsLoading(false);
       }
     };
-    loadTransactions();
-    return () => { isMounted = false; };
+
+    loadBudgetSources();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const configuredCategories = Array.isArray(budgetPlan.categories)
-    ? budgetPlan.categories
-    : DEFAULT_BUDGET_CATEGORIES;
-
-  const categories = configuredCategories.map((category) => {
-    const subcategories = (category.subcategories || []).map((subcategory) => {
-      const actualSpend = transactions
-        .filter((transaction) =>
-          isCurrentMonthExpense(transaction) &&
-          normalizeName(transaction.subcategory) === normalizeName(subcategory.name)
-        )
-        .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
-      return {
-        ...subcategory,
-        spent: transactionsLoaded ? actualSpend : Number(subcategory.spent) || 0,
-      };
-    });
-    const categorySpend = subcategories.reduce(
-      (sum, subcategory) => sum + (Number(subcategory.spent) || 0),
-      0
-    );
-    return {
-      ...category,
-      allocated: Number(category.allocated) || 0,
-      spent: transactionsLoaded ? categorySpend : Number(category.spent) || 0,
-      subcategories,
-    };
-  });
-
-  const selectedCategory = categories.find(
-    (category) => category.name === selectedCategoryName
-  ) || null;
-  const totalBudget = Number(budgetPlan.monthlyBudget) || 80000;
-  const totalAllocated = configuredCategories.reduce(
-    (sum, category) => sum + (Number(category.allocated) || 0),
-    0
+  const monthlyBudget = Number(budgetPlan.monthlyBudget) || 0;
+  const currentMonthTransactions = transactions.filter((transaction) =>
+    isCurrentMonthExpense(transaction, currentMonth)
   );
-  const remaining = totalBudget - totalAllocated;
 
-  const openPanel = (category, mode) => {
-    setSelectedCategoryName(category.name);
-    setPanelMode(mode);
-    setBudgetEditMode(false);
+  const totalSpent = currentMonthTransactions.reduce(
+    (sum, transaction) => sum + (Number(transaction.amount) || 0),
+    0,
+  );
+
+  const getCategorySpent = (category) =>
+    currentMonthTransactions
+      .filter((transaction) => {
+        if (transaction.categoryId != null) {
+          return String(transaction.categoryId) === String(category.id);
+        }
+        return normaliseName(transaction.category) === normaliseName(category.name);
+      })
+      .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+
+  const getSubcategorySpent = (category, subcategory) =>
+    currentMonthTransactions
+      .filter((transaction) => {
+        const categoryMatches = transaction.categoryId != null
+          ? String(transaction.categoryId) === String(category.id)
+          : normaliseName(transaction.category) === normaliseName(category.name);
+        const subcategoryMatches = transaction.subcategoryId != null
+          ? String(transaction.subcategoryId) === String(subcategory.id)
+          : normaliseName(transaction.subcategory) === normaliseName(subcategory.name);
+        return categoryMatches && subcategoryMatches;
+      })
+      .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+
+  const totalAllocated = categories.reduce(
+    (sum, category) =>
+      sum + getCategoryBudgetLimit(budgetPlan, category.id, category.name),
+    0,
+  );
+
+  const beginMonthlyBudgetEdit = () => {
+    setDraftMonthlyBudget(String(monthlyBudget));
+    setIsEditingMonthlyBudget(true);
   };
 
-  const closePanel = () => {
-    setSelectedCategoryName(null);
-    setBudgetEditMode(false);
+  const saveMonthlyBudget = () => {
+    const value = Number(draftMonthlyBudget);
+    if (!Number.isFinite(value) || value <= 0) return;
+    setBudgetPlan((current) => ({ ...current, monthlyBudget: value }));
+    setIsEditingMonthlyBudget(false);
   };
 
-  const beginBudgetEdit = () => {
-    if (!selectedCategory) return;
-    setDraftAllocated(String(selectedCategory.allocated));
-    setDraftMonthlyBudget(String(totalBudget));
-    setBudgetEditMode(true);
+  const beginCategoryEdit = (category) => {
+    setEditingCategoryId(String(category.id));
+    setDraftCategoryLimit(String(getCategoryBudgetLimit(budgetPlan, category.id, category.name)));
+    setEditingSubcategoryId(null);
   };
 
-  const saveSubcategoryBudget = () => {
-    const budget = Number(draftSubcategoryBudget);
-    if (!Number.isFinite(budget) || budget < 0 || !selectedCategoryName || !editingSubcategoryName) {
-      return;
-    }
+  const saveCategoryLimit = (category) => {
+    const value = Number(draftCategoryLimit);
+    if (!Number.isFinite(value) || value < 0) return;
     setBudgetPlan((current) => ({
       ...current,
-      categories: (current.categories || DEFAULT_BUDGET_CATEGORIES).map((category) =>
-        category.name !== selectedCategoryName
-          ? category
-          : {
-              ...category,
-              subcategories: (category.subcategories || []).map((subcategory) =>
-                subcategory.name === editingSubcategoryName
-                  ? { ...subcategory, budget }
-                  : subcategory
-              ),
-            }
-      ),
+      categoryBudgets: {
+        ...(current.categoryBudgets || {}),
+        [String(category.id)]: value,
+      },
     }));
-    setEditingSubcategoryName(null);
+    setEditingCategoryId(null);
   };
 
-  const saveBudgetEdits = () => {
-    const allocated = Number(draftAllocated);
-    const monthly = Number(draftMonthlyBudget);
-    if (!Number.isFinite(allocated) || allocated < 0 ||
-        !Number.isFinite(monthly) || monthly <= 0) {
-      return;
-    }
+  const beginSubcategoryEdit = (subcategory) => {
+    setEditingSubcategoryId(String(subcategory.id));
+    setDraftSubcategoryLimit(String(
+      getSubcategoryBudgetLimit(budgetPlan, subcategory.id, subcategory.name)
+    ));
+    setEditingCategoryId(null);
+  };
+
+  const saveSubcategoryLimit = (subcategory) => {
+    const value = Number(draftSubcategoryLimit);
+    if (!Number.isFinite(value) || value < 0) return;
     setBudgetPlan((current) => ({
       ...current,
-      monthlyBudget: monthly,
-      categories: (current.categories || DEFAULT_BUDGET_CATEGORIES).map((category) =>
-        category.name === selectedCategoryName
-          ? { ...category, allocated }
-          : category
-      ),
+      subcategoryBudgets: {
+        ...(current.subcategoryBudgets || {}),
+        [String(subcategory.id)]: value,
+      },
     }));
-    setBudgetEditMode(false);
+    setEditingSubcategoryId(null);
   };
 
   return (
-    <div className="budgets-page">
-      {/* PAGE HEADER */}
-      <header className="budget-header">
+    <section className="finance-budgets-page">
+      <header className="finance-budgets-header">
         <div>
           <h1>Budgets</h1>
-          <p>Plan smarter. Spend better. Stay on track.</p>
+          <p>Budget limits and spending are based on the same categories and transactions used in PennyVault.</p>
         </div>
-
-        <div className="budget-header-actions">
-          <button className="month-selector" type="button">
-            <span>▣</span>
-            {now.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
-            <span className="chevron">⌄</span>
-          </button>
-
-          <button className="primary-button">
-            <span>＋</span>
-            Add Category
-          </button>
+        <div className="finance-budgets-header-date">
+          <IconCalendar size={17} />
+          {monthLabel}
         </div>
       </header>
 
-      {/* SUMMARY */}
-      <section className="budget-summary">
-        <div className="summary-card">
-          <div className="summary-icon purple">
-            ▣
-          </div>
-
-          <div>
-            <span className="summary-label">Monthly Budget</span>
-            <strong>{formatCurrency(totalBudget)}</strong>
-
-            <button
-              className="edit-budget"
-              type="button"
-              onClick={() => {
-                const firstCategory = categories[0];
-                if (!firstCategory) return;
-                setSelectedCategoryName(firstCategory.name);
-                setPanelMode("details");
-                setDraftAllocated(String(firstCategory.allocated));
-                setDraftMonthlyBudget(String(totalBudget));
-                setBudgetEditMode(true);
-              }}
-            >
-              ✎ Edit Budget
-            </button>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon green">
-            ↗
-          </div>
-
-          <div>
-            <span className="summary-label">Total Allocated</span>
-            <strong>{formatCurrency(totalAllocated)}</strong>
-
-            <small className="positive">
-              {totalBudget > 0 ? ((totalAllocated / totalBudget) * 100).toFixed(1) : "0"}% allocated
-            </small>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <div className="summary-icon orange">
-            ▣
-          </div>
-
-          <div>
-            <span className="summary-label">Remaining</span>
-            <strong>{formatCurrency(remaining)}</strong>
-
-            <small className={remaining >= 0 ? "positive" : "negative"}>
-              {totalBudget > 0 ? ((Math.abs(remaining) / totalBudget) * 100).toFixed(1) : "0"}% {remaining >= 0 ? "remaining" : "over allocated"}
-            </small>
-          </div>
-        </div>
-      </section>
-
-      {/* CATEGORY SECTION */}
-      <section className="category-section">
-        <div className="section-heading">
-          <h2>All Budget Categories</h2>
-
-          <button className="summary-button">
-            ◔ View Summary
+      {loadError && (
+        <div className="finance-budgets-alert" role="alert">
+          <IconAlertTriangle size={19} />
+          <span>{loadError} Check that the backend is running and you are signed in.</span>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            aria-label="Reload budget data"
+          >
+            <IconRefresh size={17} />
+            Retry
           </button>
         </div>
+      )}
 
-        <div className="category-grid">
-          {categories.map((category) => {
-            const percentage = getPercent(category.spent, category.allocated);
-
-            const remainingAmount =
-              category.allocated - category.spent;
-
-            return (
-              <article
-                className={`category-card ${
-                  selectedCategory?.name === category.name
-                    ? "selected"
-                    : ""
-                }`}
-                key={category.name}
-              >
-                <div className="category-top">
-                  <div className={`category-icon ${category.color}`}>
-                    {category.icon}
-                  </div>
-
-                  <h3>{category.name}</h3>
-
-                  <button className="more-button">⋮</button>
-                </div>
-
-                <div className="category-values">
-                  <div>
-                    <span>Allocated</span>
-                    <strong>
-                      {formatCurrency(category.allocated)}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Spent</span>
-                    <strong>
-                      {formatCurrency(category.spent)}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Remaining</span>
-                    <strong>
-                      {formatCurrency(remainingAmount)}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="category-progress-row">
-                  <div className="progress-track">
-                    <div
-                      className={`progress-fill ${category.color}`}
-                      style={{
-                        width: `${Math.min(percentage, 100)}%`,
-                      }}
-                    />
-                  </div>
-
-                  <strong>{percentage}%</strong>
-                </div>
-
-                {/* TWO ACTIONS */}
-                <div className="category-actions">
-                  <button
-                    className={
-                      panelMode === "details" &&
-                      selectedCategory?.name === category.name
-                        ? "active"
-                        : ""
-                    }
-                    onClick={() =>
-                      openPanel(category, "details")
-                    }
-                  >
-                    ◔ Budget Details
-                  </button>
-
-                  <button
-                    className={
-                      panelMode === "subcategories" &&
-                      selectedCategory?.name === category.name
-                        ? "active"
-                        : ""
-                    }
-                    onClick={() =>
-                      openPanel(category, "subcategories")
-                    }
-                  >
-                    ☷ Subcategories
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* TIP */}
-      <div className="budget-tip">
-        <div className="tip-icon">♧</div>
-
-        <div>
-          <strong>Tip</strong>
-          <p>
-            Review your budgets regularly and adjust them based
-            on your spending.
-          </p>
-        </div>
-
-        <button>Learn more →</button>
-      </div>
-
-      {/* RIGHT SIDE PANEL */}
-      {selectedCategory && (
-        <div className="budget-panel">
-          <div className="panel-header">
-            <div className="panel-title">
-              <div
-                className={`panel-category-icon ${selectedCategory.color}`}
-              >
-                {selectedCategory.icon}
-              </div>
-
-              <div>
-                <h2>{selectedCategory.name}</h2>
-                <p>
-                  {panelMode === "details"
-                    ? "Manage your budget"
-                    : "Manage subcategories"}
-                </p>
-              </div>
-            </div>
-
-            <button
-              className="close-panel"
-              onClick={closePanel}
-            >
-              ×
-            </button>
-          </div>
-
-          {/* PANEL TABS */}
-          <div className="panel-tabs">
-            <button
-              className={
-                panelMode === "details" ? "active" : ""
-              }
-              onClick={() => setPanelMode("details")}
-            >
-              ◔ Budget Details
-            </button>
-
-            <button
-              className={
-                panelMode === "subcategories"
-                  ? "active"
-                  : ""
-              }
-              onClick={() => setPanelMode("subcategories")}
-            >
-              ☷ Subcategories
-            </button>
-          </div>
-
-          {/* PANEL SUMMARY */}
-          <div className="panel-summary">
-            <div>
-              <strong>
-                {formatCurrency(selectedCategory.allocated)}
-              </strong>
-              <span>Budget</span>
-            </div>
-
-            <div>
-              <strong className="purple-text">
-                {formatCurrency(selectedCategory.spent)}
-              </strong>
-              <span>
-                Spent (
-                {getPercent(selectedCategory.spent, selectedCategory.allocated)}
-                %)
-              </span>
-            </div>
-
-            <div>
-              <strong className="green-text">
-                {formatCurrency(
-                  selectedCategory.allocated -
-                    selectedCategory.spent
-                )}
-              </strong>
-              <span>Remaining</span>
-            </div>
-          </div>
-
-          <div className="panel-progress">
-            <div
-              className="panel-progress-fill"
-              style={{
-                width: `${Math.min(getPercent(selectedCategory.spent, selectedCategory.allocated), 100)}%`,
-              }}
-            />
-
-            <strong>
-              {getPercent(selectedCategory.spent, selectedCategory.allocated)}
-              %
-            </strong>
-          </div>
-
-          {/* DETAILS MODE */}
-          {panelMode === "details" && (
-            <div className="details-content">
-              <section className="panel-section">
-                <div className="panel-section-heading">
-                  <h3>Budget Details</h3>
-
-                  <button
-                    className="icon-button"
-                    type="button"
-                    onClick={budgetEditMode ? saveBudgetEdits : beginBudgetEdit}
-                    aria-label={budgetEditMode ? "Save budget limits" : "Edit budget limits"}
-                  >
-                    {budgetEditMode ? "✓" : "✎"}
-                  </button>
-                </div>
-
-                <div className="form-grid">
-                  <div>
-                    <label>Category Budget</label>
-
-                    {budgetEditMode ? (
-                      <div className="fake-input">
-                        <span>₹</span>
-                        <input
-                          type="number"
-                          min="0"
-                          value={draftAllocated}
-                          onChange={(event) => setDraftAllocated(event.target.value)}
-                          aria-label="Monthly category budget"
-                        />
-                      </div>
-                    ) : (
-                      <div className="fake-input">
-                        <span>₹</span>
-                        {selectedCategory.allocated.toLocaleString("en-IN")}
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label>Total Monthly Budget</label>
-
-                    {budgetEditMode ? (
-                      <div className="fake-input">
-                        <span>₹</span>
-                        <input
-                          type="number"
-                          min="1"
-                          value={draftMonthlyBudget}
-                          onChange={(event) => setDraftMonthlyBudget(event.target.value)}
-                          aria-label="Total monthly budget"
-                        />
-                      </div>
-                    ) : (
-                      <div className="fake-input">
-                        Monthly
-                        <span>⌄</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              {budgetEditMode && (
-                <div className="budget-edit-actions">
-                  <button type="button" onClick={() => setBudgetEditMode(false)}>Cancel</button>
-                  <button type="button" onClick={saveBudgetEdits}>Save budget</button>
-                </div>
-              )}
-
-              <section className="panel-section">
-                <h3>Budget Controls</h3>
-
-                <div className="control-row">
-                  <div className="control-icon">
-                    ◉
-                  </div>
-
-                  <div className="control-text">
-                    <strong>Overspending alert</strong>
-                    <span>
-                      Notify me when spending reaches
-                    </span>
-                  </div>
-
-                  <select defaultValue="80%">
-                    <option>70%</option>
-                    <option>80%</option>
-                    <option>90%</option>
-                    <option>100%</option>
-                  </select>
-
-                  <div className="toggle active" />
-                </div>
-
-                <div className="control-row">
-                  <div className="control-icon">
-                    ◌
-                  </div>
-
-                  <div className="control-text">
-                    <strong>
-                      Carry forward unused amount
-                    </strong>
-                    <span>
-                      Unused amount will be carried to next
-                      month
-                    </span>
-                  </div>
-
-                  <div className="toggle active" />
-                </div>
-              </section>
-
-              {/*<section className="panel-section">
-                <h3>Spending Progress</h3>
-
-                <div className="spending-box">
-                  <div>
-                    <span>Budget</span>
-                    <strong>
-                      {formatCurrency(
-                        selectedCategory.allocated
-                      )}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Spent</span>
-                    <strong>
-                      {formatCurrency(
-                        selectedCategory.spent
-                      )}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Remaining</span>
-                    <strong className="green-text">
-                      {formatCurrency(
-                        selectedCategory.allocated -
-                          selectedCategory.spent
-                      )}
-                    </strong>
-                  </div>
-
-                 <div className="large-progress">
-                    <div
-                      style={{
-                        width: `${(selectedCategory.spent /selectedCategory.allocated) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div> 
-              </section>*/}
-
-              <section className="panel-section">
-                <h3>Spent by Members</h3>
-
-                <div className="members-list">
-                  {members.map((member) => (
-                    <div
-                      className="member-row"
-                      key={member.name}
-                    >
-                      <div className="member-avatar">
-                        {member.initial}
-                      </div>
-
-                      <div className="member-info">
-                        <div>
-                          <strong>{member.name}</strong>
-                          <span>
-                            {formatCurrency(member.amount)}
-                          </span>
-                        </div>
-
-                        <div className="member-progress">
-                          <div
-                            style={{
-                              width: `${member.percent}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <span className="member-percent">
-                        {member.percent}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-          )}
-
-          {/* SUBCATEGORY MODE */}
-          {panelMode === "subcategories" && (
-            <div className="subcategory-content">
-              <div className="subcategory-heading">
-                <div>
-                  <h3>Subcategories</h3>
-                  <p>
-                    Track spending within{" "}
-                    {selectedCategory.name}
-                  </p>
-                </div>
-
-                <button className="add-subcategory">
-                  ＋ Add
+      <div className="finance-budgets-summary">
+        <article className="finance-budgets-summary-card summary-budget-limit">
+          <span className="finance-budgets-summary-icon"><IconWallet size={22} /></span>
+          <div className="finance-budgets-summary-content">
+            <p>Monthly budget</p>
+            {isEditingMonthlyBudget ? (
+              <div className="finance-budgets-inline-edit">
+                <span>₹</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={draftMonthlyBudget}
+                  onChange={(event) => setDraftMonthlyBudget(event.target.value)}
+                  aria-label="Monthly budget limit"
+                />
+                <button type="button" onClick={saveMonthlyBudget} aria-label="Save monthly budget">
+                  <IconCheck size={16} />
+                </button>
+                <button type="button" onClick={() => setIsEditingMonthlyBudget(false)} aria-label="Cancel monthly budget edit">
+                  <IconX size={16} />
                 </button>
               </div>
+            ) : (
+              <div className="finance-budgets-summary-value-row">
+                <strong>{formatCurrency(monthlyBudget)}</strong>
+                <button type="button" onClick={beginMonthlyBudgetEdit} aria-label="Edit monthly budget">
+                  <IconPencil size={15} />
+                </button>
+              </div>
+            )}
+            <span>Set your overall monthly limit</span>
+          </div>
+        </article>
 
-              <div className="subcategory-list">
-                {selectedCategory.subcategories.map(
-                  (sub) => {
-                    const percentage = getPercent(sub.spent, sub.budget);
+        <article className="finance-budgets-summary-card summary-budget-spent">
+          <span className="finance-budgets-summary-icon"><IconCalendar size={22} /></span>
+          <div className="finance-budgets-summary-content">
+            <p>Spent this month</p>
+            <strong>{formatCurrency(totalSpent)}</strong>
+            <span>{currentMonthTransactions.length} expense transactions</span>
+          </div>
+        </article>
 
-                    return (
-                      <div
-                        className="subcategory-item"
-                        key={sub.name}
-                      >
-                        <div
-                          className={`subcategory-icon ${sub.color}`}
-                        >
-                          {sub.name.charAt(0)}
+        <article className="finance-budgets-summary-card summary-budget-remaining">
+          <span className="finance-budgets-summary-icon"><IconClock size={22} /></span>
+          <div className="finance-budgets-summary-content">
+            <p>Monthly remaining</p>
+            <strong className={monthlyBudget - totalSpent < 0 ? "is-over-budget" : ""}>
+              {formatCurrency(monthlyBudget - totalSpent)}
+            </strong>
+            <span>{monthlyBudget > 0 ? `${getPercent(totalSpent, monthlyBudget)}% used` : "Set your monthly limit"}</span>
+          </div>
+        </article>
+
+        <article className="finance-budgets-summary-card summary-budget-allocated">
+          <span className="finance-budgets-summary-icon"><IconRefresh size={22} /></span>
+          <div className="finance-budgets-summary-content">
+            <p>Category limits</p>
+            <strong>{formatCurrency(totalAllocated)}</strong>
+            <span>{categories.length} transaction categories</span>
+          </div>
+        </article>
+      </div>
+
+      <section className="finance-budgets-category-section">
+        <div className="finance-budgets-section-header">
+          <div>
+            <h2>Budget by transaction category</h2>
+            <p>Edit a category or subcategory limit here; Home Inventory uses the same saved limits.</p>
+          </div>
+          <span className="finance-budgets-month-pill">{monthLabel}</span>
+        </div>
+
+        {isLoading ? (
+          <div className="finance-budgets-empty-state">
+            <span className="finance-budgets-loading-mark"><IconRefresh size={24} /></span>
+            <h3>Loading budgets</h3>
+            <p>Reading your categories and transactions from PennyVault.</p>
+          </div>
+        ) : categories.length === 0 ? (
+          <div className="finance-budgets-empty-state">
+            <span className="finance-budgets-loading-mark"><IconWallet size={24} /></span>
+            <h3>No transaction categories found</h3>
+            <p>Once the Transactions page has categories available from the backend, they will appear here with matching budget controls.</p>
+          </div>
+        ) : (
+          <div className="finance-budgets-category-list">
+            {categories.map((category) => {
+              const budget = getCategoryBudgetLimit(budgetPlan, category.id, category.name);
+              const spent = getCategorySpent(category);
+              const remaining = budget - spent;
+              const percentage = getPercent(spent, budget);
+              const categorySubcategories = subcategoriesByCategory[String(category.id)] || [];
+              const isExpanded = String(expandedCategoryId) === String(category.id);
+              const isEditing = editingCategoryId === String(category.id);
+
+              return (
+                <article className="finance-budgets-category-card" key={category.id}>
+                  <div className="finance-budgets-category-main">
+                    <div className="finance-budgets-category-icon">
+                      {category.icon || category.name?.slice(0, 1) || "•"}
+                    </div>
+
+                    <div className="finance-budgets-category-name">
+                      <h3>{category.name}</h3>
+                      <p>{categorySubcategories.length} subcategories</p>
+                    </div>
+
+                    <div className="finance-budgets-category-metric">
+                      <span>Budget limit</span>
+                      {isEditing ? (
+                        <div className="finance-budgets-inline-edit">
+                          <span>₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={draftCategoryLimit}
+                            onChange={(event) => setDraftCategoryLimit(event.target.value)}
+                            aria-label={`${category.name} budget limit`}
+                          />
+                          <button type="button" onClick={() => saveCategoryLimit(category)} aria-label="Save category budget">
+                            <IconCheck size={16} />
+                          </button>
+                          <button type="button" onClick={() => setEditingCategoryId(null)} aria-label="Cancel category budget edit">
+                            <IconX size={16} />
+                          </button>
                         </div>
+                      ) : (
+                        <strong>{budget > 0 ? formatCurrency(budget) : "Not set"}</strong>
+                      )}
+                    </div>
 
-                        <div className="subcategory-info">
-                          <div className="subcategory-title">
-                            <strong>{sub.name}</strong>
+                    <div className="finance-budgets-category-metric">
+                      <span>Spent this month</span>
+                      <strong>{formatCurrency(spent)}</strong>
+                    </div>
 
+                    <div className="finance-budgets-category-metric">
+                      <span>Remaining</span>
+                      <strong className={remaining < 0 ? "is-over-budget" : ""}>
+                        {budget > 0 ? formatCurrency(remaining) : "Set a limit"}
+                      </strong>
+                    </div>
+
+                    <div className="finance-budgets-category-actions">
+                      <button
+                        type="button"
+                        onClick={() => beginCategoryEdit(category)}
+                        aria-label={`Edit ${category.name} budget limit`}
+                        title="Edit category limit"
+                      >
+                        <IconPencil size={17} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedCategoryId(isExpanded ? null : String(category.id))}
+                        aria-expanded={isExpanded}
+                        aria-label={`Show ${category.name} subcategory budgets`}
+                        title="View subcategory budgets"
+                      >
+                        {isExpanded ? <IconChevronUp size={18} /> : <IconChevronDown size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="finance-budgets-progress-track">
+                    <div
+                      className={`finance-budgets-progress-fill ${remaining < 0 ? "progress-over" : ""}`}
+                      style={{ width: `${Math.min(percentage, 100)}%` }}
+                    />
+                  </div>
+
+                  <div className="finance-budgets-category-footer">
+                    <span>
+                      {budget <= 0
+                        ? "No category limit configured yet"
+                        : remaining < 0
+                          ? "Over budget"
+                          : `${formatCurrency(remaining)} remaining`}
+                    </span>
+                    <span>{budget > 0 ? `${percentage}% used` : "—"}</span>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="finance-budgets-subcategory-list">
+                      {categorySubcategories.length === 0 ? (
+                        <p className="finance-budgets-subcategory-empty">No subcategories are configured for this category.</p>
+                      ) : categorySubcategories.map((subcategory) => {
+                        const subBudget = getSubcategoryBudgetLimit(
+                          budgetPlan,
+                          subcategory.id,
+                          subcategory.name,
+                        );
+                        const subSpent = getSubcategorySpent(category, subcategory);
+                        const subRemaining = subBudget - subSpent;
+                        const subPercentage = getPercent(subSpent, subBudget);
+                        const editingSubcategory = editingSubcategoryId === String(subcategory.id);
+
+                        return (
+                          <div className="finance-budgets-subcategory-row" key={subcategory.id}>
+                            <div className="finance-budgets-subcategory-name">
+                              <span>{subcategory.name}</span>
+                              {editingSubcategory ? (
+                                <div className="finance-budgets-inline-edit">
+                                  <span>₹</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={draftSubcategoryLimit}
+                                    onChange={(event) => setDraftSubcategoryLimit(event.target.value)}
+                                    aria-label={`${subcategory.name} budget limit`}
+                                  />
+                                  <button type="button" onClick={() => saveSubcategoryLimit(subcategory)} aria-label="Save subcategory budget">
+                                    <IconCheck size={15} />
+                                  </button>
+                                  <button type="button" onClick={() => setEditingSubcategoryId(null)} aria-label="Cancel subcategory budget edit">
+                                    <IconX size={15} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <strong>{subBudget > 0 ? formatCurrency(subBudget) : "Not set"}</strong>
+                              )}
+                            </div>
+                            <div className="finance-budgets-subcategory-spend">
+                              <span>Spent {formatCurrency(subSpent)}</span>
+                              <span className={subBudget > 0 && subRemaining < 0 ? "is-over-budget" : ""}>
+                                {subBudget > 0 ? `${formatCurrency(subRemaining)} left` : "Set a limit"}
+                              </span>
+                            </div>
+                            <div className="finance-budgets-subcategory-progress">
+                              <div
+                                className={`finance-budgets-progress-fill ${subRemaining < 0 ? "progress-over" : ""}`}
+                                style={{ width: `${Math.min(subPercentage, 100)}%` }}
+                              />
+                            </div>
                             <button
-                              className="edit-subcategory"
+                              className="finance-budgets-subcategory-edit"
                               type="button"
-                              aria-label={`Edit ${sub.name} budget`}
-                              onClick={() => {
-                                setEditingSubcategoryName(sub.name);
-                                setDraftSubcategoryBudget(String(sub.budget));
-                              }}
+                              onClick={() => beginSubcategoryEdit(subcategory)}
+                              aria-label={`Edit ${subcategory.name} budget limit`}
                             >
-                              ✎
+                              <IconPencil size={15} />
                             </button>
                           </div>
-
-                          {editingSubcategoryName === sub.name ? (
-                            <div className="subcategory-budget-editor">
-                              <label>
-                                Monthly limit (₹)
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={draftSubcategoryBudget}
-                                  onChange={(event) => setDraftSubcategoryBudget(event.target.value)}
-                                  aria-label={`${sub.name} monthly budget`}
-                                />
-                              </label>
-                              <button type="button" onClick={saveSubcategoryBudget}>Save</button>
-                              <button type="button" onClick={() => setEditingSubcategoryName(null)}>Cancel</button>
-                            </div>
-                          ) : (
-                            <span>
-                              {formatCurrency(sub.spent)} of{" "}
-                              {formatCurrency(sub.budget)}
-                            </span>
-                          )}
-
-                          <div className="subcategory-progress">
-                            <div
-                              className={`progress-fill ${sub.color}`}
-                              style={{
-                                width: `${Math.min(
-                                  percentage,
-                                  100
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        <strong className="subcategory-percent">
-                          {percentage}%
-                        </strong>
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-
-              <button className="full-add-subcategory">
-                ＋ Add Subcategory
-              </button>
-            </div>
-          )}
-
-          <div className="panel-footer">
-            <button
-              className="cancel-button"
-              onClick={closePanel}
-            >
-              Cancel
-            </button>
-
-            <button className="save-button">
-              Save Changes
-            </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </section>
+    </section>
   );
 }
 
