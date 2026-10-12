@@ -54,7 +54,7 @@ const bottomItems = [
 
 function NavSection({ title, items, collapsed, className = "" }) {
   return (
-    <div className={\`nav-section \${className}\`.trim()}>
+    <div className={`nav-section ${className}`.trim()}>
       {!collapsed && <span className="nav-section-title">{title}</span>}
 
       {items.map((item) => {
@@ -64,7 +64,7 @@ function NavSection({ title, items, collapsed, className = "" }) {
           <NavLink
             key={item.label}
             to={item.path}
-            className={({ isActive }) => \`nav-item \${isActive ? "active" : ""}\`}
+            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             title={collapsed ? item.label : ""}
           >
             <span className="nav-icon">
@@ -115,7 +115,7 @@ function Sidebar({ collapsed, setCollapsed }) {
   }, []);
 
   return (
-    <aside className={\`sidebar \${collapsed ? "sidebar-collapsed" : ""}\`}>
+    <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""}`}>
       <div className="sidebar-top">
         <div className="sidebar-brand">
           <div className="brand-logo">P</div>
