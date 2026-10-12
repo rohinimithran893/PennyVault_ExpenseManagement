@@ -367,14 +367,14 @@ function HomeEssentials() {
           accountId: Number(formData.accountId),
           categoryId: Number(formData.financeCategoryId),
           subcategoryId: Number(formData.financeSubcategoryId),
-          description: \`\${formData.productName.trim()} purchase\`,
+          description: `${formData.productName.trim()} purchase`,
           amount: purchaseAmount,
           transactionType: "EXPENSE",
           transactionDate: formData.purchasedDate,
         };
         const method = existingItem?.transactionId ? "PUT" : "POST";
         const endpoint = existingItem?.transactionId
-          ? \`/transactions/\${existingItem.transactionId}\`
+          ? `/transactions/${existingItem.transactionId}`
           : "/transactions";
         const response = await apiRequest(endpoint, {
           method,
@@ -421,7 +421,7 @@ function HomeEssentials() {
         accountId: linkedPurchase.accountId ?? "",
         financeCategoryId: linkedPurchase.financeCategoryId ?? "",
         financeSubcategoryId: linkedPurchase.financeSubcategoryId ?? "",
-        id: editingItemId || \`\${Date.now()}-\${Math.random().toString(36).slice(2, 9)}\`,
+        id: editingItemId || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       };
 
       setItems((current) =>
@@ -594,7 +594,7 @@ function HomeEssentials() {
                 <option value="">Select account</option>
                 {accounts.map((account) => (
                   <option key={account.id} value={account.id}>
-                    {account.accountName || account.name || \`Account \${account.id}\`}
+                    {account.accountName || account.name || `Account ${account.id}`}
                   </option>
                 ))}
               </select>
