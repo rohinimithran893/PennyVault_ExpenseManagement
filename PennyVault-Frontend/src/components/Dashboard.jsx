@@ -104,7 +104,7 @@ function Dashboard() {
       if (!dateValue || !Number.isFinite(amount) || amount <= 0) return;
 
       // Parse date-only API values in local time to avoid timezone shifts.
-      const transactionDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(dateValue))
+      const transactionDate = /^\d{4}-\d{2}-\d{2}$/.test(String(dateValue))
         ? new Date(`${dateValue}T00:00:00`)
         : new Date(dateValue);
 
