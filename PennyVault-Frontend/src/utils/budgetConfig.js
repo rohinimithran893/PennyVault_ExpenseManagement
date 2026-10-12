@@ -8,7 +8,7 @@ export const DEFAULT_BUDGET_CATEGORIES = [
     allocated: 25000,
     spent: 20000,
     subcategories: [
-      { name: "Rent / EMI", spent: 12000, budget: 20000, color: "purple" },
+      { name: "Rent / EMI", spent: 12000, budget: 17000, color: "purple" },
       { name: "Electricity", spent: 950, budget: 1500, color: "orange" },
       { name: "Water", spent: 500, budget: 800, color: "blue" },
       { name: "Internet", spent: 600, budget: 1200, color: "green" },
@@ -81,15 +81,15 @@ export const DEFAULT_BUDGET_CATEGORIES = [
     name: "Finance & Others",
     icon: "▰",
     color: "teal",
-    allocated: 10000,
+    allocated: 9000,
     spent: 5400,
     subcategories: [
-      { name: "Insurance", spent: 2500, budget: 4000, color: "teal" },
-      { name: "Investments", spent: 2000, budget: 4000, color: "green" },
+      { name: "Insurance", spent: 2500, budget: 3500, color: "teal" },
+      { name: "Investments", spent: 2000, budget: 3500, color: "green" },
       { name: "Other", spent: 900, budget: 2000, color: "purple" },
     ],
   },
-];;
+];
 
 export const getBudgetPlanStorageKey = () => {
   const user = getUser();
