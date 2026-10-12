@@ -606,7 +606,7 @@ function HomeEssentials() {
 
   const handleDelete = (item) => {
     const shouldDelete = window.confirm(
-      `Delete "${item.productName}" from Home & Essentials?`,
+      `Delete "${item.productName}" from Home Inventory? Its linked financial transaction will remain in Transactions and Budgets.`,
     );
 
     if (shouldDelete) {
@@ -735,8 +735,44 @@ function HomeEssentials() {
 
             <div className="home-essentials-finance-heading">
               <h3>Purchase expense <small>Optional</small></h3>
-              <p>When you enter an amount, PennyVault creates or updates the matching expense transaction. Transactions and Budgets use that same record. Existing linked expenses must keep an amount; deleting the inventory item will not delete financial history.</p>
+              <p>Choose whether to create a new expense or link a purchase already recorded in Transactions. Budgets reads the same backend transaction, so linking avoids duplicate spending.</p>
             </div>
+
+            <label className="home-essentials-field">
+              <span>Expense action</span>
+              <select
+                value={formData.transactionMode}
+                disabled={Boolean(editingItemId && items.some((item) => item.id === editingItemId && item.transactionId))}
+                onChange={(event) => changeTransactionMode(event.target.value)}
+              >
+                <option value="create">Create a new transaction</option>
+                <option value="link">Link an existing transaction</option>
+              </select>
+            </label>
+
+            {formData.transactionMode === "link" && (
+              <label className="home-essentials-field home-essentials-notes-field">
+                <span>Existing expense transaction <b>*</b></span>
+                <select
+                  value={formData.linkedTransactionId}
+                  onChange={(event) => chooseExistingTransaction(event.target.value)}
+                  required
+                >
+                  <option value="">Select an expense to link</option>
+                  {transactions
+                    .filter((transaction) => {
+                      const type = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
+                      return type === "EXPENSE" || type === "DEBIT";
+                    })
+                    .map((transaction) => (
+                      <option key={transaction.id} value={transaction.id}>
+                        {(transaction.description || "Expense")} · {formatCurrency(transaction.amount)} · {transaction.category || "Uncategorised"} · {formatDate(transaction.transactionDate || transaction.date)}
+                      </option>
+                    ))}
+                </select>
+                <small>The amount, date, account, and finance category will come from the selected transaction.</small>
+              </label>
+            )}
 
             <label className="home-essentials-field">
               <span>Purchase amount (₹)</span>
@@ -747,6 +783,7 @@ function HomeEssentials() {
                 value={formData.purchaseAmount}
                 onChange={(event) => updateFormField("purchaseAmount", event.target.value)}
                 placeholder="Leave blank if not recording an expense"
+                disabled={formData.transactionMode === "link"}
               />
             </label>
 
@@ -755,7 +792,7 @@ function HomeEssentials() {
               <select
                 value={formData.accountId}
                 onChange={(event) => updateFormField("accountId", event.target.value)}
-                disabled={!accounts.length}
+                disabled={formData.transactionMode === "link" || !accounts.length}
               >
                 <option value="">Select account</option>
                 {accounts.map((account) => (
@@ -774,7 +811,7 @@ function HomeEssentials() {
                   updateFormField("financeCategoryId", event.target.value);
                   updateFormField("financeSubcategoryId", "");
                 }}
-                disabled={!financeCategories.length}
+                disabled={formData.transactionMode === "link" || !financeCategories.length}
               >
                 <option value="">Select category</option>
                 {financeCategories.map((category) => (
@@ -790,7 +827,7 @@ function HomeEssentials() {
               <select
                 value={formData.financeSubcategoryId}
                 onChange={(event) => updateFormField("financeSubcategoryId", event.target.value)}
-                disabled={!formData.financeCategoryId || !subcategories.length}
+                disabled={formData.transactionMode === "link" || !formData.financeCategoryId || !subcategories.length}
               >
                 <option value="">Select subcategory</option>
                 {subcategories.map((subcategory) => (
