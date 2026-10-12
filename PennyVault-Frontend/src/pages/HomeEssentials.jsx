@@ -12,6 +12,8 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { getUser } from "../utils/auth";
+import { apiRequest } from "../services/apiClient";
+import { readBudgetPlan } from "../utils/budgetConfig";
 import "../Styles/HomeEssentials.css";
 
 const CATEGORIES = [
@@ -61,6 +63,53 @@ const readInventory = (storageKey) => {
   }
 };
 
+const formatCurrency = (amount) => {
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return "—";
+  return `₹${numericAmount.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const normalizeName = (value) => String(value ?? "").trim().toLowerCase();
+
+const getBudgetDetails = (item, budgetPlan, transactions, today) => {
+  const subcategoryName = item?.financeSubcategoryName;
+  if (!subcategoryName) return null;
+
+  const budgetEntries = (budgetPlan?.categories || []).flatMap((category) =>
+    (category.subcategories || []).map((subcategory) => ({
+      ...subcategory,
+      parentCategoryName: category.name,
+    }))
+  );
+  const budget = budgetEntries.find(
+    (entry) => normalizeName(entry.name) === normalizeName(subcategoryName)
+  );
+  if (!budget) return { label: "No budget set" };
+
+  const currentMonth = today.slice(0, 7);
+  const spent = (transactions || [])
+    .filter((transaction) => {
+      const date = String(transaction.transactionDate ?? transaction.date ?? "");
+      const type = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
+      return date.slice(0, 7) === currentMonth &&
+        (type === "EXPENSE" || type === "DEBIT") &&
+        normalizeName(transaction.subcategory) === normalizeName(subcategoryName);
+    })
+    .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0);
+  const limit = Number(budget.budget) || 0;
+  const remaining = limit - spent;
+  return {
+    label: remaining < 0 ? "Over budget" : `${formatCurrency(remaining)} left`,
+    limit,
+    spent,
+    remaining,
+    parentCategoryName: budget.parentCategoryName,
+  };
+};
+
 const formatDate = (date) => {
   if (!date) return "—";
 
@@ -104,6 +153,10 @@ const createEmptyForm = () => ({
   purchasedDate: getToday(),
   expiryDate: "",
   notes: "",
+  purchaseAmount: "",
+  accountId: "",
+  financeCategoryId: "",
+  financeSubcategoryId: "",
 });
 
 function HomeEssentials() {
@@ -116,6 +169,64 @@ function HomeEssentials() {
   const [editingItemId, setEditingItemId] = useState(null);
   const [formData, setFormData] = useState(createEmptyForm);
   const [formError, setFormError] = useState("");
+  const [accounts, setAccounts] = useState([]);
+  const [financeCategories, setFinanceCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [budgetPlan] = useState(readBudgetPlan);
+  const [isSavingItem, setIsSavingItem] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadFinanceReferenceData = async () => {
+      const loadList = async (endpoint) => {
+        try {
+          const response = await apiRequest(endpoint);
+          if (!response.ok) return [];
+          const data = await response.json();
+          return Array.isArray(data) ? data : [];
+        } catch (error) {
+          console.error(`Unable to load ${endpoint}:`, error);
+          return [];
+        }
+      };
+
+      const [accountData, categoryData, transactionData] = await Promise.all([
+        loadList("/accounts"),
+        loadList("/categories"),
+        loadList("/transactions"),
+      ]);
+      if (!isMounted) return;
+      setAccounts(accountData);
+      setFinanceCategories(categoryData);
+      setTransactions(transactionData);
+    };
+    loadFinanceReferenceData();
+    return () => { isMounted = false; };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadSubcategories = async () => {
+      if (!formData.financeCategoryId) {
+        setSubcategories([]);
+        return;
+      }
+      try {
+        const response = await apiRequest(
+          `/subcategories/category/${formData.financeCategoryId}`
+        );
+        if (!response.ok) throw new Error("Unable to load subcategories.");
+        const data = await response.json();
+        if (isMounted) setSubcategories(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Unable to load transaction subcategories:", error);
+        if (isMounted) setSubcategories([]);
+      }
+    };
+    loadSubcategories();
+    return () => { isMounted = false; };
+  }, [formData.financeCategoryId]);
 
   useEffect(() => {
     try {
@@ -175,6 +286,10 @@ function HomeEssentials() {
       purchasedDate: item.purchasedDate || getToday(),
       expiryDate: item.expiryDate || "",
       notes: item.notes || "",
+      purchaseAmount: item.purchaseAmount ?? "",
+      accountId: item.accountId ?? "",
+      financeCategoryId: item.financeCategoryId ?? "",
+      financeSubcategoryId: item.financeSubcategoryId ?? "",
     });
     setFormError("");
     setIsFormOpen(true);
@@ -191,9 +306,10 @@ function HomeEssentials() {
     setFormData((current) => ({ ...current, [field]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (isSavingItem) return;
     if (!formData.productName.trim()) {
       setFormError("Enter the product name.");
       return;
@@ -207,20 +323,119 @@ function HomeEssentials() {
       return;
     }
 
-    const savedItem = {
-      ...formData,
-      productName: formData.productName.trim(),
-      quantity: formData.quantity.trim(),
-      notes: formData.notes.trim(),
-      id: editingItemId || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    };
+    const amountText = String(formData.purchaseAmount ?? "").trim();
+    const purchaseAmount = amountText === "" ? null : Number(amountText);
+    if (amountText !== "" && (!Number.isFinite(purchaseAmount) || purchaseAmount <= 0)) {
+      setFormError("Purchase amount must be greater than zero.");
+      return;
+    }
+    if (purchaseAmount !== null &&
+        (!formData.accountId || !formData.financeCategoryId || !formData.financeSubcategoryId)) {
+      setFormError("To send the purchase to Transactions and Budgets, choose an account, expense category, and subcategory.");
+      return;
+    }
 
-    setItems((current) =>
-      editingItemId
-        ? current.map((item) => (item.id === editingItemId ? savedItem : item))
-        : [savedItem, ...current],
-    );
-    closeForm();
+    setIsSavingItem(true);
+    setFormError("");
+    try {
+      const existingItem = items.find((item) => item.id === editingItemId);
+      let linkedPurchase = existingItem?.transactionId
+        ? {
+            transactionId: existingItem.transactionId,
+            purchaseAmount: existingItem.purchaseAmount,
+            accountId: existingItem.accountId ?? "",
+            financeCategoryId: existingItem.financeCategoryId ?? "",
+            financeSubcategoryId: existingItem.financeSubcategoryId ?? "",
+            financeCategoryName: existingItem.financeCategoryName ?? "",
+            financeSubcategoryName: existingItem.financeSubcategoryName ?? "",
+          }
+        : {};
+
+      if (purchaseAmount !== null) {
+        const category = financeCategories.find(
+          (entry) => String(entry.id) === String(formData.financeCategoryId)
+        );
+        const subcategory = subcategories.find(
+          (entry) => String(entry.id) === String(formData.financeSubcategoryId)
+        );
+        if (!category || !subcategory) {
+          setFormError("The selected finance category or subcategory is no longer available. Refresh the page and try again.");
+          return;
+        }
+
+        const transactionPayload = {
+          accountId: Number(formData.accountId),
+          categoryId: Number(formData.financeCategoryId),
+          subcategoryId: Number(formData.financeSubcategoryId),
+          description: \`\${formData.productName.trim()} purchase\`,
+          amount: purchaseAmount,
+          transactionType: "EXPENSE",
+          transactionDate: formData.purchasedDate,
+        };
+        const method = existingItem?.transactionId ? "PUT" : "POST";
+        const endpoint = existingItem?.transactionId
+          ? \`/transactions/\${existingItem.transactionId}\`
+          : "/transactions";
+        const response = await apiRequest(endpoint, {
+          method,
+          body: JSON.stringify(transactionPayload),
+        });
+        const responseData = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setFormError(
+            responseData.message ||
+            responseData.error ||
+            "The purchase could not be saved as a transaction. Your inventory item was not changed."
+          );
+          return;
+        }
+
+        linkedPurchase = {
+          transactionId: responseData.id ?? existingItem?.transactionId ?? null,
+          purchaseAmount,
+          accountId: String(formData.accountId),
+          financeCategoryId: String(formData.financeCategoryId),
+          financeSubcategoryId: String(formData.financeSubcategoryId),
+          financeCategoryName: category.name,
+          financeSubcategoryName: subcategory.name,
+        };
+
+        try {
+          const transactionsResponse = await apiRequest("/transactions");
+          if (transactionsResponse.ok) {
+            const transactionsData = await transactionsResponse.json();
+            setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
+          }
+        } catch (refreshError) {
+          console.error("Transaction was saved, but the list refresh failed:", refreshError);
+        }
+      }
+
+      const savedItem = {
+        ...formData,
+        ...linkedPurchase,
+        productName: formData.productName.trim(),
+        quantity: formData.quantity.trim(),
+        notes: formData.notes.trim(),
+        purchaseAmount: linkedPurchase.purchaseAmount ?? "",
+        accountId: linkedPurchase.accountId ?? "",
+        financeCategoryId: linkedPurchase.financeCategoryId ?? "",
+        financeSubcategoryId: linkedPurchase.financeSubcategoryId ?? "",
+        id: editingItemId || \`\${Date.now()}-\${Math.random().toString(36).slice(2, 9)}\`,
+      };
+
+      setItems((current) =>
+        editingItemId
+          ? current.map((item) => (item.id === editingItemId ? savedItem : item))
+          : [savedItem, ...current],
+      );
+      closeForm();
+    } catch (error) {
+      console.error("Unable to save home essentials item:", error);
+      setFormError(error.message || "Unable to save this item right now.");
+    } finally {
+      setIsSavingItem(false);
+    }
   };
 
   const handleDelete = (item) => {
@@ -287,7 +502,7 @@ function HomeEssentials() {
             </label>
 
             <label className="home-essentials-field">
-              <span>Category</span>
+              <span>Item type</span>
               <select
                 value={formData.category}
                 onChange={(event) =>
@@ -351,6 +566,113 @@ function HomeEssentials() {
                 maxLength={180}
               />
             </label>
+
+            <div className="home-essentials-finance-heading">
+              <h3>Purchase expense <small>Optional</small></h3>
+              <p>When you enter an amount, PennyVault also creates or updates the matching expense transaction. That same transaction is used by Transactions and Budgets.</p>
+            </div>
+
+            <label className="home-essentials-field">
+              <span>Purchase amount (₹)</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={formData.purchaseAmount}
+                onChange={(event) => updateFormField("purchaseAmount", event.target.value)}
+                placeholder="Leave blank if not recording an expense"
+              />
+            </label>
+
+            <label className="home-essentials-field">
+              <span>Paid from account</span>
+              <select
+                value={formData.accountId}
+                onChange={(event) => updateFormField("accountId", event.target.value)}
+                disabled={!accounts.length}
+              >
+                <option value="">Select account</option>
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.accountName || account.name || \`Account \${account.id}\`}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="home-essentials-field">
+              <span>Expense category</span>
+              <select
+                value={formData.financeCategoryId}
+                onChange={(event) => {
+                  updateFormField("financeCategoryId", event.target.value);
+                  updateFormField("financeSubcategoryId", "");
+                }}
+                disabled={!financeCategories.length}
+              >
+                <option value="">Select category</option>
+                {financeCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="home-essentials-field">
+              <span>Expense subcategory</span>
+              <select
+                value={formData.financeSubcategoryId}
+                onChange={(event) => updateFormField("financeSubcategoryId", event.target.value)}
+                disabled={!formData.financeCategoryId || !subcategories.length}
+              >
+                <option value="">Select subcategory</option>
+                {subcategories.map((subcategory) => (
+                  <option key={subcategory.id} value={subcategory.id}>
+                    {subcategory.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {(() => {
+              const chosenSubcategory = subcategories.find(
+                (entry) => String(entry.id) === String(formData.financeSubcategoryId)
+              );
+              const budgetEntries = (budgetPlan.categories || []).flatMap((category) =>
+                (category.subcategories || []).map((subcategory) => ({
+                  ...subcategory,
+                  parentCategoryName: category.name,
+                }))
+              );
+              const matchedBudget = chosenSubcategory
+                ? budgetEntries.find((entry) =>
+                    normalizeName(entry.name) === normalizeName(chosenSubcategory.name)
+                  )
+                : null;
+              const currentMonth = getToday().slice(0, 7);
+              const spent = chosenSubcategory
+                ? transactions.filter((transaction) => {
+                    const date = String(transaction.transactionDate ?? transaction.date ?? "");
+                    const type = String(transaction.transactionType ?? transaction.type ?? "").toUpperCase();
+                    return date.slice(0, 7) === currentMonth &&
+                      (type === "EXPENSE" || type === "DEBIT") &&
+                      normalizeName(transaction.subcategory) === normalizeName(chosenSubcategory.name);
+                  }).reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0)
+                : 0;
+              return chosenSubcategory && matchedBudget ? (
+                <div className="home-essentials-budget-preview">
+                  <strong>{matchedBudget.parentCategoryName} · {chosenSubcategory.name}</strong>
+                  <span>Limit {formatCurrency(matchedBudget.budget)} / month</span>
+                  <span>Spent {formatCurrency(spent)} · Remaining {formatCurrency(Number(matchedBudget.budget) - spent)}</span>
+                </div>
+              ) : chosenSubcategory ? (
+                <div className="home-essentials-budget-preview">
+                  <strong>{chosenSubcategory.name}</strong>
+                  <span>No matching subcategory budget is configured on the Budgets page yet. The transaction will still be recorded with its selected category.</span>
+                </div>
+              ) : null;
+            })()}
           </div>
 
           {formError && (
@@ -370,8 +692,9 @@ function HomeEssentials() {
             <button
               type="submit"
               className="home-essentials-primary-button"
+              disabled={isSavingItem}
             >
-              {editingItemId ? "Save changes" : "Save item"}
+              {isSavingItem ? "Saving…" : editingItemId ? "Save changes" : "Save item"}
             </button>
           </div>
         </form>
@@ -487,11 +810,14 @@ function HomeEssentials() {
               <thead>
                 <tr>
                   <th scope="col">Product name</th>
-                  <th scope="col">Category</th>
+                  <th scope="col">Item type</th>
                   <th scope="col">Quantity</th>
                   <th scope="col">Purchased date</th>
                   <th scope="col">Expiry date</th>
-                  <th scope="col">Status</th>
+                  <th scope="col">Purchase amount</th>
+                  <th scope="col">Expense category</th>
+                  <th scope="col">Budget status</th>
+                  <th scope="col">Expiry status</th>
                   <th scope="col" className="home-essentials-actions-heading">
                     Actions
                   </th>
@@ -500,6 +826,7 @@ function HomeEssentials() {
               <tbody>
                 {filteredItems.map((item) => {
                   const status = getExpiryStatus(item.expiryDate);
+                  const budgetDetails = getBudgetDetails(item, budgetPlan, transactions, getToday());
 
                   return (
                     <tr key={item.id}>
@@ -521,6 +848,26 @@ function HomeEssentials() {
                       </td>
                       <td>{formatDate(item.purchasedDate)}</td>
                       <td>{formatDate(item.expiryDate)}</td>
+                      <td className="home-essentials-quantity">
+                        {item.purchaseAmount !== "" && item.purchaseAmount != null
+                          ? formatCurrency(item.purchaseAmount)
+                          : "—"}
+                      </td>
+                      <td>
+                        {item.financeCategoryName ? (
+                          <span className="home-essentials-category">
+                            {item.financeCategoryName}
+                            {item.financeSubcategoryName ? ` · ${item.financeSubcategoryName}` : ""}
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td>
+                        {budgetDetails ? (
+                          <span className={`home-essentials-budget-status ${budgetDetails.remaining < 0 ? "budget-over" : "budget-ok"}`}>
+                            {budgetDetails.label}
+                          </span>
+                        ) : "—"}
+                      </td>
                       <td>
                         <span
                           className={`home-essentials-status status-${status.key}`}
