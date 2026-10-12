@@ -128,20 +128,41 @@ function Dashboard() {
       );
     });
 
-    const sortedCategories = [...totalsByCategory.entries()]
-      .map(([name, total]) => ({ name, total }))
-      .sort((a, b) => b.total - a.total);
+    // Keep the original Dashboard categories visible even when their total is zero.
+    const defaultCategories = [
+      "Home & Utilities",
+      "Food & Groceries",
+      "Transport",
+      "Health",
+      "Education & Kids",
+      "Entertainment & Lifestyle",
+      "Finance & Others",
+    ];
+    const allCategoryNames = [
+      ...defaultCategories,
+      ...[...totalsByCategory.keys()].filter(
+        (name) => !defaultCategories.some(
+          (defaultName) => defaultName.toLowerCase() === name.toLowerCase()
+        )
+      ),
+    ];
+    const categoryTotals = allCategoryNames.map((name) => {
+      const matchingTotal = [...totalsByCategory.entries()].find(
+        ([categoryName]) => categoryName.toLowerCase() === name.toLowerCase()
+      )?.[1] || 0;
+      return { name, total: matchingTotal };
+    });
 
-    const maxAmount = sortedCategories[0]?.total || 0;
+    const maxAmount = Math.max(...categoryTotals.map((category) => category.total), 0);
     const colors = ["purple", "green"];
 
-    return sortedCategories.map((category, index) => ({
+    return categoryTotals.map((category, index) => ({
       name: category.name,
       amount: `₹${category.total.toLocaleString("en-IN", {
         maximumFractionDigits: 2,
       })}`,
       percentage: maxAmount > 0 ? (category.total / maxAmount) * 100 : 0,
-      type: colors[index % colors.length],
+      type: category.total > 0 ? colors[index % colors.length] : "empty",
     }));
   }, [transactions]);
 
