@@ -1024,3 +1024,74 @@
     width: min(410px, 100vw);
   }
 }
+
+/* Shared budget editing controls */
+.fake-input input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #292637;
+  font: inherit;
+}
+
+.budget-edit-actions {
+  padding: 0 24px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.budget-edit-actions button,
+.subcategory-budget-editor button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #e2e0eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #625e73;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.budget-edit-actions button:last-child,
+.subcategory-budget-editor button:first-of-type {
+  border-color: #7544ed;
+  background: #7544ed;
+  color: #ffffff;
+}
+
+.subcategory-budget-editor {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.subcategory-budget-editor label {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #777386;
+  font-size: 11px;
+}
+
+.subcategory-budget-editor input {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid #dedbe8;
+  border-radius: 7px;
+  outline: 0;
+  color: #292637;
+  font: inherit;
+}
+
+.subcategory-budget-editor input:focus {
+  border-color: #ad93f3;
+  box-shadow: 0 0 0 3px rgba(117, 68, 237, 0.08);
+}
