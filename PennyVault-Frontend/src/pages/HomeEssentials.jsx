@@ -377,6 +377,13 @@ function HomeEssentials() {
 
     const amountText = String(formData.purchaseAmount ?? "").trim();
     const purchaseAmount = amountText === "" ? null : Number(amountText);
+    const alreadyLinked = items.some(
+      (item) => item.id === editingItemId && item.transactionId
+    );
+    if (alreadyLinked && purchaseAmount === null) {
+      setFormError("This item already has a linked expense. Enter its amount to keep or update the linked transaction. Deleting the inventory item will not delete the transaction.");
+      return;
+    }
     if (amountText !== "" && (!Number.isFinite(purchaseAmount) || purchaseAmount <= 0)) {
       setFormError("Purchase amount must be greater than zero.");
       return;
@@ -504,7 +511,7 @@ function HomeEssentials() {
     <section className="home-essentials-page">
       <header className="home-essentials-header">
         <div>
-          <h1>Home &amp; Essentials</h1>
+          <h1>Home Inventory</h1>
           <p>
             Keep track of the things you buy for yourself and your home.
           </p>
@@ -621,7 +628,7 @@ function HomeEssentials() {
 
             <div className="home-essentials-finance-heading">
               <h3>Purchase expense <small>Optional</small></h3>
-              <p>When you enter an amount, PennyVault also creates or updates the matching expense transaction. That same transaction is used by Transactions and Budgets.</p>
+              <p>When you enter an amount, PennyVault creates or updates the matching expense transaction. Transactions and Budgets use that same record. Existing linked expenses must keep an amount; deleting the inventory item will not delete financial history.</p>
             </div>
 
             <label className="home-essentials-field">
