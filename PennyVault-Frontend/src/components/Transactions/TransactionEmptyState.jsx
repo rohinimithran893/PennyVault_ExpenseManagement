@@ -78,9 +78,12 @@ function TransactionEmptyState({
           <button
             type="button"
             className="empty-state-secondary-button"
-            onClick={clearFilters}
+            onClick={() => {
+              clearFilters();
+              clearSearch();
+            }}
           >
-            Clear filters
+            Clear search and filters
           </button>
         )}
 
