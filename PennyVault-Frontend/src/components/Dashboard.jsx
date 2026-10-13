@@ -83,6 +83,7 @@ const categoryIconMap = {
   travel: { icon: IconPlane, tone: "orange" },
   "health & medical": { icon: IconHeartbeat, tone: "teal" },
   "health & wellness": { icon: IconHeartbeat, tone: "teal" },
+  "personal care": { icon: IconHeart, tone: "pink" },
   health: { icon: IconHeartbeat, tone: "teal" },
   "education & kids": { icon: IconSchool, tone: "purple" },
   education: { icon: IconSchool, tone: "purple" },
