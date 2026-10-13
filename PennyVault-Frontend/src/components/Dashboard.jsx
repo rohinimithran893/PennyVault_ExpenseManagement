@@ -27,6 +27,7 @@ import {
   IconMusic,
   IconPlane,
   IconBriefcase,
+  IconHeartbeat,
 } from "@tabler/icons-react";
 
 import "../Styles/Dashboard.css";
@@ -80,8 +81,9 @@ const categoryIconMap = {
   "transport & travel": { icon: IconCar, tone: "orange" },
   transport: { icon: IconCar, tone: "orange" },
   travel: { icon: IconPlane, tone: "orange" },
-  "health & medical": { icon: IconHeart, tone: "teal" },
-  health: { icon: IconHeart, tone: "teal" },
+  "health & medical": { icon: IconHeartbeat, tone: "teal" },
+  "health & wellness": { icon: IconHeartbeat, tone: "teal" },
+  health: { icon: IconHeartbeat, tone: "teal" },
   "education & kids": { icon: IconSchool, tone: "purple" },
   education: { icon: IconSchool, tone: "purple" },
   "taxes & government": { icon: IconReceiptTax, tone: "blue" },
@@ -89,6 +91,7 @@ const categoryIconMap = {
   "finance & others": { icon: IconChartBar, tone: "green" },
   pets: { icon: IconPaw, tone: "pink" },
   "gifts & donation": { icon: IconGift, tone: "purple" },
+  "gifts & donations": { icon: IconGift, tone: "purple" },
   "gifts and donation": { icon: IconGift, tone: "purple" },
   entertainment: { icon: IconMovie, tone: "orange" },
   transfers: { icon: IconArrowsLeftRight, tone: "blue" },
@@ -96,6 +99,7 @@ const categoryIconMap = {
   music: { icon: IconMusic, tone: "purple" },
   travel: { icon: IconPlane, tone: "orange" },
   business: { icon: IconBriefcase, tone: "blue" },
+  "work & business": { icon: IconBriefcase, tone: "blue" },
   others: { icon: IconDots, tone: "neutral" },
 };
 
