@@ -65,7 +65,7 @@ const summaryCards = [
 const budgetUsedPercent = 12;
 
 function normalizeCategoryName(categoryName) {
-  return categoryName.trim().toLowerCase().replace(/\\s+/g, " ");
+  return categoryName.trim().toLowerCase();
 }
 
 const categoryIconMap = {
