@@ -123,6 +123,14 @@
   color: #9292a5;
 }
 
+.page-heading-title .dashboard-selected-month {
+  margin-bottom: 2px;
+}
+
+.page-heading-title .dashboard-plan-label {
+  margin: 0;
+}
+
 .dashboard-month-picker {
   min-width: 250px;
   height: 48px;
