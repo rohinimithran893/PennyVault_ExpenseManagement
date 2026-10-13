@@ -9,6 +9,16 @@ import {
   IconFileInvoice,
   IconCalendar,
   IconChevronDown,
+  IconShoppingCart,
+  IconHome,
+  IconToolsKitchen2,
+  IconCar,
+  IconHeart,
+  IconSchool,
+  IconReceiptTax,
+  IconChartBar,
+  IconDots,
+  IconTag,
 } from "@tabler/icons-react";
 
 import "../Styles/Dashboard.css";
@@ -45,6 +55,38 @@ const summaryCards = [
 ];
 
 const budgetUsedPercent = 12;
+
+function getCategoryIcon(categoryName) {
+  const name = categoryName.toLowerCase();
+
+  if (/grocery|groceries|shopping|market/.test(name)) return IconShoppingCart;
+  if (/home|housing|utilities|rent|maintenance/.test(name)) return IconHome;
+  if (/food|dining|restaurant|kitchen/.test(name)) return IconToolsKitchen2;
+  if (/transport|travel|vehicle|fuel|car/.test(name)) return IconCar;
+  if (/health|medical|pharmacy|fitness/.test(name)) return IconHeart;
+  if (/education|school|kids|learning/.test(name)) return IconSchool;
+  if (/tax|government|bill|insurance/.test(name)) return IconReceiptTax;
+  if (/finance|investment|saving|bank/.test(name)) return IconChartBar;
+  if (/other|miscellaneous|uncategorized/.test(name)) return IconDots;
+
+  return IconTag;
+}
+
+function getCategoryIconTone(categoryName) {
+  const name = categoryName.toLowerCase();
+
+  if (/grocery|groceries|shopping|market/.test(name)) return "pink";
+  if (/home|housing|utilities|rent|maintenance/.test(name)) return "blue";
+  if (/food|dining|restaurant|kitchen/.test(name)) return "green";
+  if (/transport|travel|vehicle|fuel|car/.test(name)) return "orange";
+  if (/health|medical|pharmacy|fitness/.test(name)) return "teal";
+  if (/education|school|kids|learning/.test(name)) return "purple";
+  if (/tax|government|bill|insurance/.test(name)) return "blue";
+  if (/finance|investment|saving|bank/.test(name)) return "green";
+  if (/other|miscellaneous|uncategorized/.test(name)) return "neutral";
+
+  return "purple";
+}
 
 function Dashboard() {
   const [transactions, setTransactions] = useState([]);
@@ -285,8 +327,11 @@ function Dashboard() {
                     className="category-row"
                     key={category.name}
                   >
-                    <div className="category-name">
-                      {category.name}
+                    <div className="category-label">
+                      <span className={`category-icon ${getCategoryIconTone(category.name)}`}>
+                        {React.createElement(getCategoryIcon(category.name), { size: 18, stroke: 1.8, "aria-hidden": true })}
+                      </span>
+                      <div className="category-name">{category.name}</div>
                     </div>
 
                     <div className="category-progress">
