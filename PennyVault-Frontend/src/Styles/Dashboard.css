@@ -312,20 +312,23 @@
   display: grid;
 
   grid-template-columns:
-    34px
-    170px
+    minmax(0, 170px)
     minmax(0, 1fr)
     72px;
 
   align-items: center;
 
-  gap: 8px;
+  column-gap: 12px;
+  row-gap: 8px;
 
   min-height: 36px;
 }
 
 .category-label {
-  display: contents;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .category-icon {
@@ -619,8 +622,8 @@
 @media (max-width: 480px) {
 
   .category-row {
-    grid-template-columns: 28px minmax(0, 1fr) 60px;
-    gap: 5px;
+    grid-template-columns: minmax(0, 1fr) 60px;
+    gap: 6px 8px;
     padding: 8px 0;
   }
 
@@ -630,16 +633,19 @@
   }
 
   .category-label {
-    display: contents;
+    grid-column: 1;
+    grid-row: 1;
+    gap: 8px;
   }
 
   .category-progress {
-    grid-column: 2;
+    grid-column: 1;
+    grid-row: 2;
   }
 
   .category-amount {
-    grid-column: 3;
-    grid-row: 2;
+    grid-column: 2;
+    grid-row: 1;
     text-align: right;
   }
 
