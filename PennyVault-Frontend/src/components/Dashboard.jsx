@@ -202,8 +202,7 @@ function Dashboard() {
         <div className="page-heading">
           <div className="page-heading-title">
             <h2>Overview</h2>
-            <p className="dashboard-selected-month">{monthOptions.find((month) => month.value === selectedMonth)?.label}</p>
-            <p className="dashboard-plan-label">Family expense Plan</p>
+            <p className="dashboard-selected-month">{monthOptions.find((month) => month.value === selectedMonth)?.label} · Family Expense Plan</p>
           </div>
           <label className="dashboard-month-picker">
             <IconCalendar size={22} stroke={1.8} aria-hidden="true" />
