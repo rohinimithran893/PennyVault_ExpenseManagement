@@ -19,6 +19,14 @@ import {
   IconChartBar,
   IconDots,
   IconTag,
+  IconPaw,
+  IconGift,
+  IconMovie,
+  IconArrowsLeftRight,
+  IconRepeat,
+  IconMusic,
+  IconPlane,
+  IconBriefcase,
 } from "@tabler/icons-react";
 
 import "../Styles/Dashboard.css";
@@ -56,36 +64,47 @@ const summaryCards = [
 
 const budgetUsedPercent = 12;
 
+function normalizeCategoryName(categoryName) {
+  return categoryName.trim().toLowerCase().replace(/\\s+/g, " ");
+}
+
+const categoryIconMap = {
+  "food & groceries": { icon: IconShoppingCart, tone: "pink" },
+  groceries: { icon: IconShoppingCart, tone: "pink" },
+  shopping: { icon: IconShoppingCart, tone: "pink" },
+  "home & utilities": { icon: IconHome, tone: "blue" },
+  "housing & utilities": { icon: IconHome, tone: "blue" },
+  housing: { icon: IconHome, tone: "blue" },
+  "food & dining": { icon: IconToolsKitchen2, tone: "green" },
+  dining: { icon: IconToolsKitchen2, tone: "green" },
+  "transport & travel": { icon: IconCar, tone: "orange" },
+  transport: { icon: IconCar, tone: "orange" },
+  travel: { icon: IconPlane, tone: "orange" },
+  "health & medical": { icon: IconHeart, tone: "teal" },
+  health: { icon: IconHeart, tone: "teal" },
+  "education & kids": { icon: IconSchool, tone: "purple" },
+  education: { icon: IconSchool, tone: "purple" },
+  "taxes & government": { icon: IconReceiptTax, tone: "blue" },
+  "finance & investments": { icon: IconChartBar, tone: "green" },
+  "finance & others": { icon: IconChartBar, tone: "green" },
+  pets: { icon: IconPaw, tone: "pink" },
+  "gifts & donation": { icon: IconGift, tone: "purple" },
+  "gifts and donation": { icon: IconGift, tone: "purple" },
+  entertainment: { icon: IconMovie, tone: "orange" },
+  transfers: { icon: IconArrowsLeftRight, tone: "blue" },
+  subscriptions: { icon: IconRepeat, tone: "teal" },
+  music: { icon: IconMusic, tone: "purple" },
+  travel: { icon: IconPlane, tone: "orange" },
+  business: { icon: IconBriefcase, tone: "blue" },
+  others: { icon: IconDots, tone: "neutral" },
+};
+
 function getCategoryIcon(categoryName) {
-  const name = categoryName.toLowerCase();
-
-  if (/grocery|groceries|shopping|market/.test(name)) return IconShoppingCart;
-  if (/home|housing|utilities|rent|maintenance/.test(name)) return IconHome;
-  if (/food|dining|restaurant|kitchen/.test(name)) return IconToolsKitchen2;
-  if (/transport|travel|vehicle|fuel|car/.test(name)) return IconCar;
-  if (/health|medical|pharmacy|fitness/.test(name)) return IconHeart;
-  if (/education|school|kids|learning/.test(name)) return IconSchool;
-  if (/tax|government|bill|insurance/.test(name)) return IconReceiptTax;
-  if (/finance|investment|saving|bank/.test(name)) return IconChartBar;
-  if (/other|miscellaneous|uncategorized/.test(name)) return IconDots;
-
-  return IconTag;
+  return categoryIconMap[normalizeCategoryName(categoryName)]?.icon || IconTag;
 }
 
 function getCategoryIconTone(categoryName) {
-  const name = categoryName.toLowerCase();
-
-  if (/grocery|groceries|shopping|market/.test(name)) return "pink";
-  if (/home|housing|utilities|rent|maintenance/.test(name)) return "blue";
-  if (/food|dining|restaurant|kitchen/.test(name)) return "green";
-  if (/transport|travel|vehicle|fuel|car/.test(name)) return "orange";
-  if (/health|medical|pharmacy|fitness/.test(name)) return "teal";
-  if (/education|school|kids|learning/.test(name)) return "purple";
-  if (/tax|government|bill|insurance/.test(name)) return "blue";
-  if (/finance|investment|saving|bank/.test(name)) return "green";
-  if (/other|miscellaneous|uncategorized/.test(name)) return "neutral";
-
-  return "purple";
+  return categoryIconMap[normalizeCategoryName(categoryName)]?.tone || "neutral";
 }
 
 function Dashboard() {
