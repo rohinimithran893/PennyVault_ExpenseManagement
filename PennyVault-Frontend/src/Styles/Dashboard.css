@@ -312,13 +312,13 @@
   display: grid;
 
   grid-template-columns:
-    132px
+    170px
     minmax(0, 1fr)
     72px;
 
   align-items: center;
 
-  gap: 12px;
+  gap: 8px;
 
   min-height: 36px;
 }
@@ -328,6 +328,7 @@
   color: #252531;
 
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .category-progress {
@@ -554,10 +555,10 @@
 
   .category-row {
     grid-template-columns:
-      115px
+      150px
       minmax(0, 1fr)
       60px;
-    gap: 8px;
+    gap: 6px;
   }
 
 }
