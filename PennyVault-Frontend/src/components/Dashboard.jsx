@@ -49,6 +49,7 @@ function Dashboard() {
   const [availableCategories, setAvailableCategories] = useState([]);
   const [isSpendingCategoriesLoading, setIsSpendingCategoriesLoading] = useState(true);
   const [spendingCategoriesError, setSpendingCategoriesError] = useState("");
+  const [showAllSpendingCategories, setShowAllSpendingCategories] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -159,36 +160,11 @@ function Dashboard() {
       );
     });
 
-    // Keep the original Dashboard categories visible even when their total is zero.
-    const defaultCategories = [
-      "Home & Utilities",
-      "Food & Groceries",
-      "Transport",
-      "Health",
-      "Education & Kids",
-      "Entertainment & Lifestyle",
-      "Finance & Others",
-    ];
-    const allCategoryNames = [
-      ...defaultCategories,
-      ...availableCategories,
-      ...totalsByCategory.keys(),
-    ].reduce((uniqueNames, name) => {
-      const trimmedName = name.trim();
-      const normalizedName = trimmedName.toLowerCase();
-      if (normalizedName && !uniqueNames.some(
-        (existingName) => existingName.toLowerCase() === normalizedName
-      )) {
-        uniqueNames.push(trimmedName);
-      }
-      return uniqueNames;
-    }, []);
-    const categoryTotals = allCategoryNames.map((name) => {
-      const matchingTotal = [...totalsByCategory.entries()].find(
-        ([categoryName]) => categoryName.toLowerCase() === name.toLowerCase()
-      )?.[1] || 0;
-      return { name, total: matchingTotal };
-    });
+    // Only categories with expenses are shown, sorted from highest to lowest.
+    const categoryTotals = [...totalsByCategory.entries()]
+      .map(([name, total]) => ({ name, total }))
+      .filter((category) => category.total > 0)
+      .sort((a, b) => b.total - a.total);
 
     const maxAmount = Math.max(...categoryTotals.map((category) => category.total), 0);
     const colors = ["purple", "green"];
@@ -199,7 +175,7 @@ function Dashboard() {
         maximumFractionDigits: 2,
       })}`,
       percentage: maxAmount > 0 ? (category.total / maxAmount) * 100 : 0,
-      type: category.total > 0 ? colors[index % colors.length] : "empty",
+      type: colors[index % colors.length],
     }));
   }, [transactions, availableCategories]);
 
@@ -275,8 +251,17 @@ function Dashboard() {
         <section className="dashboard-grid">
           {/* Spending by category */}
           <div className="dashboard-card spending-card">
-            <div className="card-heading">
+            <div className="card-heading" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
               <h3>SPENDING BY CATEGORY</h3>
+              {!isSpendingCategoriesLoading && !spendingCategoriesError && spendingCategories.length > 5 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllSpendingCategories((showAll) => !showAll)}
+                  style={{ border: "none", background: "transparent", color: "#7955ed", cursor: "pointer", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap", padding: 0 }}
+                >
+                  {showAllSpendingCategories ? "Show less" : "View all"}
+                </button>
+              )}
             </div>
 
             <div className="category-list">
@@ -285,9 +270,9 @@ function Dashboard() {
               ) : spendingCategoriesError ? (
                 <p role="status">{spendingCategoriesError}</p>
               ) : spendingCategories.length === 0 ? (
-                <p>No expense transactions for this month yet.</p>
+                <p>No expenses this month</p>
               ) : (
-                spendingCategories.map((category) => (
+                spendingCategories.slice(0, showAllSpendingCategories ? spendingCategories.length : 5).map((category) => (
                   <div
                     className="category-row"
                     key={category.name}
