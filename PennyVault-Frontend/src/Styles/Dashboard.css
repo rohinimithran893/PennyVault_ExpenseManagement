@@ -619,13 +619,28 @@
 @media (max-width: 480px) {
 
   .category-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 28px minmax(0, 1fr) 60px;
     gap: 5px;
     padding: 8px 0;
   }
 
+  .category-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .category-label {
+    display: contents;
+  }
+
+  .category-progress {
+    grid-column: 2;
+  }
+
   .category-amount {
-    text-align: left;
+    grid-column: 3;
+    grid-row: 2;
+    text-align: right;
   }
 
   .progress-background {
