@@ -49,6 +49,24 @@ function Dashboard() {
   const [isSpendingCategoriesLoading, setIsSpendingCategoriesLoading] = useState(true);
   const [spendingCategoriesError, setSpendingCategoriesError] = useState("");
   const [showAllSpendingCategories, setShowAllSpendingCategories] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const currentDate = new Date();
+    return `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+  });
+
+  const monthOptions = useMemo(() => {
+    const options = [];
+    const currentDate = new Date();
+    for (let offset = 0; offset < 12; offset += 1) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - offset, 1);
+      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      options.push({
+        value,
+        label: date.toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
+      });
+    }
+    return options;
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -94,7 +112,7 @@ function Dashboard() {
 
 
   const spendingCategories = useMemo(() => {
-    const now = new Date();
+    const [selectedYear, selectedMonthNumber] = selectedMonth.split("-").map(Number);
     const totalsByCategory = new Map();
 
     transactions.forEach((transaction) => {
@@ -112,8 +130,8 @@ function Dashboard() {
 
       if (
         Number.isNaN(transactionDate.getTime()) ||
-        transactionDate.getFullYear() !== now.getFullYear() ||
-        transactionDate.getMonth() !== now.getMonth()
+        transactionDate.getFullYear() !== selectedYear ||
+        transactionDate.getMonth() !== selectedMonthNumber - 1
       ) {
         return;
       }
@@ -147,7 +165,7 @@ function Dashboard() {
       percentage: maxAmount > 0 ? (category.total / maxAmount) * 100 : 0,
       type: colors[index % colors.length],
     }));
-  }, [transactions]);
+  }, [transactions, selectedMonth]);
 
   const donutRadius = 44;
     const donutCircumference = 2 * Math.PI * donutRadius;
@@ -179,9 +197,27 @@ function Dashboard() {
       {/* ================= MAIN CONTENT ================= */}
       <main className="dashboard-content">
         {/* Page heading */}
-        <div className="page-heading">
-          <h2>Overview</h2>
-          <p>August 2026 · Family Plan</p>
+        <div className="page-heading" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          <div>
+            <h2>Overview</h2>
+            <p style={{ marginBottom: 0 }}>Family Plan</p>
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "#666677", fontSize: "13px" }}>
+            <span className="sr-only">Select month</span>
+            <select
+              aria-label="Select spending month"
+              value={selectedMonth}
+              onChange={(event) => {
+                setSelectedMonth(event.target.value);
+                setShowAllSpendingCategories(false);
+              }}
+              style={{ border: "1px solid #ddddeb", borderRadius: "9px", padding: "9px 12px", background: "#ffffff", color: "#33333f", fontSize: "14px", cursor: "pointer" }}
+            >
+              {monthOptions.map((month) => (
+                <option key={month.value} value={month.value}>{month.label}</option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {/* ================= SUMMARY CARDS ================= */}
