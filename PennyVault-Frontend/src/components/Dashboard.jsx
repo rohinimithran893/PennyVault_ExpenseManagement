@@ -7,6 +7,7 @@ import {
   IconCreditCard,
   IconPigMoney,
   IconFileInvoice,
+  IconCalendar,
 } from "@tabler/icons-react";
 
 import "../Styles/Dashboard.css";
@@ -197,13 +198,13 @@ function Dashboard() {
       {/* ================= MAIN CONTENT ================= */}
       <main className="dashboard-content">
         {/* Page heading */}
-        <div className="page-heading" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
-          <div>
+        <div className="page-heading">
+          <div className="page-heading-title">
             <h2>Overview</h2>
-            <p style={{ marginBottom: 0 }}>Family Plan</p>
+            <p>Family Plan</p>
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "#666677", fontSize: "13px" }}>
-            <span className="sr-only">Select month</span>
+          <label className="dashboard-month-picker">
+            <IconCalendar size={22} stroke={1.8} aria-hidden="true" />
             <select
               aria-label="Select spending month"
               value={selectedMonth}
@@ -211,7 +212,6 @@ function Dashboard() {
                 setSelectedMonth(event.target.value);
                 setShowAllSpendingCategories(false);
               }}
-              style={{ border: "1px solid #ddddeb", borderRadius: "9px", padding: "9px 12px", background: "#ffffff", color: "#33333f", fontSize: "14px", cursor: "pointer" }}
             >
               {monthOptions.map((month) => (
                 <option key={month.value} value={month.value}>{month.label}</option>
