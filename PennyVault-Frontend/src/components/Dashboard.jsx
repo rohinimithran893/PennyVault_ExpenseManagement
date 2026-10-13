@@ -8,6 +8,7 @@ import {
   IconPigMoney,
   IconFileInvoice,
   IconCalendar,
+  IconChevronDown,
 } from "@tabler/icons-react";
 
 import "../Styles/Dashboard.css";
@@ -217,6 +218,7 @@ function Dashboard() {
                 <option key={month.value} value={month.value}>{month.label}</option>
               ))}
             </select>
+            <IconChevronDown size={18} stroke={1.8} aria-hidden="true" />
           </label>
         </div>
 
