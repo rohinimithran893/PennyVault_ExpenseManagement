@@ -46,7 +46,6 @@ const budgetUsedPercent = 12;
 
 function Dashboard() {
   const [transactions, setTransactions] = useState([]);
-  const [availableCategories, setAvailableCategories] = useState([]);
   const [isSpendingCategoriesLoading, setIsSpendingCategoriesLoading] = useState(true);
   const [spendingCategoriesError, setSpendingCategoriesError] = useState("");
   const [showAllSpendingCategories, setShowAllSpendingCategories] = useState(false);
@@ -93,36 +92,7 @@ function Dashboard() {
     };
   }, []);
 
-  useEffect(() => {
-    let isMounted = true;
 
-    const loadAvailableCategories = async () => {
-      try {
-        const token = getToken();
-        const response = await fetch("http://localhost:8080/api/categories", {
-          method: "GET",
-          headers: token ? { Authorization: "Bearer " + token } : {},
-        });
-
-        if (!response.ok) throw new Error("Failed to load categories");
-
-        const data = await response.json();
-        if (Array.isArray(data) && isMounted) {
-          const names = data.map((category) => {
-            if (typeof category === "string") return category.trim();
-            return String(category.categoryName ?? category.name ?? category.category ?? "").trim();
-          }).filter(Boolean);
-          setAvailableCategories(names);
-        }
-      } catch (error) {
-        // Keep default categories and categories found in transactions if this request fails.
-        console.error("Error loading Dashboard categories:", error);
-      }
-    };
-
-    loadAvailableCategories();
-    return () => { isMounted = false; };
-  }, []);
   const spendingCategories = useMemo(() => {
     const now = new Date();
     const totalsByCategory = new Map();
