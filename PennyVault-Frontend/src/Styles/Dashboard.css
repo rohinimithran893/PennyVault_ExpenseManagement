@@ -104,19 +104,66 @@
 
 .page-heading {
   margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.page-heading h2 {
-  margin-bottom: 4px;
+.page-heading-title h2 {
+  margin: 0 0 4px;
   font-size: 22px;
   font-weight: 600;
   color: #20202d;
 }
 
-.page-heading p {
-  margin: 0px 0 20px;
+.page-heading-title p {
+  margin: 0;
   font-size: 13px;
   color: #9292a5;
+}
+
+.dashboard-month-picker {
+  min-width: 250px;
+  height: 48px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: #ffffff;
+  border: 1px solid #e7e7ef;
+  border-radius: 12px;
+  color: #20202d;
+}
+
+.dashboard-month-picker svg {
+  flex-shrink: 0;
+  color: #666677;
+}
+
+.dashboard-month-picker select {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #20202d;
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .page-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-month-picker {
+    width: 100%;
+  }
 }
 
 
