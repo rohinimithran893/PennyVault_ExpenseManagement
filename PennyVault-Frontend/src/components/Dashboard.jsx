@@ -147,7 +147,7 @@ function Dashboard() {
       percentage: maxAmount > 0 ? (category.total / maxAmount) * 100 : 0,
       type: colors[index % colors.length],
     }));
-  }, [transactions, availableCategories]);
+  }, [transactions]);
 
   const donutRadius = 44;
     const donutCircumference = 2 * Math.PI * donutRadius;
