@@ -198,8 +198,8 @@
 }
 
 .category-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -244,12 +244,23 @@
 
 .category-tag {
   height: 25px;
+  max-width: 100%;
+  min-width: 0;
   padding: 0 9px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  box-sizing: border-box;
+  overflow: hidden;
   border-radius: 20px;
   font-size: 11px;
+}
+
+.category-tag-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .category-dot {
