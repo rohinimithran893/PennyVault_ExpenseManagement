@@ -65,6 +65,39 @@
   color: #777894;
 }
 
+.month-selector-wrap {
+  position: relative;
+}
+
+.month-selector-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.budget-month-note,
+.budget-load-error {
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.budget-month-note {
+  color: #777894;
+  background: #fff;
+  border: 1px solid #e8e8f0;
+}
+
+.budget-load-error {
+  color: #b42318;
+  background: #fff5f5;
+  border: 1px solid #ffd4d4;
+}
+
 .primary-button {
   height: 42px;
   padding: 0 18px;
