@@ -1,14 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { getToken } from "../utils/auth";
 import {
-  IconSearch,
-  IconBell,
-  IconWallet,
-  IconCreditCard,
-  IconPigMoney,
-  IconFileInvoice,
-  IconCalendar,
-  IconChevronDown,
   IconShoppingCart,
   IconHome,
   IconToolsKitchen2,
@@ -28,6 +19,18 @@ import {
   IconPlane,
   IconBriefcase,
   IconHeartbeat,
+} from "@tabler/icons-react";
+import { getCategoryIcon, getCategoryIconTone } from "./Transactions/CategoryIcon";
+import { getToken } from "../utils/auth";
+import {
+  IconSearch,
+  IconBell,
+  IconWallet,
+  IconCreditCard,
+  IconPigMoney,
+  IconFileInvoice,
+  IconCalendar,
+  IconChevronDown,
 } from "@tabler/icons-react";
 
 import "../Styles/Dashboard.css";
@@ -64,53 +67,6 @@ const summaryCards = [
 ];
 
 const budgetUsedPercent = 12;
-
-function normalizeCategoryName(categoryName) {
-  return categoryName.trim().toLowerCase();
-}
-
-const categoryIconMap = {
-  "food & groceries": { icon: IconShoppingCart, tone: "pink" },
-  groceries: { icon: IconShoppingCart, tone: "pink" },
-  shopping: { icon: IconShoppingCart, tone: "pink" },
-  "home & utilities": { icon: IconHome, tone: "blue" },
-  "housing & utilities": { icon: IconHome, tone: "blue" },
-  housing: { icon: IconHome, tone: "blue" },
-  "food & dining": { icon: IconToolsKitchen2, tone: "green" },
-  dining: { icon: IconToolsKitchen2, tone: "green" },
-  "transport & travel": { icon: IconCar, tone: "orange" },
-  transport: { icon: IconCar, tone: "orange" },
-  travel: { icon: IconPlane, tone: "orange" },
-  "health & medical": { icon: IconHeartbeat, tone: "teal" },
-  "health & wellness": { icon: IconHeartbeat, tone: "teal" },
-  "personal care": { icon: IconHeart, tone: "pink" },
-  health: { icon: IconHeartbeat, tone: "teal" },
-  "education & kids": { icon: IconSchool, tone: "purple" },
-  education: { icon: IconSchool, tone: "purple" },
-  "taxes & government": { icon: IconReceiptTax, tone: "blue" },
-  "finance & investments": { icon: IconChartBar, tone: "green" },
-  "finance & others": { icon: IconChartBar, tone: "green" },
-  pets: { icon: IconPaw, tone: "pink" },
-  "gifts & donation": { icon: IconGift, tone: "purple" },
-  "gifts & donations": { icon: IconGift, tone: "purple" },
-  "gifts and donation": { icon: IconGift, tone: "purple" },
-  entertainment: { icon: IconMovie, tone: "orange" },
-  transfers: { icon: IconArrowsLeftRight, tone: "blue" },
-  subscriptions: { icon: IconRepeat, tone: "teal" },
-  music: { icon: IconMusic, tone: "purple" },
-  travel: { icon: IconPlane, tone: "orange" },
-  business: { icon: IconBriefcase, tone: "blue" },
-  "work & business": { icon: IconBriefcase, tone: "blue" },
-  others: { icon: IconDots, tone: "neutral" },
-};
-
-function getCategoryIcon(categoryName) {
-  return categoryIconMap[normalizeCategoryName(categoryName)]?.icon || IconTag;
-}
-
-function getCategoryIconTone(categoryName) {
-  return categoryIconMap[normalizeCategoryName(categoryName)]?.tone || "neutral";
-}
 
 function Dashboard() {
   const [transactions, setTransactions] = useState([]);
