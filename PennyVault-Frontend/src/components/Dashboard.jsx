@@ -1,26 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  IconShoppingCart,
-  IconHome,
-  IconToolsKitchen2,
-  IconCar,
-  IconHeart,
-  IconSchool,
-  IconReceiptTax,
-  IconChartBar,
-  IconDots,
-  IconTag,
-  IconPaw,
-  IconGift,
-  IconMovie,
-  IconArrowsLeftRight,
-  IconRepeat,
-  IconMusic,
-  IconPlane,
-  IconBriefcase,
-  IconHeartbeat,
-} from "@tabler/icons-react";
-import { getCategoryIcon, getCategoryIconTone } from "./Transactions/CategoryIcon";
 import { getToken } from "../utils/auth";
 import {
   IconSearch,
@@ -32,6 +10,7 @@ import {
   IconCalendar,
   IconChevronDown,
 } from "@tabler/icons-react";
+import { getCategoryIcon, getCategoryIconTone } from "./Transactions/CategoryIcon";
 
 import "../Styles/Dashboard.css";
 
