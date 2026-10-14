@@ -1,4 +1,5 @@
 import React from "react";
+import CategoryIcon from "./CategoryIcon";
 import {
   IconEye,
   IconPencil,
@@ -253,7 +254,7 @@ function TransactionTable({
                     <span
                       className={`category-tag ${transaction.categoryClass}`}
                     >
-                      <span className="category-dot"></span>
+                      <CategoryIcon categoryName={transaction.category} />
                       {transaction.category}
                     </span>
                   </td>
