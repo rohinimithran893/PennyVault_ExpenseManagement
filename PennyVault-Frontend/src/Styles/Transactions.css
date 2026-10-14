@@ -269,50 +269,7 @@
   border-radius: 50%;
 }
 
-.category-tag.food {
-  background: #f0eaff;
-  color: #6e3ee4;
-}
-
-.category-tag.food .category-dot {
-  background: #7544ed;
-}
-
-.category-tag.utilities {
-  background: #eaf2ff;
-  color: #3676d2;
-}
-
-.category-tag.utilities .category-dot {
-  background: #3676d2;
-}
-
-.category-tag.income {
-  background: #e8f8f0;
-  color: #158a57;
-}
-
-.category-tag.income .category-dot {
-  background: #15945e;
-}
-
-.category-tag.shopping {
-  background: #fff2e3;
-  color: #df8112;
-}
-
-.category-tag.shopping .category-dot {
-  background: #ef941c;
-}
-
-.category-tag.transport {
-  background: #eaf3ff;
-  color: #397bd5;
-}
-
-.category-tag.transport .category-dot {
-  background: #397bd5;
-}
+/* Category badges stay neutral; category-specific colour is shown by the shared icon. */
 
 .subcategory-cell {
   color: #7f7c8f !important;
