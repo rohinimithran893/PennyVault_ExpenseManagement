@@ -312,7 +312,7 @@
   display: grid;
 
   grid-template-columns:
-    minmax(0, 170px)
+    minmax(0, 220px)
     minmax(0, 1fr)
     72px;
 
@@ -377,13 +377,12 @@
 }
 
 .category-name {
+  min-width: 0;
   font-size: 15px;
   color: #252531;
 
   line-height: 1.2;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .category-progress {
