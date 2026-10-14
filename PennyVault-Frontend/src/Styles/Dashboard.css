@@ -104,19 +104,74 @@
 
 .page-heading {
   margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.page-heading h2 {
-  margin-bottom: 4px;
+.page-heading-title h2 {
+  margin: 0 0 4px;
   font-size: 22px;
   font-weight: 600;
   color: #20202d;
 }
 
-.page-heading p {
-  margin: 0px 0 20px;
+.page-heading-title p {
+  margin: 0;
   font-size: 13px;
   color: #9292a5;
+}
+
+.page-heading-title .dashboard-selected-month {
+  margin-bottom: 2px;
+}
+
+.page-heading-title .dashboard-plan-label {
+  margin: 0;
+}
+
+.dashboard-month-picker {
+  min-width: 250px;
+  height: 48px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: #ffffff;
+  border: 1px solid #e7e7ef;
+  border-radius: 12px;
+  color: #20202d;
+}
+
+.dashboard-month-picker svg {
+  flex-shrink: 0;
+  color: #666677;
+}
+
+.dashboard-month-picker select {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #20202d;
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .page-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-month-picker {
+    width: 100%;
+  }
 }
 
 
@@ -257,15 +312,68 @@
   display: grid;
 
   grid-template-columns:
-    132px
+    minmax(0, 170px)
     minmax(0, 1fr)
     72px;
 
   align-items: center;
 
-  gap: 12px;
+  column-gap: 12px;
+  row-gap: 8px;
 
-  min-height: 36px;
+  min-height: 48px;
+}
+
+.category-label {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.category-icon.pink {
+  background: #fff0f3;
+  color: #d94b68;
+}
+
+.category-icon.blue {
+  background: #edf4ff;
+  color: #3679d8;
+}
+
+.category-icon.green {
+  background: #eaf8ef;
+  color: #27945a;
+}
+
+.category-icon.orange {
+  background: #fff4e3;
+  color: #b97817;
+}
+
+.category-icon.teal {
+  background: #e8f8f8;
+  color: #168b98;
+}
+
+.category-icon.purple {
+  background: #f1edff;
+  color: #7955ed;
+}
+
+.category-icon.neutral {
+  background: #f0f1f5;
+  color: #858b9b;
 }
 
 .category-name {
@@ -273,6 +381,9 @@
   color: #252531;
 
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .category-progress {
@@ -499,10 +610,11 @@
 
   .category-row {
     grid-template-columns:
-      115px
+      30px
+      140px
       minmax(0, 1fr)
       60px;
-    gap: 8px;
+    gap: 6px;
   }
 
 }
@@ -510,13 +622,31 @@
 @media (max-width: 480px) {
 
   .category-row {
-    grid-template-columns: 1fr;
-    gap: 5px;
+    grid-template-columns: minmax(0, 1fr) 60px;
+    gap: 6px 8px;
     padding: 8px 0;
   }
 
+  .category-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .category-label {
+    grid-column: 1;
+    grid-row: 1;
+    gap: 8px;
+  }
+
+  .category-progress {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
   .category-amount {
-    text-align: left;
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
   }
 
   .progress-background {
