@@ -255,7 +255,7 @@ function TransactionTable({
                       className={`category-tag ${transaction.categoryClass}`}
                     >
                       <CategoryIcon categoryName={transaction.category} />
-                      {transaction.category}
+                      <span className="category-tag-label">{transaction.category}</span>
                     </span>
                   </td>
 
