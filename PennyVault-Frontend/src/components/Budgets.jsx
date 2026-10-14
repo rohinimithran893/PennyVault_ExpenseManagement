@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { apiRequest } from "../services/apiClient";
 import "../Styles/BudgetCategories.css";
 
 const categories = [
@@ -104,10 +105,48 @@ const formatCurrency = (value) =>
 function Budgets() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [panelMode, setPanelMode] = useState("details");
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [monthlyBudget, setMonthlyBudget] = useState(0);
+  const [budgetConfigured, setBudgetConfigured] = useState(false);
+  const [budgetLoading, setBudgetLoading] = useState(true);
+  const [budgetError, setBudgetError] = useState("");
 
-  const totalBudget = 80000;
-  const totalAllocated = 79000;
+  useEffect(() => {
+    let active = true;
+    const loadMonthlyBudget = async () => {
+      setBudgetLoading(true);
+      setBudgetError("");
+      try {
+        const response = await apiRequest(`/budgets?month=${selectedMonth}`);
+        if (!response.ok) throw new Error("Unable to load this month's budget.");
+        const data = await response.json();
+        if (!active) return;
+        setMonthlyBudget(Number(data.totalLimit ?? 0));
+        setBudgetConfigured(Boolean(data.configured));
+      } catch (error) {
+        if (active) {
+          setMonthlyBudget(0);
+          setBudgetConfigured(false);
+          setBudgetError(error.message || "Unable to load this month's budget.");
+        }
+      } finally {
+        if (active) setBudgetLoading(false);
+      }
+    };
+    loadMonthlyBudget();
+    return () => { active = false; };
+  }, [selectedMonth]);
+
+  const totalBudget = monthlyBudget;
+  const totalAllocated = 0;
   const remaining = totalBudget - totalAllocated;
+  const selectedMonthLabel = new Date(`${selectedMonth}-01T12:00:00`).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   const openPanel = (category, mode) => {
     setSelectedCategory(category);
@@ -128,11 +167,20 @@ function Budgets() {
         </div>
 
         <div className="budget-header-actions">
-          <button className="month-selector">
-            <span>▣</span>
-            July 2026
-            <span className="chevron">⌄</span>
-          </button>
+          <div className="month-selector-wrap">
+            <button className="month-selector" type="button" aria-label="Select budget month">
+              <span>▣</span>
+              {selectedMonthLabel}
+              <span className="chevron">⌄</span>
+            </button>
+            <input
+              className="month-selector-input"
+              type="month"
+              value={selectedMonth}
+              aria-label="Choose month for budget"
+              onChange={(event) => setSelectedMonth(event.target.value)}
+            />
+          </div>
 
           <button className="primary-button">
             <span>＋</span>
@@ -140,6 +188,15 @@ function Budgets() {
           </button>
         </div>
       </header>
+
+      {budgetError && (
+        <p role="alert" className="budget-load-error">{budgetError}</p>
+      )}
+      {!budgetLoading && !budgetError && !budgetConfigured && (
+        <p className="budget-month-note">
+          No monthly budget has been saved for {selectedMonthLabel} yet.
+        </p>
+      )}
 
       {/* SUMMARY */}
       <section className="budget-summary">
@@ -150,7 +207,7 @@ function Budgets() {
 
           <div>
             <span className="summary-label">Monthly Budget</span>
-            <strong>{formatCurrency(totalBudget)}</strong>
+            <strong>{budgetLoading ? "Loading..." : formatCurrency(totalBudget)}</strong>
 
             <button className="edit-budget">
               ✎ Edit Budget
@@ -168,7 +225,7 @@ function Budgets() {
             <strong>{formatCurrency(totalAllocated)}</strong>
 
             <small className="positive">
-              98.8% of budget
+              {totalBudget > 0 ? "0% of budget" : "No allocations saved"}
             </small>
           </div>
         </div>
@@ -183,7 +240,7 @@ function Budgets() {
             <strong>{formatCurrency(remaining)}</strong>
 
             <small className="negative">
-              1.2% of budget
+              {totalBudget > 0 ? "100% available" : "No budget set"}
             </small>
           </div>
         </div>
