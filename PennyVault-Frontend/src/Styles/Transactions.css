@@ -197,14 +197,70 @@
   color: #4385db;
 }
 
+.category-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.category-icon.pink {
+  background: #fff0f3;
+  color: #d94b68;
+}
+
+.category-icon.blue {
+  background: #edf4ff;
+  color: #3679d8;
+}
+
+.category-icon.green {
+  background: #eaf8ef;
+  color: #27945a;
+}
+
+.category-icon.orange {
+  background: #fff4e3;
+  color: #b97817;
+}
+
+.category-icon.teal {
+  background: #e8f8f8;
+  color: #168b98;
+}
+
+.category-icon.purple {
+  background: #f1edff;
+  color: #7955ed;
+}
+
+.category-icon.neutral {
+  background: #f0f1f5;
+  color: #858b9b;
+}
+
 .category-tag {
   height: 25px;
+  max-width: 100%;
+  min-width: 0;
   padding: 0 9px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  box-sizing: border-box;
+  overflow: hidden;
   border-radius: 20px;
   font-size: 11px;
+}
+
+.category-tag-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .category-dot {
@@ -213,50 +269,7 @@
   border-radius: 50%;
 }
 
-.category-tag.food {
-  background: #f0eaff;
-  color: #6e3ee4;
-}
-
-.category-tag.food .category-dot {
-  background: #7544ed;
-}
-
-.category-tag.utilities {
-  background: #eaf2ff;
-  color: #3676d2;
-}
-
-.category-tag.utilities .category-dot {
-  background: #3676d2;
-}
-
-.category-tag.income {
-  background: #e8f8f0;
-  color: #158a57;
-}
-
-.category-tag.income .category-dot {
-  background: #15945e;
-}
-
-.category-tag.shopping {
-  background: #fff2e3;
-  color: #df8112;
-}
-
-.category-tag.shopping .category-dot {
-  background: #ef941c;
-}
-
-.category-tag.transport {
-  background: #eaf3ff;
-  color: #397bd5;
-}
-
-.category-tag.transport .category-dot {
-  background: #397bd5;
-}
+/* Category badges stay neutral; category-specific colour is shown by the shared icon. */
 
 .subcategory-cell {
   color: #7f7c8f !important;
