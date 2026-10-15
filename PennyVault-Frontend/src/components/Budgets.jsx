@@ -1,172 +1,140 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { apiRequest } from "../services/apiClient";
 import "../Styles/BudgetCategories.css";
 
-const categories = [
-  {
-    name: "Home & Utilities",
-    icon: "⌂",
-    color: "purple",
-    allocated: 25000,
-    spent: 20000,
-    subcategories: [
-      { name: "Rent / EMI", spent: 12000, budget: 20000, color: "purple" },
-      { name: "Electricity", spent: 950, budget: 1500, color: "orange" },
-      { name: "Water", spent: 500, budget: 800, color: "blue" },
-      { name: "Internet", spent: 600, budget: 1200, color: "green" },
-      { name: "Mobile", spent: 300, budget: 1000, color: "purple" },
-      { name: "Household", spent: 900, budget: 2000, color: "pink" },
-      { name: "Maintenance", spent: 750, budget: 1500, color: "purple" },
-    ],
-  },
-  {
-    name: "Food & Groceries",
-    icon: "🛒",
-    color: "green",
-    allocated: 16000,
-    spent: 12500,
-    subcategories: [
-      { name: "Groceries", spent: 8000, budget: 10000, color: "green" },
-      { name: "Dining Out", spent: 3000, budget: 4000, color: "orange" },
-      { name: "Snacks", spent: 1500, budget: 2000, color: "pink" },
-    ],
-  },
-  {
-    name: "Transport",
-    icon: "🚗",
-    color: "blue",
-    allocated: 8000,
-    spent: 3200,
-    subcategories: [
-      { name: "Fuel", spent: 1800, budget: 3000, color: "blue" },
-      { name: "Cab", spent: 900, budget: 1500, color: "purple" },
-      { name: "Public Transport", spent: 500, budget: 1000, color: "green" },
-    ],
-  },
-  {
-    name: "Health",
-    icon: "♥",
-    color: "pink",
-    allocated: 6000,
-    spent: 2400,
-    subcategories: [
-      { name: "Medicines", spent: 1200, budget: 2500, color: "pink" },
-      { name: "Doctor", spent: 800, budget: 2000, color: "red" },
-      { name: "Fitness", spent: 400, budget: 1500, color: "green" },
-    ],
-  },
-  {
-    name: "Education & Kids",
-    icon: "🎓",
-    color: "orange",
-    allocated: 10000,
-    spent: 7000,
-    subcategories: [
-      { name: "School Fees", spent: 5000, budget: 6000, color: "orange" },
-      { name: "Books", spent: 1200, budget: 2000, color: "purple" },
-      { name: "Activities", spent: 800, budget: 2000, color: "blue" },
-    ],
-  },
-  {
-    name: "Entertainment",
-    icon: "▣",
-    color: "purple",
-    allocated: 6000,
-    spent: 3600,
-    subcategories: [
-      { name: "Movies", spent: 1200, budget: 2000, color: "purple" },
-      { name: "Subscriptions", spent: 1500, budget: 2000, color: "blue" },
-      { name: "Events", spent: 900, budget: 2000, color: "pink" },
-    ],
-  },
-  {
-    name: "Finance & Others",
-    icon: "▰",
-    color: "teal",
-    allocated: 10000,
-    spent: 5400,
-    subcategories: [
-      { name: "Insurance", spent: 2500, budget: 4000, color: "teal" },
-      { name: "Investments", spent: 2000, budget: 4000, color: "green" },
-      { name: "Other", spent: 900, budget: 2000, color: "purple" },
-    ],
-  },
-];
-
-const members = [
-  { name: "Rohini (You)", amount: 10000, percent: 50, initial: "R" },
-  { name: "Varun", amount: 6000, percent: 30, initial: "V" },
-  { name: "Meera", amount: 4000, percent: 20, initial: "M" },
-];
-
 const formatCurrency = (value) =>
-  `₹${value.toLocaleString("en-IN")}`;
+  `₹${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+
+const categoryPresentation = (name = "") => {
+  const value = name.toLowerCase();
+  if (value.includes("home") || value.includes("utilit")) return { icon: "⌂", color: "purple" };
+  if (value.includes("food") || value.includes("grocer")) return { icon: "🛒", color: "green" };
+  if (value.includes("transport")) return { icon: "🚗", color: "blue" };
+  if (value.includes("health") || value.includes("personal care")) return { icon: "♥", color: "pink" };
+  if (value.includes("education") || value.includes("kids")) return { icon: "🎓", color: "orange" };
+  if (value.includes("entertain")) return { icon: "▣", color: "purple" };
+  if (value.includes("finance") || value.includes("invest")) return { icon: "▰", color: "teal" };
+  if (value.includes("travel")) return { icon: "✈", color: "blue" };
+  if (value.includes("gift")) return { icon: "🎁", color: "pink" };
+  if (value.includes("shopping")) return { icon: "🛍", color: "purple" };
+  if (value.includes("subscription")) return { icon: "▣", color: "teal" };
+  if (value.includes("pet")) return { icon: "♥", color: "orange" };
+  if (value.includes("work") || value.includes("business")) return { icon: "▰", color: "blue" };
+  return { icon: "•", color: "purple" };
+};
 
 function Budgets() {
   const monthInputRef = useRef(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [panelMode, setPanelMode] = useState("details");
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
-  const [monthlyBudget, setMonthlyBudget] = useState(0);
-  const [budgetConfigured, setBudgetConfigured] = useState(false);
+  const [categories, setCategories] = useState([]);
   const [budgetLoading, setBudgetLoading] = useState(true);
   const [budgetError, setBudgetError] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
+  const [formCategoryId, setFormCategoryId] = useState("");
+  const [formAmount, setFormAmount] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [panelMode, setPanelMode] = useState("details");
 
-  useEffect(() => {
-    let active = true;
-    const loadMonthlyBudget = async () => {
-      setBudgetLoading(true);
-      setBudgetError("");
-      try {
-        const response = await apiRequest(`/budgets?month=${selectedMonth}`);
-        if (!response.ok) throw new Error("Unable to load this month's budget.");
-        const data = await response.json();
-        if (!active) return;
-        setMonthlyBudget(Number(data.totalLimit ?? 0));
-        setBudgetConfigured(Boolean(data.configured));
-      } catch (error) {
-        if (active) {
-          setMonthlyBudget(0);
-          setBudgetConfigured(false);
-          setBudgetError(error.message || "Unable to load this month's budget.");
-        }
-      } finally {
-        if (active) setBudgetLoading(false);
-      }
-    };
-    loadMonthlyBudget();
-    return () => { active = false; };
-  }, [selectedMonth]);
-
-  const totalBudget = monthlyBudget;
-  const totalAllocated = 0;
-  const remaining = totalBudget - totalAllocated;
   const selectedMonthLabel = new Date(`${selectedMonth}-01T12:00:00`).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
+
+  const loadCategoryBudgets = async () => {
+    setBudgetLoading(true);
+    setBudgetError("");
+    try {
+      const response = await apiRequest(`/budgets/categories?month=${selectedMonth}`);
+      if (!response.ok) throw new Error("Unable to load category budgets for this month.");
+      const data = await response.json();
+      const expenseCategories = data
+        .filter((item) => !["income", "transfers"].includes((item.name || "").trim().toLowerCase()))
+        .map((item) => ({
+          ...item,
+          allocated: Number(item.budgetLimit || 0),
+          spent: Number(item.spent || 0),
+          ...categoryPresentation(item.name),
+        }));
+      setCategories(expenseCategories);
+    } catch (error) {
+      setCategories([]);
+      setBudgetError(error.message || "Unable to load category budgets for this month.");
+    } finally {
+      setBudgetLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCategoryBudgets();
+    setSelectedCategory(null);
+    setShowBudgetForm(false);
+    // The selected month is the sole trigger for reloading its independent data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMonth]);
+
+  const configuredCategories = useMemo(
+    () => categories.filter((category) => category.configured),
+    [categories]
+  );
+  const hasAnyBudget = configuredCategories.length > 0;
+  const totalBudget = configuredCategories.reduce((sum, category) => sum + category.allocated, 0);
+  const totalSpent = categories.reduce((sum, category) => sum + category.spent, 0);
+  const remaining = totalBudget - totalSpent;
+  const categoriesForForm = categories;
+
+  const openBudgetForm = (category = null) => {
+    setSaveError("");
+    setFormCategoryId(category ? String(category.categoryId) : "");
+    setFormAmount(category?.configured ? String(category.allocated) : "");
+    setShowBudgetForm(true);
+  };
+
+  const saveCategoryBudget = async (event) => {
+    event.preventDefault();
+    setSaveError("");
+    const amount = Number(formAmount);
+    if (!formCategoryId || formAmount.trim() === "" || !Number.isFinite(amount) || amount < 0) {
+      setSaveError("Choose a category and enter a valid budget limit.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const response = await apiRequest(`/budgets/categories?month=${selectedMonth}`, {
+        method: "PUT",
+        body: JSON.stringify({ categoryId: Number(formCategoryId), budgetLimit: amount }),
+      });
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || "Unable to save this category budget.");
+      }
+      setShowBudgetForm(false);
+      await loadCategoryBudgets();
+    } catch (error) {
+      setSaveError(error.message || "Unable to save this category budget.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const openPanel = (category, mode) => {
     setSelectedCategory(category);
     setPanelMode(mode);
   };
 
-  const closePanel = () => {
-    setSelectedCategory(null);
-  };
+  const closePanel = () => setSelectedCategory(null);
 
   return (
     <div className="budgets-page">
-      {/* PAGE HEADER */}
       <header className="budget-header">
         <div>
           <h1>Budgets</h1>
           <p>Plan smarter. Spend better. Stay on track.</p>
         </div>
-
         <div className="budget-header-actions">
           <div className="month-selector-wrap">
             <button
@@ -175,15 +143,9 @@ function Budgets() {
               aria-label="Select budget month"
               onClick={() => {
                 const input = monthInputRef.current;
-
                 if (!input) return;
-
-                if (typeof input.showPicker === "function") {
-                  input.showPicker();
-                } else {
-                  input.focus();
-                  input.click();
-                }
+                if (typeof input.showPicker === "function") input.showPicker();
+                else { input.focus(); input.click(); }
               }}
             >
               <span>▣</span>
@@ -196,562 +158,195 @@ function Budgets() {
               type="month"
               value={selectedMonth}
               aria-label="Choose month for budget"
-              onChange={(event) => {
-                if (event.target.value) {
-                  setSelectedMonth(event.target.value);
-                }
-              }}
+              onChange={(event) => event.target.value && setSelectedMonth(event.target.value)}
             />
           </div>
-
-          <button className="primary-button">
+          <button className="primary-button" type="button" onClick={() => openBudgetForm()}>
             <span>＋</span>
             Add Category
           </button>
         </div>
       </header>
 
-      {budgetError && (
-        <p role="alert" className="budget-load-error">{budgetError}</p>
-      )}
-      {!budgetLoading && !budgetError && !budgetConfigured && (
-        <p className="budget-month-note">
-          No monthly budget has been saved for {selectedMonthLabel} yet.
-        </p>
-      )}
+      {budgetError && <p role="alert" className="budget-load-error">{budgetError}</p>}
 
-      {/* SUMMARY */}
       <section className="budget-summary">
         <div className="summary-card">
-          <div className="summary-icon purple">
-            ▣
-          </div>
-
+          <div className="summary-icon purple">▣</div>
           <div>
             <span className="summary-label">Monthly Budget</span>
             <strong>{budgetLoading ? "Loading..." : formatCurrency(totalBudget)}</strong>
-
-            <button className="edit-budget">
-              ✎ Edit Budget
+            <button className="edit-budget" type="button" onClick={() => openBudgetForm()}>
+              ✎ Add / Edit Budget
             </button>
           </div>
         </div>
-
         <div className="summary-card">
-          <div className="summary-icon green">
-            ↗
-          </div>
-
+          <div className="summary-icon green">↗</div>
           <div>
             <span className="summary-label">Total Allocated</span>
-            <strong>{formatCurrency(totalAllocated)}</strong>
-
-            <small className="positive">
-              {totalBudget > 0 ? "0% of budget" : "No allocations saved"}
-            </small>
+            <strong>{budgetLoading ? "Loading..." : formatCurrency(totalBudget)}</strong>
+            <small className="positive">{hasAnyBudget ? "Saved category limits" : "No allocations saved"}</small>
           </div>
         </div>
-
         <div className="summary-card">
-          <div className="summary-icon orange">
-            ▣
-          </div>
-
+          <div className="summary-icon orange">▣</div>
           <div>
             <span className="summary-label">Remaining</span>
-            <strong>{formatCurrency(remaining)}</strong>
-
-            <small className="negative">
-              {totalBudget > 0 ? "100% available" : "No budget set"}
+            <strong>{budgetLoading ? "Loading..." : formatCurrency(remaining)}</strong>
+            <small className={remaining < 0 ? "negative" : "positive"}>
+              {hasAnyBudget ? (remaining < 0 ? "Over budget" : "Budget less monthly spending") : "No budget set"}
             </small>
           </div>
         </div>
       </section>
 
-      {/* CATEGORY SECTION */}
       <section className="category-section">
         <div className="section-heading">
           <h2>All Budget Categories</h2>
-
-          <button className="summary-button">
-            ◔ View Summary
-          </button>
+          {hasAnyBudget && <button className="summary-button" type="button" onClick={() => openBudgetForm()}>◔ Add / Edit Budget</button>}
         </div>
 
-        <div className="category-grid">
-          {categories.map((category) => {
-            const percentage = Math.round(
-              (category.spent / category.allocated) * 100
-            );
-
-            const remainingAmount =
-              category.allocated - category.spent;
-
-            return (
-              <article
-                className={`category-card ${
-                  selectedCategory?.name === category.name
-                    ? "selected"
-                    : ""
-                }`}
-                key={category.name}
-              >
-                <div className="category-top">
-                  <div className={`category-icon ${category.color}`}>
-                    {category.icon}
+        {budgetLoading ? (
+          <div className="budget-empty-state"><p>Loading budgets for {selectedMonthLabel}...</p></div>
+        ) : !budgetError && !hasAnyBudget ? (
+          <div className="budget-empty-state">
+            <div className="budget-empty-icon">▣</div>
+            <h3>No budgets set for {selectedMonthLabel}</h3>
+            <p>Add a category budget to start tracking this month's spending. Other months' budget limits will remain unchanged.</p>
+            <button className="primary-button" type="button" onClick={() => openBudgetForm()}>
+              <span>＋</span> Add Your First Budget
+            </button>
+          </div>
+        ) : !budgetError ? (
+          <div className="category-grid">
+            {categories.map((category) => {
+              const percentage = category.allocated > 0
+                ? Math.round((category.spent / category.allocated) * 100)
+                : 0;
+              const remainingAmount = category.allocated - category.spent;
+              return (
+                <article className={`category-card ${selectedCategory?.categoryId === category.categoryId ? "selected" : ""}`} key={category.categoryId}>
+                  <div className="category-top">
+                    <div className={`category-icon ${category.color}`}>{category.icon}</div>
+                    <h3>{category.name}</h3>
+                    <button className="more-button" type="button" aria-label={`Edit ${category.name} budget`} onClick={() => openBudgetForm(category)}>⋮</button>
                   </div>
-
-                  <h3>{category.name}</h3>
-
-                  <button className="more-button">⋮</button>
-                </div>
-
-                <div className="category-values">
-                  <div>
-                    <span>Allocated</span>
-                    <strong>
-                      {formatCurrency(category.allocated)}
-                    </strong>
+                  <div className="category-values">
+                    <div><span>Allocated</span><strong>{formatCurrency(category.allocated)}</strong></div>
+                    <div><span>Spent</span><strong>{formatCurrency(category.spent)}</strong></div>
+                    <div><span>Remaining</span><strong>{formatCurrency(remainingAmount)}</strong></div>
                   </div>
-
-                  <div>
-                    <span>Spent</span>
-                    <strong>
-                      {formatCurrency(category.spent)}
-                    </strong>
+                  <div className="category-progress-row">
+                    <div className="progress-track">
+                      <div className={`progress-fill ${category.color}`} style={{ width: `${Math.min(percentage, 100)}%` }} />
+                    </div>
+                    <strong>{percentage}%</strong>
                   </div>
-
-                  <div>
-                    <span>Remaining</span>
-                    <strong>
-                      {formatCurrency(remainingAmount)}
-                    </strong>
+                  <div className="category-actions">
+                    <button type="button" onClick={() => openPanel(category, "details")}>◔ Budget Details</button>
+                    <button type="button" onClick={() => openPanel(category, "subcategories")}>☷ Subcategories</button>
                   </div>
-                </div>
-
-                <div className="category-progress-row">
-                  <div className="progress-track">
-                    <div
-                      className={`progress-fill ${category.color}`}
-                      style={{
-                        width: `${Math.min(percentage, 100)}%`,
-                      }}
-                    />
-                  </div>
-
-                  <strong>{percentage}%</strong>
-                </div>
-
-                {/* TWO ACTIONS */}
-                <div className="category-actions">
-                  <button
-                    className={
-                      panelMode === "details" &&
-                      selectedCategory?.name === category.name
-                        ? "active"
-                        : ""
-                    }
-                    onClick={() =>
-                      openPanel(category, "details")
-                    }
-                  >
-                    ◔ Budget Details
-                  </button>
-
-                  <button
-                    className={
-                      panelMode === "subcategories" &&
-                      selectedCategory?.name === category.name
-                        ? "active"
-                        : ""
-                    }
-                    onClick={() =>
-                      openPanel(category, "subcategories")
-                    }
-                  >
-                    ☷ Subcategories
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : null}
       </section>
 
-      {/* TIP */}
       <div className="budget-tip">
         <div className="tip-icon">♧</div>
-
         <div>
           <strong>Tip</strong>
-          <p>
-            Review your budgets regularly and adjust them based
-            on your spending.
-          </p>
+          <p>Review your budgets regularly and adjust them based on your spending.</p>
         </div>
-
-        <button>Learn more →</button>
+        <button type="button" onClick={() => openBudgetForm()}>Add budget →</button>
       </div>
 
-      {/* RIGHT SIDE PANEL */}
+      {showBudgetForm && (
+        <div className="budget-modal-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setShowBudgetForm(false);
+        }}>
+          <form className="budget-modal" onSubmit={saveCategoryBudget}>
+            <div className="budget-modal-header">
+              <div>
+                <h2>{formCategoryId ? "Set Category Budget" : "Add Category Budget"}</h2>
+                <p>{selectedMonthLabel} · saved independently for this month</p>
+              </div>
+              <button type="button" className="close-panel" aria-label="Close" onClick={() => setShowBudgetForm(false)}>×</button>
+            </div>
+            <label htmlFor="budget-category">Category</label>
+            <select id="budget-category" value={formCategoryId} onChange={(event) => {
+              setFormCategoryId(event.target.value);
+              const match = categories.find((item) => String(item.categoryId) === event.target.value);
+              setFormAmount(match?.configured ? String(match.allocated) : "");
+            }} required>
+              <option value="">Choose a category</option>
+              {categoriesForForm.map((category) => (
+                <option key={category.categoryId} value={category.categoryId}>{category.name}</option>
+              ))}
+            </select>
+            <label htmlFor="budget-limit">Monthly budget limit (₹)</label>
+            <input id="budget-limit" type="number" min="0" step="0.01" value={formAmount} onChange={(event) => setFormAmount(event.target.value)} placeholder="Enter amount" required />
+            {saveError && <p role="alert" className="budget-load-error">{saveError}</p>}
+            <div className="budget-modal-actions">
+              <button className="cancel-button" type="button" onClick={() => setShowBudgetForm(false)}>Cancel</button>
+              <button className="save-button" type="submit" disabled={saving}>{saving ? "Saving..." : "Save Budget"}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {selectedCategory && (
         <div className="budget-panel">
           <div className="panel-header">
             <div className="panel-title">
-              <div
-                className={`panel-category-icon ${selectedCategory.color}`}
-              >
-                {selectedCategory.icon}
-              </div>
-
+              <div className={`panel-category-icon ${selectedCategory.color}`}>{selectedCategory.icon}</div>
               <div>
                 <h2>{selectedCategory.name}</h2>
-                <p>
-                  {panelMode === "details"
-                    ? "Manage your budget"
-                    : "Manage subcategories"}
-                </p>
+                <p>{panelMode === "details" ? `Budget details · ${selectedMonthLabel}` : "Category spending"}</p>
               </div>
             </div>
-
-            <button
-              className="close-panel"
-              onClick={closePanel}
-            >
-              ×
-            </button>
+            <button className="close-panel" type="button" aria-label="Close details" onClick={closePanel}>×</button>
           </div>
-
-          {/* PANEL TABS */}
           <div className="panel-tabs">
-            <button
-              className={
-                panelMode === "details" ? "active" : ""
-              }
-              onClick={() => setPanelMode("details")}
-            >
-              ◔ Budget Details
-            </button>
-
-            <button
-              className={
-                panelMode === "subcategories"
-                  ? "active"
-                  : ""
-              }
-              onClick={() => setPanelMode("subcategories")}
-            >
-              ☷ Subcategories
-            </button>
+            <button type="button" className={panelMode === "details" ? "active" : ""} onClick={() => setPanelMode("details")}>◔ Budget Details</button>
+            <button type="button" className={panelMode === "subcategories" ? "active" : ""} onClick={() => setPanelMode("subcategories")}>☷ Subcategories</button>
           </div>
-
-          {/* PANEL SUMMARY */}
           <div className="panel-summary">
-            <div>
-              <strong>
-                {formatCurrency(selectedCategory.allocated)}
-              </strong>
-              <span>Budget</span>
-            </div>
-
-            <div>
-              <strong className="purple-text">
-                {formatCurrency(selectedCategory.spent)}
-              </strong>
-              <span>
-                Spent (
-                {Math.round(
-                  (selectedCategory.spent /
-                    selectedCategory.allocated) *
-                    100
-                )}
-                %)
-              </span>
-            </div>
-
-            <div>
-              <strong className="green-text">
-                {formatCurrency(
-                  selectedCategory.allocated -
-                    selectedCategory.spent
-                )}
-              </strong>
-              <span>Remaining</span>
-            </div>
+            <div><strong>{formatCurrency(selectedCategory.allocated)}</strong><span>Budget</span></div>
+            <div><strong className="purple-text">{formatCurrency(selectedCategory.spent)}</strong><span>Spent</span></div>
+            <div><strong className="green-text">{formatCurrency(selectedCategory.allocated - selectedCategory.spent)}</strong><span>Remaining</span></div>
           </div>
-
           <div className="panel-progress">
-            <div
-              className="panel-progress-fill"
-              style={{
-                width: `${Math.min(
-                  (selectedCategory.spent /
-                    selectedCategory.allocated) *
-                    100,
-                  100
-                )}%`,
-              }}
-            />
-
-            <strong>
-              {Math.round(
-                (selectedCategory.spent /
-                  selectedCategory.allocated) *
-                  100
-              )}
-              %
-            </strong>
+            <div className="panel-progress-fill" style={{ width: `${selectedCategory.allocated > 0 ? Math.min((selectedCategory.spent / selectedCategory.allocated) * 100, 100) : 0}%` }} />
+            <strong>{selectedCategory.allocated > 0 ? Math.round((selectedCategory.spent / selectedCategory.allocated) * 100) : 0}%</strong>
           </div>
-
-          {/* DETAILS MODE */}
-          {panelMode === "details" && (
+          {panelMode === "details" ? (
             <div className="details-content">
               <section className="panel-section">
                 <div className="panel-section-heading">
                   <h3>Budget Details</h3>
-
-                  <button className="icon-button">
-                    ✎
-                  </button>
+                  <button className="icon-button" type="button" onClick={() => { closePanel(); openBudgetForm(selectedCategory); }}>✎</button>
                 </div>
-
                 <div className="form-grid">
-                  <div>
-                    <label>Monthly Budget</label>
-
-                    <div className="fake-input">
-                      <span>₹</span>
-                      {selectedCategory.allocated.toLocaleString(
-                        "en-IN"
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label>Budget Period</label>
-
-                    <div className="fake-input">
-                      Monthly
-                      <span>⌄</span>
-                    </div>
-                  </div>
+                  <div><label>Monthly Budget</label><div className="fake-input">{formatCurrency(selectedCategory.allocated)}</div></div>
+                  <div><label>Budget Period</label><div className="fake-input">Monthly</div></div>
                 </div>
-              </section>
-
-              <section className="panel-section">
-                <h3>Budget Controls</h3>
-
-                <div className="control-row">
-                  <div className="control-icon">
-                    ◉
-                  </div>
-
-                  <div className="control-text">
-                    <strong>Overspending alert</strong>
-                    <span>
-                      Notify me when spending reaches
-                    </span>
-                  </div>
-
-                  <select defaultValue="80%">
-                    <option>70%</option>
-                    <option>80%</option>
-                    <option>90%</option>
-                    <option>100%</option>
-                  </select>
-
-                  <div className="toggle active" />
-                </div>
-
-                <div className="control-row">
-                  <div className="control-icon">
-                    ◌
-                  </div>
-
-                  <div className="control-text">
-                    <strong>
-                      Carry forward unused amount
-                    </strong>
-                    <span>
-                      Unused amount will be carried to next
-                      month
-                    </span>
-                  </div>
-
-                  <div className="toggle active" />
-                </div>
-              </section>
-
-              {/*<section className="panel-section">
-                <h3>Spending Progress</h3>
-
-                <div className="spending-box">
-                  <div>
-                    <span>Budget</span>
-                    <strong>
-                      {formatCurrency(
-                        selectedCategory.allocated
-                      )}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Spent</span>
-                    <strong>
-                      {formatCurrency(
-                        selectedCategory.spent
-                      )}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Remaining</span>
-                    <strong className="green-text">
-                      {formatCurrency(
-                        selectedCategory.allocated -
-                          selectedCategory.spent
-                      )}
-                    </strong>
-                  </div>
-
-                 <div className="large-progress">
-                    <div
-                      style={{
-                        width: `${(selectedCategory.spent /selectedCategory.allocated) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div> 
-              </section>*/}
-
-              <section className="panel-section">
-                <h3>Spent by Members</h3>
-
-                <div className="members-list">
-                  {members.map((member) => (
-                    <div
-                      className="member-row"
-                      key={member.name}
-                    >
-                      <div className="member-avatar">
-                        {member.initial}
-                      </div>
-
-                      <div className="member-info">
-                        <div>
-                          <strong>{member.name}</strong>
-                          <span>
-                            {formatCurrency(member.amount)}
-                          </span>
-                        </div>
-
-                        <div className="member-progress">
-                          <div
-                            style={{
-                              width: `${member.percent}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <span className="member-percent">
-                        {member.percent}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <p className="budget-panel-note">Spending is calculated from expense transactions dated in {selectedMonthLabel}.</p>
               </section>
             </div>
-          )}
-
-          {/* SUBCATEGORY MODE */}
-          {panelMode === "subcategories" && (
+          ) : (
             <div className="subcategory-content">
-              <div className="subcategory-heading">
-                <div>
-                  <h3>Subcategories</h3>
-                  <p>
-                    Track spending within{" "}
-                    {selectedCategory.name}
-                  </p>
-                </div>
-
-                <button className="add-subcategory">
-                  ＋ Add
-                </button>
+              <div className="budget-empty-state compact">
+                <h3>Subcategory budgets aren't configured yet</h3>
+                <p>The amount spent above is based on transactions assigned to this category for {selectedMonthLabel}.</p>
               </div>
-
-              <div className="subcategory-list">
-                {selectedCategory.subcategories.map(
-                  (sub) => {
-                    const percentage = Math.round(
-                      (sub.spent / sub.budget) * 100
-                    );
-
-                    return (
-                      <div
-                        className="subcategory-item"
-                        key={sub.name}
-                      >
-                        <div
-                          className={`subcategory-icon ${sub.color}`}
-                        >
-                          {sub.name.charAt(0)}
-                        </div>
-
-                        <div className="subcategory-info">
-                          <div className="subcategory-title">
-                            <strong>{sub.name}</strong>
-
-                            <button className="edit-subcategory">
-                              ✎
-                            </button>
-                          </div>
-
-                          <span>
-                            {formatCurrency(sub.spent)} of{" "}
-                            {formatCurrency(sub.budget)}
-                          </span>
-
-                          <div className="subcategory-progress">
-                            <div
-                              className={`progress-fill ${sub.color}`}
-                              style={{
-                                width: `${Math.min(
-                                  percentage,
-                                  100
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        <strong className="subcategory-percent">
-                          {percentage}%
-                        </strong>
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-
-              <button className="full-add-subcategory">
-                ＋ Add Subcategory
-              </button>
             </div>
           )}
-
           <div className="panel-footer">
-            <button
-              className="cancel-button"
-              onClick={closePanel}
-            >
-              Cancel
-            </button>
-
-            <button className="save-button">
-              Save Changes
-            </button>
+            <button className="cancel-button" type="button" onClick={closePanel}>Close</button>
+            <button className="save-button" type="button" onClick={() => { closePanel(); openBudgetForm(selectedCategory); }}>Edit Budget</button>
           </div>
         </div>
       )}
