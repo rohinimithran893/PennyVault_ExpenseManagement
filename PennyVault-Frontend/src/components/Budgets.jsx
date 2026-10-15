@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { apiRequest } from "../services/apiClient";
 import "../Styles/BudgetCategories.css";
 
@@ -103,6 +103,7 @@ const formatCurrency = (value) =>
   `₹${value.toLocaleString("en-IN")}`;
 
 function Budgets() {
+  const monthInputRef = useRef(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [panelMode, setPanelMode] = useState("details");
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -168,17 +169,38 @@ function Budgets() {
 
         <div className="budget-header-actions">
           <div className="month-selector-wrap">
-            <button className="month-selector" type="button" aria-label="Select budget month">
+            <button
+              className="month-selector"
+              type="button"
+              aria-label="Select budget month"
+              onClick={() => {
+                const input = monthInputRef.current;
+
+                if (!input) return;
+
+                if (typeof input.showPicker === "function") {
+                  input.showPicker();
+                } else {
+                  input.focus();
+                  input.click();
+                }
+              }}
+            >
               <span>▣</span>
               {selectedMonthLabel}
               <span className="chevron">⌄</span>
             </button>
             <input
+              ref={monthInputRef}
               className="month-selector-input"
               type="month"
               value={selectedMonth}
               aria-label="Choose month for budget"
-              onChange={(event) => setSelectedMonth(event.target.value)}
+              onChange={(event) => {
+                if (event.target.value) {
+                  setSelectedMonth(event.target.value);
+                }
+              }}
             />
           </div>
 
