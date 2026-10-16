@@ -39,6 +39,10 @@ function Budgets() {
   const [formAmount, setFormAmount] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [panelMode, setPanelMode] = useState("details");
+  const [subcategoryBudgets, setSubcategoryBudgets] = useState([]);
+  const [subcategoryLoading, setSubcategoryLoading] = useState(false);
+  const [subcategoryError, setSubcategoryError] = useState("");
+  const [subcategorySaving, setSubcategorySaving] = useState(false);
 
   const selectedMonthLabel = new Date(`${selectedMonth}-01T12:00:00`).toLocaleDateString("en-US", {
     month: "long",
@@ -121,9 +125,87 @@ function Budgets() {
     }
   };
 
+  useEffect(() => {
+    if (panelMode !== "subcategories" || !selectedCategory) return;
+    let cancelled = false;
+    const loadSubcategoryBudgets = async () => {
+      setSubcategoryLoading(true);
+      setSubcategoryError("");
+      try {
+        const response = await apiRequest(
+          `/budgets/subcategories?month=${selectedMonth}&categoryId=${selectedCategory.categoryId}`
+        );
+        if (!response.ok) throw new Error("Unable to load subcategory budgets for this month.");
+        const data = await response.json();
+        if (!cancelled) {
+          setSubcategoryBudgets((data.subcategories || []).map((item) => ({
+            ...item,
+            budgetLimit: String(item.budgetLimit ?? 0),
+            spent: Number(item.spent || 0),
+          })));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSubcategoryBudgets([]);
+          setSubcategoryError(error.message || "Unable to load subcategory budgets.");
+        }
+      } finally {
+        if (!cancelled) setSubcategoryLoading(false);
+      }
+    };
+    loadSubcategoryBudgets();
+    return () => { cancelled = true; };
+  }, [panelMode, selectedCategory?.categoryId, selectedMonth]);
+
+  const subcategoryTotalCents = subcategoryBudgets.reduce((sum, item) => {
+    const amount = Number(item.budgetLimit);
+    return sum + (Number.isFinite(amount) && amount >= 0 ? Math.round(amount * 100) : 0);
+  }, 0);
+  const parentBudgetCents = Math.round(Number(selectedCategory?.allocated || 0) * 100);
+  const subcategoryTotalsMatch = subcategoryTotalCents === parentBudgetCents;
+
+  const saveSubcategoryBudgets = async () => {
+    if (!selectedCategory || !subcategoryTotalsMatch || subcategoryLoading) return;
+    setSubcategorySaving(true);
+    setSubcategoryError("");
+    try {
+      const response = await apiRequest(
+        `/budgets/subcategories?month=${selectedMonth}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            categoryId: Number(selectedCategory.categoryId),
+            subcategories: subcategoryBudgets.map((item) => ({
+              subcategoryId: Number(item.subcategoryId),
+              budgetLimit: Number(item.budgetLimit || 0),
+            })),
+          }),
+        }
+      );
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || "Unable to save subcategory budgets.");
+      }
+      const data = await response.json();
+      setSubcategoryBudgets((data.subcategories || []).map((item) => ({
+        ...item,
+        budgetLimit: String(item.budgetLimit ?? 0),
+        spent: Number(item.spent || 0),
+      })));
+    } catch (error) {
+      setSubcategoryError(error.message || "Unable to save subcategory budgets.");
+    } finally {
+      setSubcategorySaving(false);
+    }
+  };
+
   const openPanel = (category, mode) => {
     setSelectedCategory(category);
     setPanelMode(mode);
+    if (mode === "subcategories") {
+      setSubcategoryBudgets([]);
+      setSubcategoryError("");
+    }
   };
 
   const closePanel = () => setSelectedCategory(null);
@@ -339,15 +421,78 @@ function Budgets() {
             </div>
           ) : (
             <div className="subcategory-content">
-              <div className="budget-empty-state compact">
-                <h3>Subcategory budgets aren't configured yet</h3>
-                <p>The amount spent above is based on transactions assigned to this category for {selectedMonthLabel}.</p>
+              <div className="subcategory-budget-summary">
+                <div>
+                  <span>Parent category budget</span>
+                  <strong>{formatCurrency(selectedCategory.allocated)}</strong>
+                </div>
+                <div>
+                  <span>Subcategory total</span>
+                  <strong>{formatCurrency(subcategoryTotalCents / 100)}</strong>
+                </div>
+                <p className={subcategoryTotalsMatch ? "positive" : "negative"}>
+                  {subcategoryTotalsMatch
+                    ? "Subcategory limits match the parent budget."
+                    : `Allocate ${formatCurrency((parentBudgetCents - subcategoryTotalCents) / 100)} more or adjust the limits to match the parent budget.`}
+                </p>
               </div>
+              {subcategoryLoading ? (
+                <div className="budget-empty-state compact"><p>Loading subcategories for {selectedMonthLabel}...</p></div>
+              ) : subcategoryError ? (
+                <p role="alert" className="budget-load-error">{subcategoryError}</p>
+              ) : subcategoryBudgets.length === 0 ? (
+                <div className="budget-empty-state compact">
+                  <h3>No subcategories available</h3>
+                  <p>This category doesn't have any existing subcategories to allocate.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="subcategory-list">
+                    {subcategoryBudgets.map((item) => (
+                      <div className="subcategory-budget-item" key={item.subcategoryId}>
+                        <div className="subcategory-budget-info">
+                          <strong>{item.name}</strong>
+                          <span>Spent this month: {formatCurrency(item.spent)}</span>
+                        </div>
+                        <label className="subcategory-budget-input-wrap">
+                          <span>Limit (₹)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.budgetLimit}
+                            aria-label={`${item.name} budget limit`}
+                            onChange={(event) => setSubcategoryBudgets((current) =>
+                              current.map((row) => row.subcategoryId === item.subcategoryId
+                                ? { ...row, budgetLimit: event.target.value }
+                                : row)
+                            )}
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="subcategory-budget-help">
+                    The sum of all subcategory limits must equal the parent category budget before saving.
+                  </p>
+                </>
+              )}
             </div>
           )}
           <div className="panel-footer">
             <button className="cancel-button" type="button" onClick={closePanel}>Close</button>
-            <button className="save-button" type="button" onClick={() => { closePanel(); openBudgetForm(selectedCategory); }}>Edit Budget</button>
+            {panelMode === "details" ? (
+              <button className="save-button" type="button" onClick={() => { closePanel(); openBudgetForm(selectedCategory); }}>Edit Budget</button>
+            ) : (
+              <button
+                className="save-button"
+                type="button"
+                onClick={saveSubcategoryBudgets}
+                disabled={subcategoryLoading || subcategorySaving || subcategoryBudgets.length === 0 || !subcategoryTotalsMatch}
+              >
+                {subcategorySaving ? "Saving..." : "Save Subcategory Budgets"}
+              </button>
+            )}
           </div>
         </div>
       )}
