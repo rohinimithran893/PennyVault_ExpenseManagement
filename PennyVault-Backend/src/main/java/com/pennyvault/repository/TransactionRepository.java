@@ -16,4 +16,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             LocalDate endDate
     );
 
+    List<Transaction> findByAccountInAndTransactionDateBetweenAndTransactionTypeIgnoreCase(
+            List<Account> accounts, LocalDate startDate, LocalDate endDate, String transactionType);
+
+
 }
