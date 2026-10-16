@@ -161,10 +161,12 @@ function Budgets() {
               onChange={(event) => event.target.value && setSelectedMonth(event.target.value)}
             />
           </div>
-          <button className="primary-button" type="button" onClick={() => openBudgetForm()}>
-            <span>＋</span>
-            Add Category
-          </button>
+          {!budgetLoading && !budgetError && hasAnyBudget && (
+            <button className="primary-button" type="button" onClick={() => openBudgetForm()}>
+              <span>＋</span>
+              Add Budget
+            </button>
+          )}
         </div>
       </header>
 
@@ -176,9 +178,6 @@ function Budgets() {
           <div>
             <span className="summary-label">Monthly Budget</span>
             <strong>{budgetLoading ? "Loading..." : formatCurrency(totalBudget)}</strong>
-            <button className="edit-budget" type="button" onClick={() => openBudgetForm()}>
-              ✎ Add / Edit Budget
-            </button>
           </div>
         </div>
         <div className="summary-card">
@@ -204,7 +203,6 @@ function Budgets() {
       <section className="category-section">
         <div className="section-heading">
           <h2>All Budget Categories</h2>
-          {hasAnyBudget && <button className="summary-button" type="button" onClick={() => openBudgetForm()}>◔ Add / Edit Budget</button>}
         </div>
 
         {budgetLoading ? (
@@ -260,7 +258,6 @@ function Budgets() {
           <strong>Tip</strong>
           <p>Review your budgets regularly and adjust them based on your spending.</p>
         </div>
-        <button type="button" onClick={() => openBudgetForm()}>Add budget →</button>
       </div>
 
       {showBudgetForm && (
