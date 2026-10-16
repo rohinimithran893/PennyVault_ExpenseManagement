@@ -1273,3 +1273,9 @@
   font-size: 10px;
   line-height: 1.5;
 }
+
+
+/* Independent subcategory limits can exceed the parent budget. */
+.subcategory-budget-help.over-budget {
+  color: #b42318;
+}
