@@ -102,15 +102,9 @@ public class SubcategoryBudgetService {
                 "Submit a budget limit for every existing subcategory exactly once.");
         }
 
-        BigDecimal total = request.subcategories().stream()
-            .map(item -> item.budgetLimit())
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (total.compareTo(parentBudget.getBudgetLimit()) != 0) {
-            throw new IllegalArgumentException(
-                "Subcategory limits must total " + parentBudget.getBudgetLimit().toPlainString()
-                    + " to match the parent category budget.");
-        }
-
+        // Subcategory limits are independent spending caps. Their sum may be
+        // lower than or higher than the parent category budget; the parent
+        // budget is never changed automatically.
         for (var item : request.subcategories()) {
             Subcategory subcategory = byId.get(item.subcategoryId());
             SubcategoryMonthlyBudget budget = subcategoryBudgetRepository
