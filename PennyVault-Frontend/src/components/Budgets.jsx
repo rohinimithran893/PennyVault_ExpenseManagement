@@ -162,10 +162,12 @@ function Budgets() {
     return sum + (Number.isFinite(amount) && amount >= 0 ? Math.round(amount * 100) : 0);
   }, 0);
   const parentBudgetCents = Math.round(Number(selectedCategory?.allocated || 0) * 100);
-  const subcategoryTotalsMatch = subcategoryTotalCents === parentBudgetCents;
+  const subcategoryTotalDifferenceCents = subcategoryTotalCents - parentBudgetCents;
+  const subcategoryTotalsMatch = subcategoryTotalDifferenceCents === 0;
+  const subcategoryLimitsOverParent = subcategoryTotalDifferenceCents > 0;
 
   const saveSubcategoryBudgets = async () => {
-    if (!selectedCategory || !subcategoryTotalsMatch || subcategoryLoading) return;
+    if (!selectedCategory || subcategoryLoading || subcategorySaving) return;
     setSubcategorySaving(true);
     setSubcategoryError("");
     try {
@@ -430,10 +432,12 @@ function Budgets() {
                   <span>Subcategory total</span>
                   <strong>{formatCurrency(subcategoryTotalCents / 100)}</strong>
                 </div>
-                <p className={subcategoryTotalsMatch ? "positive" : "negative"}>
-                  {subcategoryTotalsMatch
-                    ? "Subcategory limits match the parent budget."
-                    : `Allocate ${formatCurrency((parentBudgetCents - subcategoryTotalCents) / 100)} more or adjust the limits to match the parent budget.`}
+                <p className={subcategoryLimitsOverParent ? "negative" : "positive"}>
+                  {subcategoryLimitsOverParent
+                    ? `Subcategory limits exceed the parent budget by ${formatCurrency(subcategoryTotalDifferenceCents / 100)}.`
+                    : subcategoryTotalsMatch
+                      ? "Subcategory limits total exactly the parent budget."
+                      : `Subcategory limits are ${formatCurrency(Math.abs(subcategoryTotalDifferenceCents) / 100)} below the parent budget.`}
                 </p>
               </div>
               {subcategoryLoading ? (
@@ -472,8 +476,13 @@ function Budgets() {
                       </div>
                     ))}
                   </div>
-                  <p className="subcategory-budget-help">
-                    The sum of all subcategory limits must equal the parent category budget before saving.
+                  <p className={`subcategory-budget-help ${subcategoryLimitsOverParent ? "over-budget" : ""}`}>
+                    Subcategory limits are independent. The parent budget stays at {formatCurrency(selectedCategory.allocated)} and will not change automatically.
+                    {subcategoryLimitsOverParent
+                      ? ` Your subcategory limits exceed it by ${formatCurrency(subcategoryTotalDifferenceCents / 100)}; you can still save these limits.`
+                      : !subcategoryTotalsMatch
+                        ? ` You have ${formatCurrency(Math.abs(subcategoryTotalDifferenceCents) / 100)} of the parent budget not allocated to subcategories.`
+                        : " Your subcategory limits currently total the parent budget."}
                   </p>
                 </>
               )}
@@ -488,7 +497,7 @@ function Budgets() {
                 className="save-button"
                 type="button"
                 onClick={saveSubcategoryBudgets}
-                disabled={subcategoryLoading || subcategorySaving || subcategoryBudgets.length === 0 || !subcategoryTotalsMatch}
+                disabled={subcategoryLoading || subcategorySaving || subcategoryBudgets.length === 0}
               >
                 {subcategorySaving ? "Saving..." : "Save Subcategory Budgets"}
               </button>
