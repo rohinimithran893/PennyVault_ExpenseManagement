@@ -172,6 +172,11 @@ function Budgets() {
           <div>
             <span className="summary-label">Monthly Budget</span>
             <strong>{budgetLoading ? "Loading..." : formatCurrency(totalBudget)}</strong>
+            {!budgetLoading && !budgetError && hasAnyBudget && (
+              <button className="edit-budget" type="button" onClick={() => openBudgetForm()}>
+                ✎ Add / Edit Budget
+              </button>
+            )}
           </div>
         </div>
         <div className="summary-card">
@@ -197,6 +202,11 @@ function Budgets() {
       <section className="category-section">
         <div className="section-heading">
           <h2>All Budget Categories</h2>
+          {!budgetLoading && !budgetError && hasAnyBudget && (
+            <button className="summary-button" type="button" onClick={() => openBudgetForm()}>
+              ◔ Add / Edit Budget
+            </button>
+          )}
         </div>
 
         {budgetLoading ? (
