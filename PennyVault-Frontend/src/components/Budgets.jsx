@@ -220,7 +220,7 @@ function Budgets() {
           </div>
         ) : !budgetError ? (
           <div className="category-grid">
-            {categories.map((category) => {
+            {configuredCategories.map((category) => {
               const percentage = category.allocated > 0
                 ? Math.round((category.spent / category.allocated) * 100)
                 : 0;
