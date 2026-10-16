@@ -161,12 +161,6 @@ function Budgets() {
               onChange={(event) => event.target.value && setSelectedMonth(event.target.value)}
             />
           </div>
-          {!budgetLoading && !budgetError && hasAnyBudget && (
-            <button className="primary-button" type="button" onClick={() => openBudgetForm()}>
-              <span>＋</span>
-              Add Budget
-            </button>
-          )}
         </div>
       </header>
 
