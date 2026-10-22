@@ -20,6 +20,7 @@ const Signup = () => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [fullName, setFullName] = useState("");
+  const [householdName, setHouseholdName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +34,12 @@ const Signup = () => {
       const newErrors = {};
         if (!fullName.trim()) {
           newErrors.fullName = "Full name is required";
+        }
+
+        if (!householdName.trim()) {
+          newErrors.householdName = "Household name is required";
+        } else if (householdName.trim().length > 100) {
+          newErrors.householdName = "Household name must be at most 100 characters";
         }
 
         if (!username.trim()) {
@@ -78,6 +85,7 @@ const Signup = () => {
       
       await register(
         fullName.trim(),
+        householdName.trim(),
         username.trim(),
         email.trim(),
         password
@@ -153,6 +161,23 @@ const Signup = () => {
             {errors.fullName && (
               <small className="field-error">{errors.fullName}</small>
           )}
+          </div>
+
+          <div className="form-group">
+            <label>Household Name</label>
+            <div className="input-box">
+              <IconUser size={20} />
+              <input
+                type="text"
+                placeholder="e.g. Sharma Family"
+                value={householdName}
+                onChange={(e) => setHouseholdName(e.target.value)}
+                maxLength={100}
+              />
+            </div>
+            {errors.householdName && (
+              <small className="field-error">{errors.householdName}</small>
+            )}
           </div>
 
           <div className="form-group">
