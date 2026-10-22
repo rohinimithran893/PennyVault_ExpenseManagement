@@ -9,10 +9,12 @@ describe("authentication API contract", () => {
     jest.resetAllMocks();
   });
 
-  test("registration sends username, email, full name, and password", async () => {
+  test("registration sends household name, username, email, full name, and password", async () => {
     const responseBody = {
       id: 12,
       fullName: "Alice Example",
+      householdId: 77,
+      householdName: "Alice Household",
       username: "alice_01",
       email: "alice@example.com",
       role: "PRIMARY_OWNER",
@@ -25,6 +27,7 @@ describe("authentication API contract", () => {
 
     const result = await register(
       "Alice Example",
+      "Alice Household",
       "alice_01",
       "alice@example.com",
       "Password123"
@@ -37,6 +40,7 @@ describe("authentication API contract", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: "Alice Example",
+          householdName: "Alice Household",
           username: "alice_01",
           email: "alice@example.com",
           password: "Password123",
@@ -57,7 +61,7 @@ describe("authentication API contract", () => {
     });
 
     await expect(
-      register("Alice Example", "alice_01", "alice@example.com", "Password123")
+      register("Alice Example", "Alice Household", "alice_01", "alice@example.com", "Password123")
     ).rejects.toEqual(errorBody);
   });
 
@@ -94,7 +98,7 @@ describe("authentication API contract", () => {
     expect(result).toEqual(responseBody);
   });
 
-  test("login exposes the backend's invalid-credentials message", async () => {
+  test("login exposes the backend invalid-credentials message", async () => {
     global.fetch.mockResolvedValue({
       ok: false,
       json: async () => ({ status: 401, message: "Invalid credentials" }),
