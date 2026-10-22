@@ -5,6 +5,7 @@ import com.pennyvault.dto.request.RegisterRequest;
 import com.pennyvault.dto.response.LoginResponse;
 import com.pennyvault.dto.response.UserResponse;
 import com.pennyvault.entity.User;
+import com.pennyvault.exception.EmailAlreadyExistsException;
 import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.exception.UsernameAlreadyExistsException;
 import com.pennyvault.repository.UserRepository;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -84,6 +86,44 @@ class UserServiceImplTest {
         assertThrows(UsernameAlreadyExistsException.class, () -> userService.register(request));
 
         verify(userRepository, never()).save(any(User.class));
+        verifyNoInteractions(accountService);
+    }
+
+    @Test
+    void registerTranslatesDatabaseUsernameConstraintViolation() {
+        RegisterRequest request = new RegisterRequest();
+        request.setFullName("Alice Example");
+        request.setUsername("Alice_01");
+        request.setEmail("alice@example.com");
+        request.setPassword("Password123");
+
+        when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("alice_01")).thenReturn(false);
+        when(passwordEncoder.encode("Password123")).thenReturn("encoded-password");
+        when(userRepository.save(any(User.class))).thenThrow(
+                new DataIntegrityViolationException(
+                        "duplicate key violates unique constraint uq_users_username"));
+
+        assertThrows(UsernameAlreadyExistsException.class, () -> userService.register(request));
+        verifyNoInteractions(accountService);
+    }
+
+    @Test
+    void registerTranslatesDatabaseEmailConstraintViolation() {
+        RegisterRequest request = new RegisterRequest();
+        request.setFullName("Alice Example");
+        request.setUsername("Alice_01");
+        request.setEmail("alice@example.com");
+        request.setPassword("Password123");
+
+        when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
+        when(userRepository.existsByUsername("alice_01")).thenReturn(false);
+        when(passwordEncoder.encode("Password123")).thenReturn("encoded-password");
+        when(userRepository.save(any(User.class))).thenThrow(
+                new DataIntegrityViolationException(
+                        "duplicate key violates unique constraint users_email_key"));
+
+        assertThrows(EmailAlreadyExistsException.class, () -> userService.register(request));
         verifyNoInteractions(accountService);
     }
 
