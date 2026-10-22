@@ -14,6 +14,7 @@ import com.pennyvault.service.AccountService;
 import com.pennyvault.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -45,16 +46,41 @@ public class UserServiceImpl implements UserService {
                 .fullName(request.getFullName())
                 .username(username)
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))  // we'll encrypt later
+                .password(passwordEncoder.encode(request.getPassword()))
                 .role("PRIMARY_OWNER")
                 .status("ACTIVE")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        User savedUser = userRepository.save(user);
+        // The pre-checks improve feedback, but only the database unique constraints
+        // can prevent duplicates when registrations happen concurrently.
+        final User savedUser;
+        try {
+            savedUser = userRepository.save(user);
+        } catch (DataIntegrityViolationException exception) {
+            throw translateDuplicateRegistration(exception);
+        }
+
         accountService.createDefaultAccounts(savedUser);
         return mapToResponse(savedUser);
+    }
+
+    private RuntimeException translateDuplicateRegistration(DataIntegrityViolationException exception) {
+        String details = exception.getMostSpecificCause() == null
+                ? exception.getMessage()
+                : exception.getMostSpecificCause().getMessage();
+        String normalizedDetails = details == null ? "" : details.toLowerCase(Locale.ROOT);
+
+        if (normalizedDetails.contains("username")) {
+            return new UsernameAlreadyExistsException("Username already exists");
+        }
+        if (normalizedDetails.contains("email")) {
+            return new EmailAlreadyExistsException("Email already exists");
+        }
+
+        // Do not misreport unrelated integrity failures as duplicate registration.
+        return exception;
     }
 
     @Override
