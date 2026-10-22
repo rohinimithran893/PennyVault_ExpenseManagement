@@ -146,13 +146,15 @@ class UserServiceImplTest {
     }
 
     @Test
-    void loginAcceptsEmail() {
-        User user = existingUser();
+    void existingUserCanStillLoginByEmailAndReceivesEmailBasedToken() {
+        User legacyUser = existingUser();
+        // This represents a username backfilled by V11 for a pre-existing account.
+        legacyUser.setUsername("alice_7");
         LoginRequest request = new LoginRequest();
         request.setEmail("alice@example.com");
         request.setPassword("Password123");
 
-        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(legacyUser));
         when(passwordEncoder.matches("Password123", "encoded-password")).thenReturn(true);
         when(jwtService.generateToken("alice@example.com")).thenReturn("test-token");
 
@@ -160,7 +162,9 @@ class UserServiceImplTest {
 
         assertEquals("test-token", response.getToken());
         assertEquals("alice@example.com", response.getUser().getEmail());
+        assertEquals("alice_7", response.getUser().getUsername());
         verify(userRepository).findByEmail("alice@example.com");
+        verify(jwtService).generateToken("alice@example.com");
     }
 
     @Test
