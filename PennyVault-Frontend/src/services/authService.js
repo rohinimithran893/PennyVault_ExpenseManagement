@@ -20,7 +20,7 @@ export const loginUser = async (email, password) => {
   return data;
 };
 
-export const register = async (fullName, email, password) => {
+export const register = async (fullName, username, email, password) => {
   const response = await fetch(`${API_BASE_URL}/auth/register`,
     {
       method: "POST",
@@ -29,6 +29,7 @@ export const register = async (fullName, email, password) => {
       },
       body: JSON.stringify({
         fullName,
+        username,
         email,
         password,
       }),
