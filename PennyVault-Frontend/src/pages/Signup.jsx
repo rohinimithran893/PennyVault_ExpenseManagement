@@ -20,6 +20,7 @@ const Signup = () => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,6 +33,14 @@ const Signup = () => {
       const newErrors = {};
         if (!fullName.trim()) {
           newErrors.fullName = "Full name is required";
+        }
+
+        if (!username.trim()) {
+          newErrors.username = "Username is required";
+        } else if (username.trim().length < 3 || username.trim().length > 50) {
+          newErrors.username = "Username must be between 3 and 50 characters";
+        } else if (!/^[A-Za-z0-9._-]+$/.test(username.trim())) {
+          newErrors.username = "Use only letters, numbers, dots, underscores, and hyphens";
         }
 
         if (!email.trim()) {
@@ -69,6 +78,7 @@ const Signup = () => {
       
       await register(
         fullName.trim(),
+        username.trim(),
         email.trim(),
         password
       );
@@ -143,6 +153,19 @@ const Signup = () => {
             {errors.fullName && (
               <small className="field-error">{errors.fullName}</small>
           )}
+          </div>
+
+          <div className="form-group">
+            <label>Username</label>
+            <div className="input-box">
+              <IconUser size={20} />
+              <input type="text" placeholder="Choose a username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)} />
+            </div>
+            {errors.username && (
+              <small className="field-error">{errors.username}</small>
+            )}
           </div>
 
           <div className="form-group">
