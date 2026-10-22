@@ -6,6 +6,7 @@ import "../Styles/Login.css";
 import loginIllustration from "../assets/login-illustration.png";
 import {
   IconMail,
+  IconUser,
   IconLock,
   IconEye,
   IconEyeOff,
@@ -33,7 +34,7 @@ const Login = () => {
 
   const validateLogin = () => {
     if (!email.trim()) {
-      setError("Email is required");
+      setError("Username or email is required");
       return false;
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
@@ -144,10 +145,10 @@ const Login = () => {
           </p>
 
           <div className="input-field">
-            <IconMail size={20} />
+            <IconUser size={20} />
             <input 
-            type="email" 
-            placeholder="Enter your email address"
+            type="text" 
+            placeholder="Enter your username or email"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
