@@ -5,10 +5,12 @@ import com.pennyvault.dto.request.RegisterRequest;
 import com.pennyvault.dto.response.LoginResponse;
 import com.pennyvault.dto.response.UserResponse;
 import com.pennyvault.entity.User;
+import com.pennyvault.entity.Household;
 import com.pennyvault.exception.EmailAlreadyExistsException;
 import com.pennyvault.exception.UsernameAlreadyExistsException;
 import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.repository.UserRepository;
+import com.pennyvault.repository.HouseholdRepository;
 import com.pennyvault.security.JwtService;
 import com.pennyvault.service.AccountService;
 import com.pennyvault.service.UserService;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -26,11 +29,13 @@ import java.util.Locale;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final HouseholdRepository householdRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AccountService accountService;
 
     @Override
+    @Transactional
     public UserResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -62,8 +67,21 @@ public class UserServiceImpl implements UserService {
             throw translateDuplicateRegistration(exception);
         }
 
-        accountService.createDefaultAccounts(savedUser);
-        return mapToResponse(savedUser);
+        LocalDateTime now = LocalDateTime.now();
+        Household household = Household.builder()
+                .ownerUserId(savedUser.getId())
+                .name(request.getHouseholdName().trim())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        Household savedHousehold = householdRepository.save(household);
+
+        savedUser.setHousehold(savedHousehold);
+        savedUser.setUpdatedAt(now);
+        User associatedUser = userRepository.save(savedUser);
+
+        accountService.createDefaultAccounts(associatedUser);
+        return mapToResponse(associatedUser);
     }
 
     private RuntimeException translateDuplicateRegistration(DataIntegrityViolationException exception) {
@@ -110,6 +128,8 @@ public class UserServiceImpl implements UserService {
                 .username(user.getUsername())
                 .role(user.getRole())
                 .status(user.getStatus())
+                .householdId(user.getHousehold() == null ? null : user.getHousehold().getId())
+                .householdName(user.getHousehold() == null ? null : user.getHousehold().getName())
                 .build();
     }
 }
