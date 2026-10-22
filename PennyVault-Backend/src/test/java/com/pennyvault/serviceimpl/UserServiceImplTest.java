@@ -5,10 +5,12 @@ import com.pennyvault.dto.request.RegisterRequest;
 import com.pennyvault.dto.response.LoginResponse;
 import com.pennyvault.dto.response.UserResponse;
 import com.pennyvault.entity.User;
+import com.pennyvault.entity.Household;
 import com.pennyvault.exception.EmailAlreadyExistsException;
 import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.exception.UsernameAlreadyExistsException;
 import com.pennyvault.repository.UserRepository;
+import com.pennyvault.repository.HouseholdRepository;
 import com.pennyvault.security.JwtService;
 import com.pennyvault.service.AccountService;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,9 @@ class UserServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
+    private HouseholdRepository householdRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -51,6 +56,7 @@ class UserServiceImplTest {
     void registerNormalizesUsernameAndReturnsItInResponse() {
         RegisterRequest request = new RegisterRequest();
         request.setFullName("Alice Example");
+        request.setHouseholdName("Alice Household");
         request.setUsername("  Alice_01  ");
         request.setEmail("alice@example.com");
         request.setPassword("Password123");
@@ -63,12 +69,20 @@ class UserServiceImplTest {
             savedUser.setId(42L);
             return savedUser;
         });
+        when(householdRepository.save(any(Household.class))).thenAnswer(invocation -> {
+            Household household = invocation.getArgument(0);
+            household.setId(77L);
+            return household;
+        });
 
         UserResponse response = userService.register(request);
 
         assertEquals(42L, response.getId());
         assertEquals("alice_01", response.getUsername());
         assertEquals("alice@example.com", response.getEmail());
+        assertEquals(77L, response.getHouseholdId());
+        assertEquals("Alice Household", response.getHouseholdName());
+        verify(householdRepository).save(any(Household.class));
         verify(accountService).createDefaultAccounts(any(User.class));
     }
 
