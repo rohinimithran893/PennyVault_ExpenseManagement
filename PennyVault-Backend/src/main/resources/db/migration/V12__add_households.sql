@@ -9,35 +9,27 @@ CREATE TABLE households (
     updated_at TIMESTAMP
 );
 
-INSERT INTO households (name, created_at, updated_at)
-SELECT
-    LEFT(COALESCE(NULLIF(BTRIM(full_name), ''), 'Personal') || '''s Household', 100),
-    COALESCE(created_at, CURRENT_TIMESTAMP),
-    COALESCE(updated_at, CURRENT_TIMESTAMP)
-FROM users
-ORDER BY id;
-
 ALTER TABLE users
     ADD COLUMN household_id BIGINT;
 
-WITH household_assignments AS (
-    SELECT
-        u.id AS user_id,
-        h.id AS household_id,
-        ROW_NUMBER() OVER (ORDER BY u.id) AS row_num
-    FROM users u
-    JOIN households h
-      ON h.name = LEFT(COALESCE(NULLIF(BTRIM(u.full_name), ''), 'Personal') || '''s Household', 100)
-)
+-- Temporarily retain the originating user ID to make the backfill deterministic,
+-- including when different users have the same full name.
+ALTER TABLE households
+    ADD COLUMN migration_user_id BIGINT UNIQUE;
+
+INSERT INTO households (name, created_at, updated_at, migration_user_id)
+SELECT
+    LEFT(COALESCE(NULLIF(BTRIM(full_name), ''), 'Personal') || '''s Household', 100),
+    COALESCE(created_at, CURRENT_TIMESTAMP),
+    COALESCE(updated_at, CURRENT_TIMESTAMP),
+    id
+FROM users
+ORDER BY id;
+
 UPDATE users u
-SET household_id = assignments.household_id
-FROM household_assignments assignments
-WHERE u.id = assignments.user_id
-  AND assignments.row_num = (
-      SELECT COUNT(*)
-      FROM users earlier_user
-      WHERE earlier_user.id <= u.id
-  );
+SET household_id = h.id
+FROM households h
+WHERE h.migration_user_id = u.id;
 
 ALTER TABLE users
     ALTER COLUMN household_id SET NOT NULL;
@@ -45,3 +37,6 @@ ALTER TABLE users
 ALTER TABLE users
     ADD CONSTRAINT fk_users_household
     FOREIGN KEY (household_id) REFERENCES households(id);
+
+ALTER TABLE households
+    DROP COLUMN migration_user_id;
