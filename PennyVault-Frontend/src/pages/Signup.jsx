@@ -211,6 +211,7 @@ const Signup = () => {
                 maxLength={100}
               />
             </div>
+            <small>Suggested from your full name or username. You can edit it.</small>
             {errors.householdName && (
               <small className="field-error">{errors.householdName}</small>
             )}
