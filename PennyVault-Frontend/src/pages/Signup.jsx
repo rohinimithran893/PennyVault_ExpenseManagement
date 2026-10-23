@@ -21,6 +21,7 @@ const Signup = () => {
 
   const [fullName, setFullName] = useState("");
   const [householdName, setHouseholdName] = useState("");
+  const [householdNameEdited, setHouseholdNameEdited] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +30,25 @@ const Signup = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
+
+  const suggestHouseholdName = (name, user) => {
+    const suggestionSource = name.trim() || user.trim();
+    return suggestionSource ? suggestionSource + "'s Household" : "";
+  };
+
+  const handleFullNameChange = (value) => {
+    setFullName(value);
+    if (!householdNameEdited) {
+      setHouseholdName(suggestHouseholdName(value, username));
+    }
+  };
+
+  const handleUsernameChange = (value) => {
+    setUsername(value);
+    if (!householdNameEdited && !fullName.trim()) {
+      setHouseholdName(suggestHouseholdName(fullName, value));
+    }
+  };
 
   const validateForm = () => {
       const newErrors = {};
@@ -156,11 +176,24 @@ const Signup = () => {
               <IconUser size={20} />
               <input type="text" placeholder="Enter your full name"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}/>
+              onChange={(e) => handleFullNameChange(e.target.value)}/>
             </div>
             {errors.fullName && (
               <small className="field-error">{errors.fullName}</small>
           )}
+          </div>
+
+          <div className="form-group">
+            <label>Username</label>
+            <div className="input-box">
+              <IconUser size={20} />
+              <input type="text" placeholder="Choose a username"
+              value={username}
+              onChange={(e) => handleUsernameChange(e.target.value)} />
+            </div>
+            {errors.username && (
+              <small className="field-error">{errors.username}</small>
+            )}
           </div>
 
           <div className="form-group">
@@ -171,25 +204,15 @@ const Signup = () => {
                 type="text"
                 placeholder="e.g. Sharma Family"
                 value={householdName}
-                onChange={(e) => setHouseholdName(e.target.value)}
+                onChange={(e) => {
+                  setHouseholdName(e.target.value);
+                  setHouseholdNameEdited(true);
+                }}
                 maxLength={100}
               />
             </div>
             {errors.householdName && (
               <small className="field-error">{errors.householdName}</small>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>Username</label>
-            <div className="input-box">
-              <IconUser size={20} />
-              <input type="text" placeholder="Choose a username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)} />
-            </div>
-            {errors.username && (
-              <small className="field-error">{errors.username}</small>
             )}
           </div>
 
