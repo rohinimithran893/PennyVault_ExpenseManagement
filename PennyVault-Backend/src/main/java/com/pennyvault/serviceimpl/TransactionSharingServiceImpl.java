@@ -1,6 +1,6 @@
 package com.pennyvault.serviceimpl;
 
-import com.pennyvault.dto.response.TransactionResponse;
+import com.pennyvault.dto.response.SharedTransactionResponse;
 import com.pennyvault.entity.*;
 import com.pennyvault.repository.*;
 import com.pennyvault.service.TransactionSharingService;
@@ -66,16 +66,16 @@ public class TransactionSharingServiceImpl implements TransactionSharingService 
 
     @Override
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getSharedTransactions(Long householdId, String userEmail) {
+    public List<SharedTransactionResponse> getSharedTransactions(Long householdId, String userEmail) {
         User user = getUser(userEmail);
         getHousehold(householdId);
         requireMember(householdId, user.getId());
 
         return shareRepository.findByHouseholdIdAndRevokedAtIsNullOrderBySharedAtDesc(householdId).stream()
                 .map(share -> transactionRepository.findById(share.getTransactionId())
+                        .map(transaction -> toResponse(transaction, share.getSharedAt()))
                         .orElse(null))
-                .filter(transaction -> transaction != null)
-                .map(this::toResponse)
+                .filter(response -> response != null)
                 .toList();
     }
 
@@ -100,19 +100,18 @@ public class TransactionSharingServiceImpl implements TransactionSharingService 
         }
     }
 
-    private TransactionResponse toResponse(Transaction transaction) {
-        return TransactionResponse.builder()
+    private SharedTransactionResponse toResponse(Transaction transaction, LocalDateTime sharedAt) {
+        return SharedTransactionResponse.builder()
                 .id(transaction.getId())
-                .accountId(transaction.getAccount().getId())
                 .categoryId(transaction.getCategory().getId())
                 .subcategoryId(transaction.getSubcategory() != null ? transaction.getSubcategory().getId() : null)
-                .account(transaction.getAccount().getAccountName())
                 .category(transaction.getCategory().getName())
                 .subcategory(transaction.getSubcategory() != null ? transaction.getSubcategory().getName() : null)
                 .description(transaction.getDescription())
                 .amount(transaction.getAmount())
                 .transactionType(transaction.getTransactionType())
                 .transactionDate(transaction.getTransactionDate())
+                .sharedAt(sharedAt)
                 .build();
     }
 }

@@ -1,6 +1,6 @@
 package com.pennyvault.controller;
 
-import com.pennyvault.dto.response.TransactionResponse;
+import com.pennyvault.dto.response.SharedTransactionResponse;
 import com.pennyvault.service.TransactionSharingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,7 +35,7 @@ public class TransactionSharingController {
     }
 
     @GetMapping("/api/households/{householdId}/shared-transactions")
-    public List<TransactionResponse> getSharedTransactions(
+    public List<SharedTransactionResponse> getSharedTransactions(
             @PathVariable Long householdId,
             Authentication authentication) {
         return sharingService.getSharedTransactions(householdId, authentication.getName());
