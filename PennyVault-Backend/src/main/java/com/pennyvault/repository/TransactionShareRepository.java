@@ -12,4 +12,7 @@ public interface TransactionShareRepository extends JpaRepository<TransactionSha
             Long transactionId, Long householdId);
 
     List<TransactionShare> findByHouseholdIdAndRevokedAtIsNullOrderBySharedAtDesc(Long householdId);
+
+    List<TransactionShare> findByHouseholdIdAndSharedByUserIdAndRevokedAtIsNull(
+            Long householdId, Long sharedByUserId);
 }
