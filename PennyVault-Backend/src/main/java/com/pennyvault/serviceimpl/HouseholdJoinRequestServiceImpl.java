@@ -4,8 +4,10 @@ import com.pennyvault.dto.response.HouseholdJoinRequestResponse;
 import com.pennyvault.dto.response.HouseholdSearchResponse;
 import com.pennyvault.entity.Household;
 import com.pennyvault.entity.HouseholdJoinRequest;
+import com.pennyvault.entity.HouseholdMembership;
 import com.pennyvault.entity.User;
 import com.pennyvault.repository.HouseholdJoinRequestRepository;
+import com.pennyvault.repository.HouseholdMembershipRepository;
 import com.pennyvault.repository.HouseholdRepository;
 import com.pennyvault.repository.UserRepository;
 import com.pennyvault.service.HouseholdJoinRequestService;
@@ -28,6 +30,7 @@ public class HouseholdJoinRequestServiceImpl implements HouseholdJoinRequestServ
 
     private final HouseholdJoinRequestRepository requestRepository;
     private final HouseholdRepository householdRepository;
+    private final HouseholdMembershipRepository membershipRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -49,8 +52,7 @@ public class HouseholdJoinRequestServiceImpl implements HouseholdJoinRequestServ
         User requester = getUserByEmail(requesterEmail);
         Household household = getHousehold(householdId);
 
-        if (requester.getHousehold() != null
-                && householdId.equals(requester.getHousehold().getId())) {
+        if (membershipRepository.existsByHouseholdIdAndUserId(householdId, requester.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You are already a member of this household");
         }
 
@@ -108,9 +110,17 @@ public class HouseholdJoinRequestServiceImpl implements HouseholdJoinRequestServ
         User requester = userRepository.findById(request.getRequesterUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Requesting user not found"));
 
-        requester.setHousehold(household);
-        userRepository.save(requester);
+        if (!membershipRepository.existsByHouseholdIdAndUserId(household.getId(), requester.getId())) {
+            membershipRepository.save(HouseholdMembership.builder()
+                    .householdId(household.getId())
+                    .userId(requester.getId())
+                    .role("MEMBER")
+                    .joinedAt(LocalDateTime.now())
+                    .build());
+        }
 
+        // Do not overwrite users.household_id: it remains the legacy/default household.
+        // Memberships are now represented independently, so users can join multiple households.
         request.setStatus(APPROVED);
         request.setReviewedAt(LocalDateTime.now());
         request.setReviewedByUserId(owner.getId());
