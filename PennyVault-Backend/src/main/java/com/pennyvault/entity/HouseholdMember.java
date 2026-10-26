@@ -43,4 +43,11 @@ public class HouseholdMember {
 
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
+
+    @PrePersist
+    void setJoinedAtIfMissing() {
+        if (joinedAt == null) {
+            joinedAt = LocalDateTime.now();
+        }
+    }
 }
