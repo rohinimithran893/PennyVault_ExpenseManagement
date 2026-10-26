@@ -7,7 +7,8 @@ package com.pennyvault.entity;
 public enum HouseholdRole {
     OWNER,
     CO_OWNER,
-    MEMBER;
+    MEMBER,
+    VIEWER;
 
     public boolean isPrimaryOwner() {
         return this == OWNER;
