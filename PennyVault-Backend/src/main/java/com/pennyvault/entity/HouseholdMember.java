@@ -44,6 +44,13 @@ public class HouseholdMember {
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
 
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private boolean active = true;
+
+    @Column(name = "deactivated_at")
+    private LocalDateTime deactivatedAt;
+
     @PrePersist
     void setJoinedAtIfMissing() {
         if (joinedAt == null) {
