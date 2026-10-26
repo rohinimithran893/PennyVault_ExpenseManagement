@@ -24,10 +24,14 @@ public class HouseholdMembershipService {
     private final UserRepository userRepository;
 
     public HouseholdMember requireMembership(Long householdId, Long userId) {
-        return householdMemberRepository.findByHousehold_IdAndUser_Id(householdId, userId)
+        HouseholdMember membership = householdMemberRepository.findByHousehold_IdAndUser_Id(householdId, userId)
                 .orElseThrow(() -> new AccessDeniedException(
                         "User is not a member of this household"
                 ));
+        if (!membership.isActive()) {
+            throw new AccessDeniedException("Household membership is inactive");
+        }
+        return membership;
     }
 
     public HouseholdMember requireRole(
