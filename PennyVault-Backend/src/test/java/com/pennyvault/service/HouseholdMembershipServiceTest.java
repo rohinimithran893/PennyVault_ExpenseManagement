@@ -46,6 +46,16 @@ class HouseholdMembershipServiceTest {
     }
 
     @Test
+    void requireMembershipDeniesInactiveMembership() {
+        HouseholdMember membership = membership(HouseholdRole.MEMBER);
+        membership.setActive(false);
+        when(membershipRepository.findByHousehold_IdAndUser_Id(10L, 20L))
+                .thenReturn(Optional.of(membership));
+
+        assertThrows(AccessDeniedException.class, () -> service.requireMembership(10L, 20L));
+    }
+
+    @Test
     void requireRoleDeniesMemberWhenOwnerRoleIsRequired() {
         HouseholdMember membership = membership(HouseholdRole.MEMBER);
         when(membershipRepository.findByHousehold_IdAndUser_Id(10L, 20L))
