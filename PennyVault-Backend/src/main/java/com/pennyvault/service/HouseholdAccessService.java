@@ -77,12 +77,20 @@ public class HouseholdAccessService {
         return HouseholdInvitationResponse.from(invitation, rawToken);
     }
 
-    @Transactional(readOnly = true)
     public List<HouseholdInvitationResponse> listInvitations(Long householdId) {
         User actor = currentUser();
         membershipService.requirePrimaryOwner(householdId, actor.getId());
-        return invitationRepository.findAllByHousehold_IdOrderByCreatedAtDesc(householdId)
-                .stream().map(invitation -> HouseholdInvitationResponse.from(invitation, null)).toList();
+        LocalDateTime now = LocalDateTime.now();
+        List<HouseholdInvitation> invitations = invitationRepository.findAllByHousehold_IdOrderByCreatedAtDesc(householdId);
+        invitations.stream()
+                .filter(invitation -> invitation.getStatus() == HouseholdInvitationStatus.PENDING
+                        && !invitation.getExpiresAt().isAfter(now))
+                .forEach(invitation -> {
+                    invitation.setStatus(HouseholdInvitationStatus.EXPIRED);
+                    invitation.setUpdatedAt(now);
+                });
+        invitationRepository.saveAll(invitations);
+        return invitations.stream().map(invitation -> HouseholdInvitationResponse.from(invitation, null)).toList();
     }
 
     public HouseholdInvitationResponse resendInvitation(Long householdId, Long invitationId) {
