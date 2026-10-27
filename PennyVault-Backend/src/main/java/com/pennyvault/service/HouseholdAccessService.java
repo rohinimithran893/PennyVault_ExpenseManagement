@@ -131,9 +131,8 @@ public class HouseholdAccessService {
             throw new IllegalArgumentException("This invitation is no longer pending");
         }
         if (!invitation.getExpiresAt().isAfter(now)) {
-            invitation.setStatus(HouseholdInvitationStatus.EXPIRED);
-            invitation.setUpdatedAt(now);
-            invitationRepository.save(invitation);
+            // The exception rolls back this transaction, so do not attempt to persist
+            // EXPIRED here. listInvitations() records expired statuses separately.
             throw new IllegalArgumentException("This invitation has expired");
         }
         if (!actor.getEmail().equalsIgnoreCase(invitation.getEmail())) {
