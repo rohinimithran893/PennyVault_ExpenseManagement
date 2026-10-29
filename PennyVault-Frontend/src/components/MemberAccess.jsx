@@ -317,10 +317,6 @@ function PeopleAccess() {
           </div>
         </div>
 
-        <div className="active-members-section">
-          <h2>{selectedTab === "ACTIVE" ? "Active Members" : "Deactivated Members"}</h2>
-          <span className="count-badge">{filteredMembers.length}</span>
-        </div>
         <div className="members-card">
           {loading ? (
             <div className="people-empty-state">Loading household members…</div>
