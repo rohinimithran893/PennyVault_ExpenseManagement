@@ -243,7 +243,7 @@ function PeopleAccess() {
         </div>
         {canManage && (
           <button className="invite-button" onClick={() => { setShowInviteForm(true); setError(""); }}>
-            <IconPlus size={16} stroke={2.5} /> Invite Member
+            <IconPlus size={16} stroke={2.5} /> Invite People
           </button>
         )}
       </div>
@@ -342,7 +342,7 @@ function PeopleAccess() {
             <span className="count-badge">{invitations.length}</span>
           </div>
           {loading ? <div className="people-empty-state">Loading invitations…</div> : invitations.length === 0 ? (
-            <div className="people-empty-state">No invitations yet. Use Invite Member to invite someone to this household.</div>
+            <div className="people-empty-state">No invitations yet. Use Invite People to invite someone to this household.</div>
           ) : (
             <div className="invitation-grid">
               {invitations.map((invitation) => (
