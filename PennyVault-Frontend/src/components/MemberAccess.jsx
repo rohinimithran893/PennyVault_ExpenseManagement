@@ -78,6 +78,7 @@ function PeopleAccess() {
   const [invitations, setInvitations] = useState([]);
   const [currentRole, setCurrentRole] = useState(null);
   const [search, setSearch] = useState("");
+  const [selectedTab, setSelectedTab] = useState("ACTIVE");
   const [filter, setFilter] = useState("ALL");
   const [activeMenu, setActiveMenu] = useState(null);
   const [showInviteForm, setShowInviteForm] = useState(false);
@@ -97,15 +98,13 @@ function PeopleAccess() {
   const filteredMembers = useMemo(() => {
     const query = search.trim().toLowerCase();
     return members.filter((member) => {
+      const matchesStatus = selectedTab === "ACTIVE" ? member.active : !member.active;
       const matchesSearch = !query ||
         `${member.fullName || ""} ${member.email || ""}`.toLowerCase().includes(query);
-      const matchesFilter = filter === "ALL" ||
-        (filter === "ACTIVE" && member.active) ||
-        (filter === "INACTIVE" && !member.active) ||
-        member.role === filter;
-      return matchesSearch && matchesFilter;
+      const matchesRole = filter === "ALL" || member.role === filter;
+      return matchesStatus && matchesSearch && matchesRole;
     });
-  }, [members, search, filter]);
+  }, [members, search, filter, selectedTab]);
 
   const loadData = useCallback(async () => {
     if (!householdId) {
@@ -290,35 +289,45 @@ function PeopleAccess() {
         <SummaryCard icon={<IconEye size={22} stroke={2} />} title="Viewers" value={String(viewerCount)} subtitle="Read-only access" color="blue" />
       </div>
 
-      <div className="people-toolbar">
-        <div className="people-search">
-          <IconSearch size={18} stroke={2} />
-          <input type="text" placeholder="Search members by name or email..." value={search} onChange={(event) => setSearch(event.target.value)} />
-        </div>
-        <div className="people-filter-wrap">
-          <IconFilter size={15} stroke={2} />
-          <select aria-label="Filter members" value={filter} onChange={(event) => setFilter(event.target.value)}>
-            <option value="ALL">All members</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Deactivated</option>
-            <option value="CO_OWNER">Co-owners</option>
-            <option value="MEMBER">Members</option>
-            <option value="VIEWER">Viewers</option>
-          </select>
-          <IconChevronDown size={15} stroke={2} />
-        </div>
-      </div>
-
       <section className="members-section">
+        <div className="member-tabs" role="tablist" aria-label="Member status">
+          <button type="button" role="tab" aria-selected={selectedTab === "ACTIVE"} className={`member-tab ${selectedTab === "ACTIVE" ? "selected" : ""}`} onClick={() => { setSelectedTab("ACTIVE"); setFilter("ALL"); }}>
+            Active Members <span className="count-badge">{activeMembers.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected={selectedTab === "INACTIVE"} className={`member-tab ${selectedTab === "INACTIVE" ? "selected" : ""}`} onClick={() => { setSelectedTab("INACTIVE"); setFilter("ALL"); }}>
+            Deactivated Members <span className="count-badge">{members.length - activeMembers.length}</span>
+          </button>
+        </div>
+
+        <div className="people-toolbar">
+          <div className="people-search">
+            <IconSearch size={18} stroke={2} />
+            <input type="text" placeholder="Search members by name or email..." value={search} onChange={(event) => setSearch(event.target.value)} />
+          </div>
+          <div className="people-filter-wrap">
+            <IconFilter size={15} stroke={2} />
+            <select aria-label="Filter members by role" value={filter} onChange={(event) => setFilter(event.target.value)}>
+              <option value="ALL">All roles</option>
+              <option value="OWNER">Owners</option>
+              <option value="CO_OWNER">Co-owners</option>
+              <option value="MEMBER">Members</option>
+              <option value="VIEWER">Viewers</option>
+            </select>
+            <IconChevronDown size={15} stroke={2} />
+          </div>
+        </div>
+
         <div className="active-members-section">
-          <h2>Household Members</h2>
+          <h2>{selectedTab === "ACTIVE" ? "Active Members" : "Deactivated Members"}</h2>
           <span className="count-badge">{filteredMembers.length}</span>
         </div>
         <div className="members-card">
           {loading ? (
             <div className="people-empty-state">Loading household members…</div>
           ) : filteredMembers.length === 0 ? (
-            <div className="people-empty-state">{members.length ? "No members match your search or filter." : "No household members were found."}</div>
+            <div className="people-empty-state">{members.some((member) => selectedTab === "ACTIVE" ? member.active : !member.active)
+              ? "No members match your search or role filter."
+              : selectedTab === "ACTIVE" ? "No active members found." : "No deactivated members found."}</div>
           ) : filteredMembers.map((member) => (
             <MemberRow
               key={member.userId}
