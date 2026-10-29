@@ -415,12 +415,14 @@ function MemberRow({ member, canManage, isSelf, activeMenu, setActiveMenu, onRol
       <div className="member-actions">
         {canManage && member.role !== "OWNER" && !isSelf ? (
           <>
-            <label className="member-role-select-label">
-              <span>Change role</span>
-              <select aria-label={`Change role for ${member.fullName}`} value={member.role} disabled={saving} onChange={(event) => onRoleChange(member, event.target.value)}>
-                {ROLE_OPTIONS.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
-              </select>
-            </label>
+            {member.active && (
+              <label className="member-role-select-label">
+                <span>Change role</span>
+                <select aria-label={`Change role for ${member.fullName}`} value={member.role} disabled={saving} onChange={(event) => onRoleChange(member, event.target.value)}>
+                  {ROLE_OPTIONS.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
+                </select>
+              </label>
+            )}
             <button className="menu-button" disabled={saving} aria-label={`More actions for ${member.fullName}`} onClick={() => setActiveMenu(isMenuOpen ? null : member.userId)}>
               <IconDotsVertical size={16} stroke={2} />
             </button>
