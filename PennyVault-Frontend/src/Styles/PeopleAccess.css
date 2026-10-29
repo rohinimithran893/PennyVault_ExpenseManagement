@@ -1061,3 +1061,60 @@
     flex: 1;
   }
 }
+
+
+/* MEMBER STATUS TABS */
+.member-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e7e5ef;
+}
+
+.member-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 12px 16px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: #77748d;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.member-tab:hover {
+  color: #6542e8;
+  background: #f8f6ff;
+}
+
+.member-tab.selected {
+  color: #6542e8;
+  border-bottom-color: #6542e8;
+  background: #faf9ff;
+}
+
+.member-tab:focus-visible {
+  outline: 2px solid #8b75f5;
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .member-tabs {
+    gap: 2px;
+  }
+
+  .member-tab {
+    flex: 1;
+    gap: 5px;
+    padding: 10px 7px;
+    font-size: 11px;
+  }
+}
