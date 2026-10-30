@@ -478,22 +478,49 @@ function MemberRow({ member, canManage, isSelf, activeMenu, setActiveMenu, onRol
 
 function InvitationCard({ invite, onResend, onCancel, saving }) {
   const color = colorFor(invite.email);
-  const status = invite.status || "PENDING";
+  const status = String(invite.status || "PENDING").trim().toUpperCase();
   const isPending = status === "PENDING";
   const canResend = isPending || status === "EXPIRED";
+  const statusLabel = status.charAt(0) + status.slice(1).toLowerCase();
+
   return (
     <div className="invitation-card">
       <div className={`invitation-icon ${color}`}><IconMail size={19} stroke={2} /></div>
       <div className="invitation-content">
         <div className="invitation-top">
-          <div><strong>{invite.email}</strong><span>{ROLE_LABELS[invite.role] || invite.role}</span></div>
-          <span className={`pending-badge ${status.toLowerCase()}`}>{status.charAt(0) + status.slice(1).toLowerCase()}</span>
+          <div>
+            <strong>{invite.email}</strong>
+            <span>{ROLE_LABELS[invite.role] || invite.role}</span>
+          </div>
+          <span className={`pending-badge ${status.toLowerCase()}`}>{statusLabel}</span>
         </div>
         <div className="invitation-bottom">
-          <div><span>Created {formatDate(invite.createdAt)}</span><small>{formatExpiry(invite.expiresAt)}</small></div>
+          <div>
+            <span>Created {formatDate(invite.createdAt)}</span>
+            <small>{formatExpiry(invite.expiresAt)}</small>
+          </div>
           <div className="invitation-actions">
-            {canResend && <button disabled={saving} onClick={() => onResend(invite)}><IconRefresh size={12} /> Resend</button>}
-            {isPending && <button className="cancel-button" disabled={saving} onClick={() => onCancel(invite)}>Cancel</button>}
+            {canResend && (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => onResend(invite)}
+                aria-label={`Resend invitation to ${invite.email}`}
+              >
+                <IconRefresh size={12} /> Resend Invite
+              </button>
+            )}
+            {isPending && (
+              <button
+                type="button"
+                className="cancel-button"
+                disabled={saving}
+                onClick={() => onCancel(invite)}
+                aria-label={`Cancel invitation to ${invite.email}`}
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </div>
       </div>
