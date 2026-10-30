@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    List<Transaction> findByAccount(Account account);
+    List<Transaction> findByAccount(Account account);\n\n    List<Transaction> findByAccountInOrderByTransactionDateDesc(List<Account> accounts);
 
     List<Transaction> findByTransactionDateBetween(
             LocalDate startDate,
