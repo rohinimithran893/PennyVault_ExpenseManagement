@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -27,7 +26,7 @@ public class HouseholdMemberStatisticsService {
     private final TransactionRepository transactionRepository;
 
     public List<HouseholdMemberStatisticsResponse> getMonthlyStatistics(Long householdId, String monthValue) {
-        HouseholdMember currentMembership = membershipService.requireCurrentUserMembership(householdId);
+        membershipService.requireCurrentUserMembership(householdId);
         List<HouseholdMember> members =
                 householdMemberRepository.findAllByHousehold_IdOrderByJoinedAtAsc(householdId);
 
