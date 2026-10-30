@@ -189,7 +189,7 @@ public class HouseholdAccessService {
         HouseholdMember target = memberRepository.findByHousehold_IdAndUser_Id(householdId, targetUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Household member was not found"));
         List<Account> accounts = accountRepository.findByUser(target.getUser());
-        return transactionRepository.findByAccountInOrderByTransactionDateDesc(accounts)
+        return transactionRepository.findByAccountInAndTransactionTypeIgnoreCaseOrderByTransactionDateDesc(accounts, "EXPENSE")
                 .stream()
                 .map(transaction -> TransactionResponse.builder()
                         .id(transaction.getId())
