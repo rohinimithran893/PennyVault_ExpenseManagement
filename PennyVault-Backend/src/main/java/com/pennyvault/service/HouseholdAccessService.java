@@ -190,6 +190,9 @@ public class HouseholdAccessService {
         if (target.getMemberRole() == HouseholdRole.OWNER) {
             throw new IllegalArgumentException("The Primary Owner role cannot be changed");
         }
+        if (!target.isActive()) {
+            throw new IllegalArgumentException("A deactivated member's role cannot be changed");
+        }
         target.setMemberRole(role);
         return HouseholdMemberResponse.from(memberRepository.save(target));
     }
