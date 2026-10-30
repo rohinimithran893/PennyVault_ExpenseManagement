@@ -64,3 +64,12 @@ export const setHouseholdMemberActive = (householdId, userId, active) =>
  
 export const getHouseholdMemberStatistics = (householdId, month) =>
   request(`/households/${householdId}/members/statistics?month=${encodeURIComponent(month)}`);
+
+export const getHouseholdMemberTransactions = (householdId, userId) =>
+  request(`/households/${householdId}/members/${userId}/transactions`);
+
+export const updateHouseholdMemberProfile = (householdId, userId, fullName) =>
+  request(`/households/${householdId}/members/${userId}/profile`, {
+    method: "PATCH",
+    body: JSON.stringify({ fullName }),
+  });
