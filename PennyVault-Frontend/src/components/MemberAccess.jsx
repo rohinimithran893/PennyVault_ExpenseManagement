@@ -60,6 +60,14 @@ const formatDate = (value) => {
     : date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 };
 
+const formatTransactionDate = (value) => {
+  if (!value) return "—";
+  const date = new Date(value + (String(value).length === 10 ? "T00:00:00" : ""));
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+};
+
 const formatCurrency = (value) => {
   const amount = Number(value || 0);
   return `₹${amount.toLocaleString("en-IN", {
@@ -449,7 +457,7 @@ function PeopleAccess() {
                   <thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Category</th><th>Type</th><th>Amount</th></tr></thead>
                   <tbody>{memberTransactions.map((transaction) => (
                     <tr key={transaction.id}>
-                      <td>{formatDate(transaction.transactionDate)}</td>
+                      <td>{formatTransactionDate(transaction.transactionDate)}</td>
                       <td>{transaction.description || "—"}</td>
                       <td>{transaction.account || "—"}</td>
                       <td>{transaction.category || "—"}{transaction.subcategory ? " / " + transaction.subcategory : ""}</td>
