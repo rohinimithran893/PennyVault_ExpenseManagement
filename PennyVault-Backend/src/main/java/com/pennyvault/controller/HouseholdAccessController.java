@@ -4,8 +4,10 @@ import com.pennyvault.dto.request.AcceptHouseholdInvitationRequest;
 import com.pennyvault.dto.request.CreateHouseholdInvitationRequest;
 import com.pennyvault.dto.response.HouseholdInvitationResponse;
 import com.pennyvault.dto.response.HouseholdMemberResponse;
+import com.pennyvault.dto.response.HouseholdMemberStatisticsResponse;
 import com.pennyvault.entity.HouseholdRole;
 import com.pennyvault.service.HouseholdAccessService;
+import com.pennyvault.service.HouseholdMemberStatisticsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import java.util.Map;
 public class HouseholdAccessController {
 
     private final HouseholdAccessService householdAccessService;
+    private final HouseholdMemberStatisticsService householdMemberStatisticsService;
 
     @PostMapping("/api/households/{householdId}/invitations")
     @ResponseStatus(HttpStatus.CREATED)
@@ -55,6 +58,13 @@ public class HouseholdAccessController {
     @GetMapping("/api/households/{householdId}/members")
     public List<HouseholdMemberResponse> listMembers(@PathVariable Long householdId) {
         return householdAccessService.listMembers(householdId);
+    }
+
+    @GetMapping("/api/households/{householdId}/members/statistics")
+    public List<HouseholdMemberStatisticsResponse> getMemberStatistics(
+            @PathVariable Long householdId,
+            @RequestParam(required = false) String month) {
+        return householdMemberStatisticsService.getMonthlyStatistics(householdId, month);
     }
 
     @PostMapping("/api/households/{householdId}/members/{userId}/deactivate")
