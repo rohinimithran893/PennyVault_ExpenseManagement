@@ -1260,7 +1260,7 @@
 /* SIX-COLUMN MEMBER TABLE: MATCH THE APPROVED REFERENCE */
 .members-table-header {
   display: grid;
-  grid-template-columns: minmax(165px, 1.25fr) minmax(145px, 1.1fr) minmax(125px, .9fr) minmax(120px, .85fr) minmax(95px, .7fr) minmax(150px, 1.1fr);
+  grid-template-columns: minmax(165px, 1.25fr) minmax(145px, 1.1fr) minmax(125px, .9fr) minmax(120px, .85fr) minmax(95px, .7fr) minmax(260px, 1.8fr);
   align-items: center;
   gap: 12px;
   min-height: 34px;
@@ -1329,7 +1329,7 @@
 }
 @media (max-width: 1100px) {
   .members-table-header {
-    grid-template-columns: minmax(145px, 1.2fr) minmax(125px, 1fr) minmax(110px, .85fr) minmax(105px, .8fr) minmax(85px, .65fr) minmax(125px, 1fr);
+    grid-template-columns: minmax(145px, 1.2fr) minmax(125px, 1fr) minmax(110px, .85fr) minmax(105px, .8fr) minmax(85px, .65fr) minmax(220px, 1.5fr);
     gap: 8px;
   }
   .member-row {
