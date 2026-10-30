@@ -3,6 +3,7 @@ package com.pennyvault.service;
 import com.pennyvault.dto.request.CreateHouseholdInvitationRequest;
 import com.pennyvault.dto.response.HouseholdInvitationResponse;
 import com.pennyvault.dto.response.HouseholdMemberResponse;
+import com.pennyvault.dto.response.TransactionResponse;
 import com.pennyvault.entity.*;
 import com.pennyvault.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,8 @@ public class HouseholdAccessService {
     private final HouseholdMemberRepository memberRepository;
     private final HouseholdInvitationRepository invitationRepository;
     private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
     private final HouseholdMembershipService membershipService;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -177,6 +180,51 @@ public class HouseholdAccessService {
         target.setActive(active);
         target.setDeactivatedAt(active ? null : LocalDateTime.now());
         return HouseholdMemberResponse.from(memberRepository.save(target));
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> listMemberTransactions(Long householdId, Long targetUserId) {
+        User actor = currentUser();
+        membershipService.requirePrimaryOwner(householdId, actor.getId());
+        HouseholdMember target = memberRepository.findByHousehold_IdAndUser_Id(householdId, targetUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Household member was not found"));
+        List<Account> accounts = accountRepository.findByUser(target.getUser());
+        return transactionRepository.findByAccountInOrderByTransactionDateDesc(accounts)
+                .stream()
+                .map(transaction -> TransactionResponse.builder()
+                        .id(transaction.getId())
+                        .accountId(transaction.getAccount().getId())
+                        .categoryId(transaction.getCategory().getId())
+                        .subcategoryId(transaction.getSubcategory() != null ? transaction.getSubcategory().getId() : null)
+                        .account(transaction.getAccount().getAccountName())
+                        .category(transaction.getCategory().getName())
+                        .subcategory(transaction.getSubcategory() != null ? transaction.getSubcategory().getName() : null)
+                        .description(transaction.getDescription())
+                        .amount(transaction.getAmount())
+                        .transactionType(transaction.getTransactionType())
+                        .transactionDate(transaction.getTransactionDate())
+                        .build())
+                .toList();
+    }
+
+    public HouseholdMemberResponse updateMemberFullName(Long householdId, Long targetUserId, String fullName) {
+        User actor = currentUser();
+        membershipService.requirePrimaryOwner(householdId, actor.getId());
+        HouseholdMember target = memberRepository.findByHousehold_IdAndUser_Id(householdId, targetUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Household member was not found"));
+        if (target.getMemberRole() == HouseholdRole.OWNER) {
+            throw new IllegalArgumentException("The Primary Owner profile cannot be edited here");
+        }
+        String normalizedName = fullName == null ? "" : fullName.trim();
+        if (normalizedName.isEmpty()) {
+            throw new IllegalArgumentException("Full name is required");
+        }
+        if (normalizedName.length() > 100) {
+            throw new IllegalArgumentException("Full name must be 100 characters or fewer");
+        }
+        target.getUser().setFullName(normalizedName);
+        userRepository.save(target.getUser());
+        return HouseholdMemberResponse.from(target);
     }
 
     public HouseholdMemberResponse updateMemberRole(Long householdId, Long targetUserId, HouseholdRole role) {
