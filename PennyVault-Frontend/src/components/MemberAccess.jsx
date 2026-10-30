@@ -317,6 +317,14 @@ function PeopleAccess() {
           </div>
         </div>
 
+        <div className="members-table-header" aria-hidden="true">
+          <span>Name</span>
+          <span>Email</span>
+          <span>Spent this month</span>
+          <span>Transactions</span>
+          <span>Joined On</span>
+          <span>Action</span>
+        </div>
         <div className="members-card">
           {loading ? (
             <div className="people-empty-state">Loading household members…</div>
@@ -390,26 +398,28 @@ function MemberRow({ member, canManage, isSelf, activeMenu, setActiveMenu, onRol
             {!member.active && <span className="inactive-badge">Deactivated</span>}
             {isSelf && <span className="you-badge">You</span>}
           </div>
-          <div className="member-email"><IconMail size={13} stroke={2} />{member.email}</div>
         </div>
       </div>
 
-      <div className="member-stat">
-        <span>Joined household</span>
-        <strong>{formatDate(member.joinedAt)}</strong>
-        <small className="member-stat-note">Spending insights not connected yet</small>
+      <div className="member-email-cell">{member.email || "—"}</div>
+
+      <div className="member-insight">
+        <strong>—</strong>
+        <div className="spending-placeholder" aria-label="Spending chart placeholder">
+          <span /><span /><span /><span /><span />
+        </div>
+        <small>No data yet</small>
       </div>
 
-      <div className="member-stat transaction-stat">
-        <span>Access</span>
-        <strong>{member.active ? "Enabled" : "Disabled"}</strong>
-        <small className="member-stat-note">{member.deactivatedAt ? `Updated ${formatDate(member.deactivatedAt)}` : "Membership status"}</small>
+      <div className="member-insight transaction-insight">
+        <strong>—</strong>
+        <div className={`mini-chart ${color} placeholder-chart`} aria-label="Illustrative transaction chart">
+          <i /><i /><i /><i /><i />
+        </div>
+        <small>No transactions yet</small>
       </div>
 
-      <div className="member-joined">
-        <strong>{roleLabel}</strong>
-        <span>{member.active ? "Can access household" : "Cannot access household"}</span>
-      </div>
+      <div className="member-joined-date">{formatDate(member.joinedAt)}</div>
 
       <div className="member-actions">
         {canManage && member.role !== "OWNER" && !isSelf ? (
