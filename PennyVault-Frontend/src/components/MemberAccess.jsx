@@ -127,21 +127,26 @@ function PeopleAccess() {
     setLoading(true);
     setError("");
     try {
-      const [memberData, statisticsData] = await Promise.all([
-        getHouseholdMembers(householdId),
-        getHouseholdMemberStatistics(
-          householdId,
-          `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
-        ),
-      ]);
+      const memberData = await getHouseholdMembers(householdId);
       const safeMembers = Array.isArray(memberData) ? memberData : [];
-      const safeStatistics = Array.isArray(statisticsData) ? statisticsData : [];
       setMembers(safeMembers);
-      setMemberStatistics(
-        Object.fromEntries(safeStatistics.map((item) => [String(item.userId), item]))
-      );
+
       const ownMembership = safeMembers.find((member) => String(member.userId) === String(user?.id));
       setCurrentRole(ownMembership?.role || null);
+
+      try {
+        const statisticsData = await getHouseholdMemberStatistics(
+          householdId,
+          `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
+        );
+        const safeStatistics = Array.isArray(statisticsData) ? statisticsData : [];
+        setMemberStatistics(
+          Object.fromEntries(safeStatistics.map((item) => [String(item.userId), item]))
+        );
+      } catch {
+        setMemberStatistics({});
+        setError("Member details loaded, but monthly spending statistics could not be loaded.");
+      }
 
       if (ownMembership?.role === "OWNER") {
         const invitationData = await getHouseholdInvitations(householdId);
