@@ -79,6 +79,7 @@ function PeopleAccess() {
   const [currentRole, setCurrentRole] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedTab, setSelectedTab] = useState("ACTIVE");
+  const [invitationTab, setInvitationTab] = useState("PENDING");
   const [filter, setFilter] = useState("ALL");
   const [activeMenu, setActiveMenu] = useState(null);
   const [showInviteForm, setShowInviteForm] = useState(false);
@@ -231,7 +232,12 @@ function PeopleAccess() {
 
   const ownerCount = activeMembers.filter((member) => member.role === "OWNER" || member.role === "CO_OWNER").length;
   const viewerCount = activeMembers.filter((member) => member.role === "VIEWER").length;
-  const pendingCount = invitations.filter((invitation) => invitation.status === "PENDING").length;
+  const normalizedInvitationStatus = (invitation) => String(invitation.status || "PENDING").toUpperCase();
+  const pendingInvitations = invitations.filter((invitation) => normalizedInvitationStatus(invitation) === "PENDING");
+  const invitationHistory = invitations.filter((invitation) => normalizedInvitationStatus(invitation) !== "PENDING");
+  const pendingCount = pendingInvitations.length;
+  const historyCount = invitationHistory.length;
+  const visibleInvitations = invitationTab === "PENDING" ? pendingInvitations : invitationHistory;
 
   return (
     <div className="people-access-content">
@@ -350,15 +356,35 @@ function PeopleAccess() {
 
       {canManage && (
         <section className="invitations-section">
-          <div className="pending-members-section">
-            <h2>Invitations</h2>
-            <span className="count-badge">{invitations.length}</span>
+          <div className="invitation-tabs" role="tablist" aria-label="Invitation status">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={invitationTab === "PENDING"}
+              className={`invitation-tab ${invitationTab === "PENDING" ? "selected" : ""}`}
+              onClick={() => setInvitationTab("PENDING")}
+            >
+              Pending Invitations <span className="count-badge">{pendingCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={invitationTab === "HISTORY"}
+              className={`invitation-tab ${invitationTab === "HISTORY" ? "selected" : ""}`}
+              onClick={() => setInvitationTab("HISTORY")}
+            >
+              Invitation History <span className="count-badge">{historyCount}</span>
+            </button>
           </div>
-          {loading ? <div className="people-empty-state">Loading invitations…</div> : invitations.length === 0 ? (
-            <div className="people-empty-state">No invitations yet. Use Invite People to invite someone to this household.</div>
+          {loading ? <div className="people-empty-state">Loading invitations…</div> : visibleInvitations.length === 0 ? (
+            <div className="people-empty-state">
+              {invitationTab === "PENDING"
+                ? "No pending invitations. Use Invite People to invite someone to this household."
+                : "No invitation history yet. Accepted, expired and cancelled invitations will appear here."}
+            </div>
           ) : (
             <div className="invitation-grid">
-              {invitations.map((invitation) => (
+              {visibleInvitations.map((invitation) => (
                 <InvitationCard key={invitation.id} invite={invitation} onResend={handleResend} onCancel={handleCancel} saving={saving} />
               ))}
             </div>
