@@ -60,3 +60,7 @@ export const setHouseholdMemberActive = (householdId, userId, active) =>
     `/households/${householdId}/members/${userId}/${active ? "reactivate" : "deactivate"}`,
     { method: "POST" }
   );
+
+ 
+export const getHouseholdMemberStatistics = (householdId, month) =>
+  request(`/households/${householdId}/members/statistics?month=${encodeURIComponent(month)}`);
