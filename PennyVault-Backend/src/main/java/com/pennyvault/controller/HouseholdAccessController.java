@@ -4,7 +4,7 @@ import com.pennyvault.dto.request.AcceptHouseholdInvitationRequest;
 import com.pennyvault.dto.request.CreateHouseholdInvitationRequest;
 import com.pennyvault.dto.response.HouseholdInvitationResponse;
 import com.pennyvault.dto.response.HouseholdMemberResponse;
-import com.pennyvault.dto.response.HouseholdMemberStatisticsResponse;
+import com.pennyvault.dto.response.HouseholdMemberStatisticsResponse;\nimport com.pennyvault.dto.response.TransactionResponse;
 import com.pennyvault.entity.HouseholdRole;
 import com.pennyvault.service.HouseholdAccessService;
 import com.pennyvault.service.HouseholdMemberStatisticsService;
@@ -65,6 +65,20 @@ public class HouseholdAccessController {
             @PathVariable Long householdId,
             @RequestParam(required = false) String month) {
         return householdMemberStatisticsService.getMonthlyStatistics(householdId, month);
+    }
+
+    @GetMapping("/api/households/{householdId}/members/{userId}/transactions")
+    public List<TransactionResponse> getMemberTransactions(
+            @PathVariable Long householdId, @PathVariable Long userId) {
+        return householdAccessService.listMemberTransactions(householdId, userId);
+    }
+
+    @PatchMapping("/api/households/{householdId}/members/{userId}/profile")
+    public HouseholdMemberResponse updateMemberProfile(
+            @PathVariable Long householdId,
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request) {
+        return householdAccessService.updateMemberFullName(householdId, userId, request.get("fullName"));
     }
 
     @PostMapping("/api/households/{householdId}/members/{userId}/deactivate")
