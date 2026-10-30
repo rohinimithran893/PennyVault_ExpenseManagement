@@ -1255,3 +1255,92 @@
   .member-stat { padding-left: 0; }
   .invitation-grid { grid-template-columns: 1fr; }
 }
+
+
+/* SIX-COLUMN MEMBER TABLE: MATCH THE APPROVED REFERENCE */
+.members-table-header {
+  display: grid;
+  grid-template-columns: minmax(165px, 1.25fr) minmax(145px, 1.1fr) minmax(125px, .9fr) minmax(120px, .85fr) minmax(95px, .7fr) minmax(150px, 1.1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  padding: 0 8px;
+  background: #f7f7fb;
+  color: #55536b;
+  font-size: 10px;
+  font-weight: 650;
+}
+.member-row {
+  grid-template-columns: minmax(165px, 1.25fr) minmax(145px, 1.1fr) minmax(125px, .9fr) minmax(120px, .85fr) minmax(95px, .7fr) minmax(150px, 1.1fr);
+  min-height: 68px;
+  gap: 12px;
+}
+.member-email-cell {
+  min-width: 0;
+  overflow: hidden;
+  color: #55536f;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.member-insight {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.member-insight > strong {
+  color: #17162d;
+  font-size: 12px;
+  line-height: 1.2;
+}
+.member-insight > small {
+  color: #89869e;
+  font-size: 9px;
+}
+.spending-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 82px;
+  height: 8px;
+  padding: 0;
+}
+.spending-placeholder span {
+  display: block;
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: #e8e6ef;
+}
+.placeholder-chart {
+  height: 17px;
+  margin-top: 0;
+  opacity: .38;
+}
+.member-joined-date {
+  color: #37354f;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.member-actions {
+  justify-content: flex-start;
+}
+@media (max-width: 1100px) {
+  .members-table-header {
+    grid-template-columns: minmax(145px, 1.2fr) minmax(125px, 1fr) minmax(110px, .85fr) minmax(105px, .8fr) minmax(85px, .65fr) minmax(125px, 1fr);
+    gap: 8px;
+  }
+  .member-row {
+    grid-template-columns: minmax(145px, 1.2fr) minmax(125px, 1fr) minmax(110px, .85fr) minmax(105px, .8fr) minmax(85px, .65fr) minmax(125px, 1fr);
+    gap: 8px;
+  }
+}
+@media (max-width: 760px) {
+  .members-table-header { display: none; }
+  .member-row { grid-template-columns: 1fr 1fr; }
+  .member-profile { grid-column: 1 / -1; }
+  .member-email-cell { grid-column: 1 / -1; }
+  .member-actions { grid-column: 1 / -1; }
+}
