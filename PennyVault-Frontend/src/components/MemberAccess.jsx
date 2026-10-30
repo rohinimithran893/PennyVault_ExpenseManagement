@@ -15,6 +15,8 @@ import {
   IconX,
   IconCopy,
   IconRefresh,
+  IconPencil,
+  IconReceipt,
 } from "@tabler/icons-react";
 import { getUser } from "../utils/auth";
 import {
@@ -26,6 +28,8 @@ import {
   resendHouseholdInvitation,
   setHouseholdMemberActive,
   updateHouseholdMemberRole,
+  getHouseholdMemberTransactions,
+  updateHouseholdMemberProfile,
 } from "../services/householdAccessService";
 
 const ROLE_LABELS = {
@@ -100,6 +104,12 @@ function PeopleAccess() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [expenseMember, setExpenseMember] = useState(null);
+  const [memberTransactions, setMemberTransactions] = useState([]);
+  const [expenseLoading, setExpenseLoading] = useState(false);
+  const [expenseError, setExpenseError] = useState("");
+  const [profileMember, setProfileMember] = useState(null);
+  const [profileFullName, setProfileFullName] = useState("");
 
   const canManage = currentRole === "OWNER";
   const activeMembers = useMemo(
@@ -216,6 +226,48 @@ function PeopleAccess() {
       setNotice("Invitation token copied.");
     } catch {
       setNotice(`Copy the invitation token manually: ${createdToken}`);
+    }
+  };
+
+  const handleViewExpenses = async (member) => {
+    setExpenseMember(member);
+    setMemberTransactions([]);
+    setExpenseError("");
+    setExpenseLoading(true);
+    try {
+      const data = await getHouseholdMemberTransactions(householdId, member.userId);
+      setMemberTransactions(Array.isArray(data) ? data : []);
+    } catch (requestError) {
+      setExpenseError(requestError?.message || "Unable to load this member's expenses.");
+    } finally {
+      setExpenseLoading(false);
+    }
+  };
+
+  const handleOpenProfile = (member) => {
+    setProfileMember(member);
+    setProfileFullName(member.fullName || "");
+    setError("");
+  };
+
+  const handleSaveProfile = async (event) => {
+    event.preventDefault();
+    if (!profileMember || !profileFullName.trim()) {
+      setError("Enter the member's full name.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      await updateHouseholdMemberProfile(householdId, profileMember.userId, profileFullName.trim());
+      setProfileMember(null);
+      setNotice(profileFullName.trim() + "'s profile was updated.");
+      await loadData();
+    } catch (requestError) {
+      setError(requestError?.message || "Unable to update the member profile.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -374,11 +426,60 @@ function PeopleAccess() {
               setActiveMenu={setActiveMenu}
               onRoleChange={handleRoleChange}
               onToggleActive={handleMemberActive}
+              onViewExpenses={handleViewExpenses}
+              onEditProfile={handleOpenProfile}
               saving={saving}
             />
           ))}
         </div>
       </section>
+
+      {expenseMember && (
+        <div className="people-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setExpenseMember(null); }}>
+          <section className="people-modal expense-modal" role="dialog" aria-modal="true" aria-labelledby="member-expenses-title">
+            <div className="people-modal-heading">
+              <div><h2 id="member-expenses-title">{expenseMember.fullName}'s Expenses</h2><p>Read-only transaction history for this household member.</p></div>
+              <button type="button" className="token-dismiss" aria-label="Close expenses" onClick={() => setExpenseMember(null)}><IconX size={18} /></button>
+            </div>
+            {expenseLoading ? <div className="people-empty-state">Loading transactions…</div>
+              : expenseError ? <div className="people-alert error">{expenseError}</div>
+              : memberTransactions.length === 0 ? <div className="people-empty-state">No transactions found for this member.</div>
+              : <div className="member-expenses-table-wrap">
+                <table className="member-expenses-table">
+                  <thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Category</th><th>Type</th><th>Amount</th></tr></thead>
+                  <tbody>{memberTransactions.map((transaction) => (
+                    <tr key={transaction.id}>
+                      <td>{formatDate(transaction.transactionDate)}</td>
+                      <td>{transaction.description || "—"}</td>
+                      <td>{transaction.account || "—"}</td>
+                      <td>{transaction.category || "—"}{transaction.subcategory ? " / " + transaction.subcategory : ""}</td>
+                      <td><span className={"transaction-type-badge " + String(transaction.transactionType || "").toLowerCase()}>{transaction.transactionType || "—"}</span></td>
+                      <td>{formatCurrency(transaction.amount)}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>}
+            <div className="people-modal-footer"><button type="button" className="filter-button" onClick={() => setExpenseMember(null)}>Close</button></div>
+          </section>
+        </div>
+      )}
+
+      {profileMember && (
+        <div className="people-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setProfileMember(null); }}>
+          <form className="people-modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="edit-member-title" onSubmit={handleSaveProfile}>
+            <div className="people-modal-heading">
+              <div><h2 id="edit-member-title">Edit Member Profile</h2><p>Update the member's display name. Email and login details remain unchanged.</p></div>
+              <button type="button" className="token-dismiss" aria-label="Close edit profile" onClick={() => setProfileMember(null)}><IconX size={18} /></button>
+            </div>
+            <label htmlFor="member-full-name">Full name</label>
+            <input id="member-full-name" type="text" maxLength={100} required value={profileFullName} onChange={(event) => setProfileFullName(event.target.value)} />
+            <div className="people-modal-footer">
+              <button type="button" className="filter-button" onClick={() => setProfileMember(null)}>Cancel</button>
+              <button type="submit" className="invite-button" disabled={saving}>{saving ? "Saving…" : "Save changes"}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {canManage && (
         <section className="invitations-section">
@@ -432,7 +533,7 @@ function SummaryCard({ icon, title, value, subtitle, color }) {
   );
 }
 
-function MemberRow({ member, statistics, canManage, isSelf, activeMenu, setActiveMenu, onRoleChange, onToggleActive, saving }) {
+function MemberRow({ member, statistics, canManage, isSelf, activeMenu, setActiveMenu, onRoleChange, onToggleActive, onViewExpenses, onEditProfile, saving }) {
   const isMenuOpen = activeMenu === member.userId;
   const roleLabel = ROLE_LABELS[member.role] || member.role || "Member";
   const color = colorFor(member.email);
@@ -470,6 +571,8 @@ function MemberRow({ member, statistics, canManage, isSelf, activeMenu, setActiv
       <div className="member-actions">
         {canManage && member.role !== "OWNER" && !isSelf ? (
           <>
+            <button type="button" className="outline-action" disabled={saving} onClick={() => onViewExpenses(member)}><IconReceipt size={13} /> View Expenses</button>
+            <button type="button" className="outline-action" disabled={saving} onClick={() => onEditProfile(member)}><IconPencil size={13} /> Edit Profile</button>
             {member.active && (
               <label className="member-role-select-label">
                 <span>Change role</span>
