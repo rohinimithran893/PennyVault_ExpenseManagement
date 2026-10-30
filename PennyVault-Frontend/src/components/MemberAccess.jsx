@@ -22,6 +22,7 @@ import {
   createHouseholdInvitation,
   getHouseholdInvitations,
   getHouseholdMembers,
+  getHouseholdMemberStatistics,
   resendHouseholdInvitation,
   setHouseholdMemberActive,
   updateHouseholdMemberRole,
@@ -55,6 +56,14 @@ const formatDate = (value) => {
     : date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
 };
 
+const formatCurrency = (value) => {
+  const amount = Number(value || 0);
+  return `₹${amount.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
 const formatExpiry = (value) => {
   if (!value) return "Expiry unavailable";
   const date = new Date(value);
@@ -75,6 +84,7 @@ function PeopleAccess() {
   const user = getUser();
   const householdId = user?.householdId;
   const [members, setMembers] = useState([]);
+  const [memberStatistics, setMemberStatistics] = useState({});
   const [invitations, setInvitations] = useState([]);
   const [currentRole, setCurrentRole] = useState(null);
   const [search, setSearch] = useState("");
@@ -117,9 +127,19 @@ function PeopleAccess() {
     setLoading(true);
     setError("");
     try {
-      const memberData = await getHouseholdMembers(householdId);
+      const [memberData, statisticsData] = await Promise.all([
+        getHouseholdMembers(householdId),
+        getHouseholdMemberStatistics(
+          householdId,
+          `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
+        ),
+      ]);
       const safeMembers = Array.isArray(memberData) ? memberData : [];
+      const safeStatistics = Array.isArray(statisticsData) ? statisticsData : [];
       setMembers(safeMembers);
+      setMemberStatistics(
+        Object.fromEntries(safeStatistics.map((item) => [String(item.userId), item]))
+      );
       const ownMembership = safeMembers.find((member) => String(member.userId) === String(user?.id));
       setCurrentRole(ownMembership?.role || null);
 
@@ -342,6 +362,7 @@ function PeopleAccess() {
             <MemberRow
               key={member.userId}
               member={member}
+              statistics={memberStatistics[String(member.userId)]}
               canManage={canManage}
               isSelf={String(member.userId) === String(user?.id)}
               activeMenu={activeMenu}
@@ -406,7 +427,7 @@ function SummaryCard({ icon, title, value, subtitle, color }) {
   );
 }
 
-function MemberRow({ member, canManage, isSelf, activeMenu, setActiveMenu, onRoleChange, onToggleActive, saving }) {
+function MemberRow({ member, statistics, canManage, isSelf, activeMenu, setActiveMenu, onRoleChange, onToggleActive, saving }) {
   const isMenuOpen = activeMenu === member.userId;
   const roleLabel = ROLE_LABELS[member.role] || member.role || "Member";
   const color = colorFor(member.email);
@@ -430,19 +451,13 @@ function MemberRow({ member, canManage, isSelf, activeMenu, setActiveMenu, onRol
       <div className="member-email-cell">{member.email || "—"}</div>
 
       <div className="member-insight">
-        <strong>—</strong>
-        <div className="spending-placeholder" aria-label="Spending chart placeholder">
-          <span /><span /><span /><span /><span />
-        </div>
-        <small>No data yet</small>
+        <strong>{formatCurrency(statistics?.spentThisMonth)}</strong>
+        <small>Expenses this month</small>
       </div>
 
       <div className="member-insight transaction-insight">
-        <strong>—</strong>
-        <div className={`mini-chart ${color} placeholder-chart`} aria-label="Illustrative transaction chart">
-          <i /><i /><i /><i /><i />
-        </div>
-        <small>No transactions yet</small>
+        <strong>{Number(statistics?.transactionCount || 0).toLocaleString("en-IN")}</strong>
+        <small>{Number(statistics?.transactionCount || 0) === 1 ? "Transaction this month" : "Transactions this month"}</small>
       </div>
 
       <div className="member-joined-date">{formatDate(member.joinedAt)}</div>
