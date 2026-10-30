@@ -384,14 +384,13 @@ function MemberRow({ member, canManage, isSelf, activeMenu, setActiveMenu, onRol
           {member.active && <span className="online-dot" />}
         </div>
         <div className="member-role-info">
-          <div className="member-name-line">
-            <strong>{member.fullName || "Unnamed member"}</strong>
+          <strong className="member-name">{member.fullName || "Unnamed member"}</strong>
+          <div className="member-role-line">
             <span className={`role-badge ${ROLE_CLASSES[member.role] || "member"}`}>{roleLabel}</span>
             {!member.active && <span className="inactive-badge">Deactivated</span>}
             {isSelf && <span className="you-badge">You</span>}
           </div>
           <div className="member-email"><IconMail size={13} stroke={2} />{member.email}</div>
-          <div className={`member-status ${member.active ? "" : "inactive-status"}`}>{member.active ? "Active member" : "Access deactivated"}</div>
         </div>
       </div>
 
