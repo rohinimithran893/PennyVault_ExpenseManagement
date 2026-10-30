@@ -1385,3 +1385,121 @@
   .invitation-tabs { gap: 5px; }
   .invitation-tab { flex: 1; gap: 5px; padding: 10px 7px; font-size: 11px; }
 }
+
+
+/* PA-10 MEMBER EXPENSES AND PROFILE DIALOGS */
+.member-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.member-actions > .outline-action {
+  min-width: 82px;
+  padding: 0 8px;
+}
+.member-actions > .menu-button {
+  flex: 0 0 32px;
+}
+.people-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(24, 20, 47, .48);
+}
+.people-modal {
+  width: min(100%, 760px);
+  max-height: min(85vh, 760px);
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid #e5e1f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(24, 20, 47, .22);
+  box-sizing: border-box;
+}
+.profile-modal { width: min(100%, 440px); }
+.people-modal-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.people-modal-heading h2 {
+  margin: 0;
+  color: #17162d;
+  font-size: 18px;
+}
+.people-modal-heading p {
+  margin: 5px 0 0;
+  color: #77748d;
+  font-size: 12px;
+}
+.profile-modal > label {
+  display: block;
+  margin-bottom: 7px;
+  color: #4e4b66;
+  font-size: 12px;
+  font-weight: 600;
+}
+.profile-modal > input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #dedbe9;
+  border-radius: 8px;
+  color: #25233a;
+  font-size: 13px;
+}
+.people-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 18px;
+}
+.people-modal-footer .invite-button { justify-content: center; }
+.member-expenses-table-wrap {
+  overflow: auto;
+  border: 1px solid #eceaf2;
+  border-radius: 9px;
+}
+.member-expenses-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.member-expenses-table th {
+  padding: 11px 10px;
+  background: #f7f6fb;
+  color: #5d5875;
+  text-align: left;
+  font-weight: 650;
+}
+.member-expenses-table td {
+  padding: 10px;
+  border-top: 1px solid #eeedf4;
+  color: #37354f;
+}
+.transaction-type-badge {
+  display: inline-flex;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: #f0eef7;
+  color: #625d78;
+  font-size: 10px;
+  font-weight: 650;
+}
+.transaction-type-badge.expense { background: #fff0f0; color: #b43a3a; }
+.transaction-type-badge.income { background: #eaf9f0; color: #19884c; }
+@media (max-width: 760px) {
+  .member-actions { align-items: center; }
+  .member-actions > .outline-action { flex: 1 1 auto; }
+  .people-modal { padding: 15px; }
+}
