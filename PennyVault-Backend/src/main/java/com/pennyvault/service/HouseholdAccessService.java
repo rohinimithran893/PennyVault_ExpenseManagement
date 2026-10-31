@@ -40,6 +40,7 @@ public class HouseholdAccessService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final HouseholdMembershipService membershipService;
+    private final HouseholdInvitationEmailService invitationEmailService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public HouseholdInvitationResponse createInvitation(Long householdId, CreateHouseholdInvitationRequest request) {
@@ -47,24 +48,36 @@ public class HouseholdAccessService {
         membershipService.requirePrimaryOwner(householdId, actor.getId());
 
         HouseholdRole role = request.getRole();
-        if (role == null || role == HouseholdRole.OWNER) {
-            throw new IllegalArgumentException("Invitations cannot assign the Primary Owner role");
+        if (role != HouseholdRole.MEMBER && role != HouseholdRole.VIEWER) {
+            throw new IllegalArgumentException("Only Member or Viewer roles can be invited");
         }
 
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        if (actor.getEmail().equalsIgnoreCase(email)) {
+            throw new IllegalArgumentException("You cannot invite yourself");
+        }
         if (userRepository.findByEmail(email).filter(user ->
                 memberRepository.existsByHousehold_IdAndUser_Id(householdId, user.getId())).isPresent()) {
-            throw new IllegalArgumentException("This user is already a member of the household");
+            throw new IllegalArgumentException("The user is already a member");
         }
+
+        LocalDateTime now = LocalDateTime.now();
+        invitationRepository.findAllByHousehold_IdOrderByCreatedAtDesc(householdId).stream()
+                .filter(existing -> existing.getEmail().equalsIgnoreCase(email)
+                        && existing.getStatus() == HouseholdInvitationStatus.PENDING
+                        && !existing.getExpiresAt().isAfter(now))
+                .forEach(existing -> {
+                    existing.setStatus(HouseholdInvitationStatus.EXPIRED);
+                    existing.setUpdatedAt(now);
+                });
         if (invitationRepository.existsByHousehold_IdAndEmailIgnoreCaseAndStatus(
                 householdId, email, HouseholdInvitationStatus.PENDING)) {
-            throw new IllegalArgumentException("A pending invitation already exists for this email");
+            throw new IllegalArgumentException("An invitation has already been sent to this email");
         }
 
         Household household = householdRepository.findById(householdId)
                 .orElseThrow(() -> new IllegalArgumentException("Household was not found"));
         String rawToken = newToken();
-        LocalDateTime now = LocalDateTime.now();
         HouseholdInvitation invitation = HouseholdInvitation.builder()
                 .household(household)
                 .invitedBy(actor)
@@ -76,8 +89,9 @@ public class HouseholdAccessService {
                 .updatedAt(now)
                 .expiresAt(now.plusDays(INVITATION_VALID_DAYS))
                 .build();
-        invitationRepository.save(invitation);
-        return HouseholdInvitationResponse.from(invitation, rawToken);
+        HouseholdInvitation savedInvitation = invitationRepository.save(invitation);
+        invitationEmailService.sendInvitation(email, household.getName(), rawToken, role);
+        return HouseholdInvitationResponse.from(savedInvitation, rawToken);
     }
 
     public List<HouseholdInvitationResponse> listInvitations(Long householdId) {
