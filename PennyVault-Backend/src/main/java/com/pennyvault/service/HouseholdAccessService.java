@@ -124,7 +124,14 @@ public class HouseholdAccessService {
         invitation.setStatus(HouseholdInvitationStatus.PENDING);
         invitation.setExpiresAt(now.plusDays(INVITATION_VALID_DAYS));
         invitation.setUpdatedAt(now);
-        return HouseholdInvitationResponse.from(invitationRepository.save(invitation), rawToken);
+        HouseholdInvitation savedInvitation = invitationRepository.save(invitation);
+        invitationEmailService.sendInvitation(
+                invitation.getEmail(),
+                invitation.getHousehold().getName(),
+                rawToken,
+                invitation.getMemberRole()
+        );
+        return HouseholdInvitationResponse.from(savedInvitation, rawToken);
     }
 
     public void cancelInvitation(Long householdId, Long invitationId) {
