@@ -11,6 +11,9 @@ import com.pennyvault.exception.UsernameAlreadyExistsException;
 import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.repository.UserRepository;
 import com.pennyvault.repository.HouseholdRepository;
+import com.pennyvault.repository.HouseholdMemberRepository;
+import com.pennyvault.entity.HouseholdMember;
+import com.pennyvault.entity.HouseholdRole;
 import com.pennyvault.security.JwtService;
 import com.pennyvault.service.AccountService;
 import com.pennyvault.service.UserService;
@@ -30,6 +33,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final HouseholdRepository householdRepository;
+    private final HouseholdMemberRepository householdMemberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AccountService accountService;
@@ -79,6 +83,14 @@ public class UserServiceImpl implements UserService {
         savedUser.setHousehold(savedHousehold);
         savedUser.setUpdatedAt(now);
         User associatedUser = userRepository.save(savedUser);
+
+        householdMemberRepository.save(HouseholdMember.builder()
+                .household(savedHousehold)
+                .user(associatedUser)
+                .memberRole(HouseholdRole.OWNER)
+                .active(true)
+                .joinedAt(now)
+                .build());
 
         accountService.createDefaultAccounts(associatedUser);
         return mapToResponse(associatedUser);
