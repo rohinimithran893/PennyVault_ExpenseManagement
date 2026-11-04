@@ -25,6 +25,28 @@ public class MicrosoftOAuthTokenService {
         form.add("redirect_uri", graphProperties.redirectUri());
         form.add("scope", graphProperties.scopes().trim());
 
+        return requestTokens(form, "Microsoft authorization-code exchange failed.");
+    }
+
+    public MicrosoftOAuthTokenResponse refreshAccessToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new IllegalArgumentException("Microsoft refresh token must not be blank.");
+        }
+
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("client_id", graphProperties.clientId());
+        form.add("client_secret", graphProperties.clientSecret());
+        form.add("grant_type", "refresh_token");
+        form.add("refresh_token", refreshToken);
+        form.add("scope", graphProperties.scopes().trim());
+
+        return requestTokens(form, "Microsoft access-token refresh failed.");
+    }
+
+    private MicrosoftOAuthTokenResponse requestTokens(
+            MultiValueMap<String, String> form,
+            String failureMessage) {
+
         String tokenEndpoint = "https://login.microsoftonline.com/"
                 + graphProperties.tenant()
                 + "/oauth2/v2.0/token";
@@ -40,14 +62,14 @@ public class MicrosoftOAuthTokenService {
 
             if (response == null
                     || response.accessToken() == null
-                    || response.refreshToken() == null) {
-                throw new IllegalStateException("Microsoft did not return the required OAuth tokens.");
+                    || response.accessToken().isBlank()) {
+                throw new IllegalStateException("Microsoft did not return an access token.");
             }
 
             return response;
         } catch (RestClientException exception) {
-            // Do not propagate provider response details; they may contain sensitive information.
-            throw new IllegalStateException("Microsoft token exchange failed.", exception);
+            // Provider error payloads are deliberately not exposed or logged.
+            throw new IllegalStateException(failureMessage, exception);
         }
     }
 }
