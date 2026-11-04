@@ -81,12 +81,26 @@ class MicrosoftOAuthAuthorizationServiceTest {
         when(graphProperties.redirectUri())
                 .thenReturn("http://localhost:8080/oauth2/callback?source=penny vault");
         when(graphProperties.scopes()).thenReturn("openid profile Mail.Send");
-        when(stateService.generateState()).thenReturn("state+/value");
+        when(stateService.generateState()).thenReturn("state-_value");
 
         String authorizationUrl = authorizationService.buildAuthorizationUrl();
 
-        assertTrue(authorizationUrl.contains("client%20id%26value"));
-        assertTrue(authorizationUrl.contains("state%2B%2Fvalue"));
+        URI uri = URI.create(authorizationUrl);
+        Map<String, String> queryParameters = Stream
+                .of(uri.getRawQuery().split("&"))
+                .map(parameter -> parameter.split("=", 2))
+                .collect(Collectors.toMap(
+                        parameter -> decode(parameter[0]),
+                        parameter -> decode(parameter.length > 1 ? parameter[1] : "")
+                ));
+
+        // Confirm reserved query delimiters in the client ID remain part of its value.
+        assertEquals("client id&value", queryParameters.get("client_id"));
+        assertEquals("state-_value", queryParameters.get("state"));
+        assertEquals(
+                "http://localhost:8080/oauth2/callback?source=penny vault",
+                queryParameters.get("redirect_uri")
+        );
     }
 
     private String decode(String value) {
