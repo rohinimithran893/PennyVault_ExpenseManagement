@@ -18,17 +18,26 @@ class MicrosoftOAuthCallbackServiceTest {
     @Mock
     private MicrosoftOAuthTokenService tokenService;
 
+    @Mock
+    private MicrosoftOAuthCredentialService credentialService;
+
     @InjectMocks
     private MicrosoftOAuthCallbackService callbackService;
 
     @Test
-    void completeAuthorizationValidatesStateBeforeExchangingCode() {
+    void completeAuthorizationValidatesStateExchangesCodeAndStoresRefreshToken() {
         when(stateService.validateAndConsumeState("valid-state")).thenReturn(true);
+        when(tokenService.exchangeAuthorizationCode("authorization-code"))
+                .thenReturn(new MicrosoftOAuthTokenResponse(
+                        "Bearer", "Mail.Send", 3600, 3600,
+                        "access-token", "refresh-token"
+                ));
 
         callbackService.completeAuthorization("authorization-code", "valid-state", null);
 
         verify(stateService).validateAndConsumeState("valid-state");
         verify(tokenService).exchangeAuthorizationCode("authorization-code");
+        verify(credentialService).storeRefreshToken("refresh-token");
     }
 
     @Test
@@ -42,7 +51,7 @@ class MicrosoftOAuthCallbackServiceTest {
                 )
         );
 
-        verifyNoInteractions(tokenService);
+        verifyNoInteractions(tokenService, credentialService);
     }
 
     @Test
@@ -57,7 +66,7 @@ class MicrosoftOAuthCallbackServiceTest {
         );
 
         verify(stateService).validateAndConsumeState("valid-state");
-        verifyNoInteractions(tokenService);
+        verifyNoInteractions(tokenService, credentialService);
     }
 
     @Test
@@ -69,6 +78,6 @@ class MicrosoftOAuthCallbackServiceTest {
                 () -> callbackService.completeAuthorization(null, "valid-state", null)
         );
 
-        verifyNoInteractions(tokenService);
+        verifyNoInteractions(tokenService, credentialService);
     }
 }
