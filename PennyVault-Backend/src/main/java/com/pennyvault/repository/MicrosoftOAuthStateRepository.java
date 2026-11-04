@@ -9,4 +9,9 @@ public interface MicrosoftOAuthStateRepository
         extends JpaRepository<MicrosoftOAuthState, String> {
 
     long deleteByExpiresAtBefore(Instant currentTime);
+
+    long deleteByStateHashAndExpiresAtAfter(
+            String stateHash,
+            Instant currentTime
+    );
 }
