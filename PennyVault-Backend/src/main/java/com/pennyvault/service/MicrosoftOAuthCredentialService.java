@@ -46,6 +46,11 @@ public class MicrosoftOAuthCredentialService {
         credentialRepository.save(credential);
     }
 
+    @Transactional
+    public void updateRefreshToken(String refreshToken) {
+        storeRefreshToken(refreshToken);
+    }
+
     @Transactional(readOnly = true)
     public String getRefreshToken() {
         String mailboxEmail = graphProperties.senderEmail();
