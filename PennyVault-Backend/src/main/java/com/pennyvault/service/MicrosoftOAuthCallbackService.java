@@ -9,6 +9,7 @@ public class MicrosoftOAuthCallbackService {
 
     private final MicrosoftOAuthStateService stateService;
     private final MicrosoftOAuthTokenService tokenService;
+    private final MicrosoftOAuthCredentialService credentialService;
 
     public void completeAuthorization(String code, String state, String providerError) {
         if (!stateService.validateAndConsumeState(state)) {
@@ -23,8 +24,9 @@ public class MicrosoftOAuthCallbackService {
             throw new IllegalArgumentException("Microsoft authorization code is missing.");
         }
 
-        // Token persistence and encryption are implemented in the next integration step.
-        // Keep the token response server-side; never return it to the browser or log it.
-        tokenService.exchangeAuthorizationCode(code);
+        MicrosoftOAuthTokenResponse tokenResponse =
+                tokenService.exchangeAuthorizationCode(code);
+
+        credentialService.storeRefreshToken(tokenResponse.refreshToken());
     }
 }
