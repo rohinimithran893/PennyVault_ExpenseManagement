@@ -9,6 +9,7 @@ public record MicrosoftGraphProperties(
         String tenant,
         String redirectUri,
         String senderEmail,
-        String scopes
+        String scopes,
+        String encryptionKey
 ) {
 }
