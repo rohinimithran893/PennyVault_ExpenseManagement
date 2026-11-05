@@ -212,9 +212,8 @@ function PeopleAccess() {
     setSaving(true);
     setError("");
     setNotice("");
-    setCreatedToken("");
     try {
-      const invitation = await createHouseholdInvitation(
+      await createHouseholdInvitation(
         householdId,
         inviteEmail.trim(),
         inviteRole
