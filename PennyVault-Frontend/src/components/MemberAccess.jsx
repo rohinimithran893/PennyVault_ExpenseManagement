@@ -296,7 +296,7 @@ function PeopleAccess() {
       const response = await resendHouseholdInvitation(householdId, invitation.id);
       setNotice("Invitation resent successfully!");
     },
-    "Invitation refreshed."
+    "Invitation resent successfully!"
   );
 
   const handleCancel = (invitation) => {
