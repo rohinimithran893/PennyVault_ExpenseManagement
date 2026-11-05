@@ -91,7 +91,7 @@ public class HouseholdAccessService {
                 .build();
         HouseholdInvitation savedInvitation = invitationRepository.save(invitation);
         invitationEmailService.sendInvitation(email, household.getName(), rawToken, role);
-        return HouseholdInvitationResponse.from(savedInvitation, rawToken);
+        return HouseholdInvitationResponse.from(savedInvitation);
     }
 
     public List<HouseholdInvitationResponse> listInvitations(Long householdId) {
@@ -107,7 +107,7 @@ public class HouseholdAccessService {
                     invitation.setUpdatedAt(now);
                 });
         invitationRepository.saveAll(invitations);
-        return invitations.stream().map(invitation -> HouseholdInvitationResponse.from(invitation, null)).toList();
+        return invitations.stream().map(invitation -> HouseholdInvitationResponse.from(invitation)).toList();
     }
 
     public HouseholdInvitationResponse resendInvitation(Long householdId, Long invitationId) {
@@ -131,7 +131,7 @@ public class HouseholdAccessService {
                 rawToken,
                 invitation.getMemberRole()
         );
-        return HouseholdInvitationResponse.from(savedInvitation, rawToken);
+        return HouseholdInvitationResponse.from(savedInvitation);
     }
 
     public void cancelInvitation(Long householdId, Long invitationId) {
