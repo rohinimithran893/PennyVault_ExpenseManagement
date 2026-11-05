@@ -181,6 +181,12 @@ function PeopleAccess() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timeoutId = window.setTimeout(() => setNotice(""), 3500);
+    return () => window.clearTimeout(timeoutId);
+  }, [notice]);
+
   const runAction = async (action, successMessage) => {
     setSaving(true);
     setError("");
