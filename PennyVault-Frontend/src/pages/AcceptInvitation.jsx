@@ -7,7 +7,7 @@ const AcceptInvitation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const token = new URLSearchParams(location.search).get("token");
-  const started = useRef(false);
+  const acceptanceRequest = useRef(null);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Verifying your household invitation...");
 
@@ -18,11 +18,12 @@ const AcceptInvitation = () => {
       setMessage("This invitation link is missing its token. Please ask the household owner to send a new invitation.");
       return;
     }
-    if (started.current) return;
-    started.current = true;
+    if (!acceptanceRequest.current) {
+      acceptanceRequest.current = acceptHouseholdInvitation(token);
+    }
 
     let active = true;
-    acceptHouseholdInvitation(token)
+    acceptanceRequest.current
       .then(() => {
         if (!active) return;
         setStatus("success");
