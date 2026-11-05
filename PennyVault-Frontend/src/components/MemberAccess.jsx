@@ -218,7 +218,7 @@ function PeopleAccess() {
       setCreatedToken(invitation?.invitationToken || "");
       setInviteEmail("");
       setShowInviteForm(false);
-      setNotice("Invitation created. Email delivery is not configured yet; share the token securely with the invited person.");
+      setNotice("Invitation created and email accepted by Microsoft Graph.");
       await loadData();
     } catch (requestError) {
       setError(requestError?.message || "Unable to create invitation.");
@@ -302,7 +302,7 @@ function PeopleAccess() {
     async () => {
       const response = await resendHouseholdInvitation(householdId, invitation.id);
       setCreatedToken(response?.invitationToken || "");
-      setNotice("Invitation refreshed. Email delivery is not configured yet; share the new token securely.");
+      setNotice("Invitation resent and email accepted by Microsoft Graph.");
     },
     "Invitation refreshed."
   );
