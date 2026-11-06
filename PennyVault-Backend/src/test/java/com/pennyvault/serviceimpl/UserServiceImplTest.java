@@ -11,6 +11,7 @@ import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.exception.UsernameAlreadyExistsException;
 import com.pennyvault.repository.UserRepository;
 import com.pennyvault.repository.HouseholdRepository;
+import com.pennyvault.repository.HouseholdMemberRepository;
 import com.pennyvault.security.JwtService;
 import com.pennyvault.service.AccountService;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,9 @@ class UserServiceImplTest {
 
     @Mock
     private HouseholdRepository householdRepository;
+
+    @Mock
+    private HouseholdMemberRepository householdMemberRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;

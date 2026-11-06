@@ -179,10 +179,6 @@ function TransactionPage() {
     setIsAdvancedFilterOpen(false);
   };
 
-  const cancelAdvancedFilters = () => {
-    setIsAdvancedFilterOpen(false);
-  };
-
   const showToast = (message, type = "success") => {
     if (toastTimerRef.current) {
       clearTimeout(toastTimerRef.current);
