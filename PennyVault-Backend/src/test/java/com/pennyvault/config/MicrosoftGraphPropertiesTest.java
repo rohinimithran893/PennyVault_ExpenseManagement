@@ -26,7 +26,7 @@ class MicrosoftGraphPropertiesTest {
 
         MicrosoftGraphProperties properties = new Binder(source)
                 .bind("app.microsoft.graph", Bindable.of(MicrosoftGraphProperties.class))
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException("Microsoft Graph properties were not bound."));
 
         assertEquals("ci-client-id", properties.clientId());
         assertEquals("ci-client-secret", properties.clientSecret());
