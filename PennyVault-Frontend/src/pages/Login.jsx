@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
 import { saveAuth } from "../utils/auth";
 import "../Styles/Login.css";
@@ -23,6 +23,7 @@ import {
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [remember, setRemember] = useState(true);
   const [email, setEmail] = useState("");
@@ -59,7 +60,8 @@ const Login = () => {
         password
       );
       saveAuth(data);
-      navigate("/");
+      const returnTo = location.state?.from;
+      navigate(returnTo ? `${returnTo.pathname}${returnTo.search || ""}` : "/");
     } catch (err) {
       setError(
         err?.message ||

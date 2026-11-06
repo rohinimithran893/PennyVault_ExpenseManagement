@@ -6,11 +6,13 @@ import com.pennyvault.dto.response.LoginResponse;
 import com.pennyvault.dto.response.UserResponse;
 import com.pennyvault.entity.User;
 import com.pennyvault.entity.Household;
+import com.pennyvault.entity.HouseholdMember;
 import com.pennyvault.exception.EmailAlreadyExistsException;
 import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.exception.UsernameAlreadyExistsException;
 import com.pennyvault.repository.UserRepository;
 import com.pennyvault.repository.HouseholdRepository;
+import com.pennyvault.repository.HouseholdMemberRepository;
 import com.pennyvault.security.JwtService;
 import com.pennyvault.service.AccountService;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,9 @@ class UserServiceImplTest {
 
     @Mock
     private HouseholdRepository householdRepository;
+
+    @Mock
+    private HouseholdMemberRepository householdMemberRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -83,6 +88,7 @@ class UserServiceImplTest {
         assertEquals(77L, response.getHouseholdId());
         assertEquals("Alice Household", response.getHouseholdName());
         verify(householdRepository).save(any(Household.class));
+        verify(householdMemberRepository).save(any(HouseholdMember.class));
         verify(accountService).createDefaultAccounts(any(User.class));
     }
 

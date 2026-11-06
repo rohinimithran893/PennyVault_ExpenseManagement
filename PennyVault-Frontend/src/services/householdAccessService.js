@@ -73,3 +73,9 @@ export const updateHouseholdMemberProfile = (householdId, userId, fullName) =>
     method: "PATCH",
     body: JSON.stringify({ fullName }),
   });
+
+export const acceptHouseholdInvitation = (token) =>
+  request("/household-invitations/accept", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });

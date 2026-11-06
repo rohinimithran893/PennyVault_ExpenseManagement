@@ -13,7 +13,6 @@ import {
   IconUserCheck,
   IconPlus,
   IconX,
-  IconCopy,
   IconRefresh,
   IconPencil,
   IconReceipt,
@@ -107,7 +106,6 @@ function PeopleAccess() {
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("MEMBER");
-  const [createdToken, setCreatedToken] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -183,6 +181,12 @@ function PeopleAccess() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timeoutId = window.setTimeout(() => setNotice(""), 3500);
+    return () => window.clearTimeout(timeoutId);
+  }, [notice]);
+
   const runAction = async (action, successMessage) => {
     setSaving(true);
     setError("");
@@ -208,32 +212,20 @@ function PeopleAccess() {
     setSaving(true);
     setError("");
     setNotice("");
-    setCreatedToken("");
     try {
-      const invitation = await createHouseholdInvitation(
+      await createHouseholdInvitation(
         householdId,
         inviteEmail.trim(),
         inviteRole
       );
-      setCreatedToken(invitation?.invitationToken || "");
       setInviteEmail("");
       setShowInviteForm(false);
-      setNotice("Invitation created. Email delivery is not configured yet; share the token securely with the invited person.");
+      setNotice("Invitation sent successfully!");
       await loadData();
     } catch (requestError) {
       setError(requestError?.message || "Unable to create invitation.");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleCopyToken = async () => {
-    if (!createdToken) return;
-    try {
-      await navigator.clipboard.writeText(createdToken);
-      setNotice("Invitation token copied.");
-    } catch {
-      setNotice(`Copy the invitation token manually: ${createdToken}`);
     }
   };
 
@@ -301,10 +293,9 @@ function PeopleAccess() {
   const handleResend = (invitation) => runAction(
     async () => {
       const response = await resendHouseholdInvitation(householdId, invitation.id);
-      setCreatedToken(response?.invitationToken || "");
-      setNotice("Invitation refreshed. Email delivery is not configured yet; share the new token securely.");
+      setNotice("Invitation resent successfully!");
     },
-    "Invitation refreshed."
+    "Invitation resent successfully!"
   );
 
   const handleCancel = (invitation) => {
@@ -339,20 +330,7 @@ function PeopleAccess() {
       </div>
 
       {error && <div className="people-alert error" role="alert">{error}</div>}
-      {notice && <div className="people-alert success" role="status">{notice}</div>}
-      {createdToken && (
-        <div className="invitation-token-panel">
-          <div>
-            <strong>Invitation token</strong>
-            <p>Share this token securely with the invited person. They must sign in using the invited email and accept the invitation.</p>
-            <code>{createdToken}</code>
-          </div>
-          <button type="button" className="outline-action" onClick={handleCopyToken}>
-            <IconCopy size={14} /> Copy token
-          </button>
-          <button type="button" className="token-dismiss" aria-label="Dismiss token" onClick={() => setCreatedToken("")}><IconX size={16} /></button>
-        </div>
-      )}
+      {notice && <div className="people-toast success" role="status" aria-live="polite"><span className="people-toast-icon">✓</span>{notice}</div>}
 
       {showInviteForm && (
         <form className="invite-form-panel" onSubmit={handleInvite}>

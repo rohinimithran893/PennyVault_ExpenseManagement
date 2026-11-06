@@ -18,6 +18,7 @@ import Notifications from "./pages/Notifications";
 import Preferences from "./pages/Preferences";
 import Security from "./pages/Security";
 import HelpAndSupport from "./pages/HelpAndSupport";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 import "./App.css";
 
@@ -32,6 +33,7 @@ function App() {
         {/* Login page (NO Sidebar) */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
 
         {/* Protected Pages */}
         <Route element={

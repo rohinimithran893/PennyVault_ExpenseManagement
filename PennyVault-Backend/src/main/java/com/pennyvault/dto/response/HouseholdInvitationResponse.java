@@ -13,10 +13,9 @@ public record HouseholdInvitationResponse(
         HouseholdRole role,
         HouseholdInvitationStatus status,
         LocalDateTime expiresAt,
-        LocalDateTime createdAt,
-        String invitationToken
+        LocalDateTime createdAt
 ) {
-    public static HouseholdInvitationResponse from(HouseholdInvitation invitation, String rawToken) {
+    public static HouseholdInvitationResponse from(HouseholdInvitation invitation) {
         return new HouseholdInvitationResponse(
                 invitation.getId(),
                 invitation.getHousehold().getId(),
@@ -24,8 +23,7 @@ public record HouseholdInvitationResponse(
                 invitation.getMemberRole(),
                 invitation.getStatus(),
                 invitation.getExpiresAt(),
-                invitation.getCreatedAt(),
-                rawToken
+                invitation.getCreatedAt()
         );
     }
 }
