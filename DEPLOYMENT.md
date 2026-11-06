@@ -27,7 +27,8 @@ Configure these variables in Render:
 - JWT_SECRET: a new random value (the Render Blueprint generates one).
 - CORS_ALLOWED_ORIGINS: exact frontend origin, e.g. https://YOUR-FRONTEND.onrender.com.
 - APP_FRONTEND_URL: same frontend origin, without a trailing slash.
-- SMTP variables only if a supported HTTPS mail provider or SMTP relay is configured.
+- RESEND_API_KEY: Resend API key for invitation email delivery over HTTPS.
+- MAIL_FROM: sender identity verified in Resend (for example, a sender on your verified domain).
 
 Flyway owns schema migrations. Hibernate validates the schema rather than
 mutating it. The production database must successfully apply migrations V1–V16.
@@ -40,5 +41,7 @@ file. Never commit real database credentials or JWT secrets.
 
 ## Email note
 
-Render blocks outbound SMTP on common SMTP ports. Gmail SMTP should not be
-assumed to work from Render. Use an HTTPS email API for production invitations.
+Render blocks outbound SMTP on ports 25, 465, and 587 on free web services.
+The invitation service therefore uses Resend's HTTPS API when RESEND_API_KEY
+is configured; it retains SMTP as a local-development fallback. Verify your
+sender domain in Resend before using a custom MAIL_FROM address.
