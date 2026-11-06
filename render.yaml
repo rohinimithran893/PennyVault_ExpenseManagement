@@ -20,6 +20,8 @@ services:
         generateValue: true
       - key: JPA_DDL_AUTO
         value: validate
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=15.0 -XX:+UseSerialGC"
       - key: CORS_ALLOWED_ORIGINS
         sync: false
       - key: APP_FRONTEND_URL

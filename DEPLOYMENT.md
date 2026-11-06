@@ -2,6 +2,12 @@
 
 ## Target architecture
 
+This Blueprint uses Render's Free web-service plan. It is suitable for a hobby/test
+release, not a production financial service: the API sleeps after 15 minutes of
+inactivity and can take about a minute to wake. The frontend static site remains
+available, but the first API request after idle can be delayed. The backend has
+512 MB RAM and no persistent disk; application data must remain in Neon.
+
 - React frontend: Render Static Site.
 - Spring Boot API: Render Docker Web Service.
 - PostgreSQL: Neon (external managed database).
@@ -31,7 +37,8 @@ Configure these variables in Render:
 - MAIL_FROM: sender identity verified in Resend (for example, a sender on your verified domain).
 
 Flyway owns schema migrations. Hibernate validates the schema rather than
-mutating it. The production database must successfully apply migrations V1–V16.
+mutating it. CI has verified migrations V1–V16 and Hibernate validation against
+PostgreSQL 16. The Neon database must successfully apply the same migrations.
 
 ## Local backend environment
 
