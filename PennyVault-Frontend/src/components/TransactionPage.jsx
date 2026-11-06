@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getToken } from "../utils/auth";
+import API_BASE_URL from "../config/apiConfig";
 import { exportTransactionsCsv, exportTransactionsXlsx } from "../utils/transactionExport";
 import "../Styles/Transactions.css";
 import AdvancedFilters from "./Transactions/AdvancedFilters";
@@ -238,7 +239,7 @@ function TransactionPage() {
     const loadAccounts = async () => {
       try {
         const token = getToken();
-        const response = await fetch("http://localhost:8080/api/accounts", {
+        const response = await fetch(`${API_BASE_URL}/accounts`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -262,7 +263,7 @@ function TransactionPage() {
     const loadCategories = async () => {
       try {
         const token = getToken();
-        const response = await fetch("http://localhost:8080/api/categories", {
+        const response = await fetch(`${API_BASE_URL}/categories`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -294,7 +295,7 @@ function TransactionPage() {
         const token = getToken();
 
         const response = await fetch(
-          `http://localhost:8080/api/subcategories/category/${categoryId}`,
+          `${API_BASE_URL}/subcategories/category/${categoryId}`,
           {
             method: "GET",
             headers: {
@@ -325,7 +326,7 @@ function TransactionPage() {
     try {
       const token = getToken();
 
-      const response = await fetch("http://localhost:8080/api/transactions", {
+      const response = await fetch(`${API_BASE_URL}/transactions`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -459,8 +460,8 @@ function TransactionPage() {
       };
       const isEditing = editingTransactionId !== null;
       const url = isEditing
-        ? `http://localhost:8080/api/transactions/${editingTransactionId}`
-        : "http://localhost:8080/api/transactions";
+        ? `${API_BASE_URL}/transactions/${editingTransactionId}`
+        : `${API_BASE_URL}/transactions`;
 
       const method = isEditing ? "PUT" : "POST";
       const response = await fetch(url, {
@@ -498,7 +499,7 @@ function TransactionPage() {
 
       // Reload transactions from backend
       const transactionsResponse = await fetch(
-        "http://localhost:8080/api/transactions",
+        `${API_BASE_URL}/transactions`,
         {
           method: "GET",
           headers: {
@@ -551,7 +552,7 @@ function TransactionPage() {
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:8080/api/transactions/${transactionId}`,
+        `${API_BASE_URL}/transactions/${transactionId}`,
         {
           method: "GET",
           headers: {
@@ -576,7 +577,7 @@ function TransactionPage() {
       const token = getToken();
 
       const response = await fetch(
-        `http://localhost:8080/api/transactions/${transactionId}`,
+        `${API_BASE_URL}/transactions/${transactionId}`,
         {
           method: "GET",
           headers: {
@@ -635,7 +636,7 @@ function TransactionPage() {
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:8080/api/transactions/${transactionId}`,
+        `${API_BASE_URL}/transactions/${transactionId}`,
         {
           method: "DELETE",
           headers: {

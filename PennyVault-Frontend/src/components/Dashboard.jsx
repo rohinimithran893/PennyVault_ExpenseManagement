@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getToken } from "../utils/auth";
+import API_BASE_URL from "../config/apiConfig";
 import {
   IconSearch,
   IconBell,
@@ -80,7 +81,7 @@ function Dashboard() {
 
       try {
         const token = getToken();
-        const response = await fetch("http://localhost:8080/api/transactions", {
+        const response = await fetch(`${API_BASE_URL}/transactions`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
