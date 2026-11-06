@@ -5,7 +5,6 @@ import { saveAuth } from "../utils/auth";
 import "../Styles/Login.css";
 import loginIllustration from "../assets/login-illustration.png";
 import {
-  IconMail,
   IconUser,
   IconLock,
   IconEye,
@@ -13,12 +12,7 @@ import {
   IconArrowRight,
   IconShieldLock,
   IconUsers,
-  IconWallet,
   IconChartPie,
-  IconShoppingCart,
-  IconBolt,
-  IconGasStation,
-  IconWifi,
 } from "@tabler/icons-react";
 
 const Login = () => {

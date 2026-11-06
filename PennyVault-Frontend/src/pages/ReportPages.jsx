@@ -122,7 +122,7 @@ const formatCurrency = (value) =>
 const Reports = () => {
   const [activePopup, setActivePopup] = useState(null);
   const [period, setPeriod] = useState("This Month");
-  const [dateRange, setDateRange] = useState(
+  const [dateRange] = useState(
     "1 Aug 2026 - 31 Aug 2026"
   );
 

@@ -125,15 +125,17 @@ function Budgets() {
     }
   };
 
+  const selectedCategoryId = selectedCategory?.categoryId;
+
   useEffect(() => {
-    if (panelMode !== "subcategories" || !selectedCategory) return;
+    if (panelMode !== "subcategories" || !selectedCategoryId) return;
     let cancelled = false;
     const loadSubcategoryBudgets = async () => {
       setSubcategoryLoading(true);
       setSubcategoryError("");
       try {
         const response = await apiRequest(
-          `/budgets/subcategories?month=${selectedMonth}&categoryId=${selectedCategory.categoryId}`
+          `/budgets/subcategories?month=${selectedMonth}&categoryId=${selectedCategoryId}`
         );
         if (!response.ok) throw new Error("Unable to load subcategory budgets for this month.");
         const data = await response.json();
@@ -155,7 +157,7 @@ function Budgets() {
     };
     loadSubcategoryBudgets();
     return () => { cancelled = true; };
-  }, [panelMode, selectedCategory?.categoryId, selectedMonth]);
+  }, [panelMode, selectedCategoryId, selectedMonth]);
 
   const subcategoryTotalCents = subcategoryBudgets.reduce((sum, item) => {
     const amount = Number(item.budgetLimit);
