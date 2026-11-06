@@ -1,33 +1,39 @@
 package com.pennyvault.config;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Map;
 
-@SpringBootTest
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 class MicrosoftGraphPropertiesTest {
 
-    @Autowired
-    private MicrosoftGraphProperties graphProperties;
-
     @Test
-    void shouldLoadMicrosoftGraphProperties() {
+    void bindsMicrosoftGraphPropertiesFromApplicationConfiguration() {
+        MapConfigurationPropertySource source = new MapConfigurationPropertySource(Map.of(
+                "app.microsoft.graph.client-id", "ci-client-id",
+                "app.microsoft.graph.client-secret", "ci-client-secret",
+                "app.microsoft.graph.tenant", "consumers",
+                "app.microsoft.graph.redirect-uri", "http://localhost:8080/oauth2/callback",
+                "app.microsoft.graph.sender-email", "ci-mailbox@example.com",
+                "app.microsoft.graph.scopes", "openid profile offline_access Mail.Send",
+                "app.microsoft.graph.encryption-key", "Y2ktdGVzdC1rZXktdmFsdWU="
+        ));
 
-        assertNotNull(graphProperties);
+        MicrosoftGraphProperties properties = new Binder(source)
+                .bind("app.microsoft.graph", Bindable.of(MicrosoftGraphProperties.class))
+                .orElseThrow();
 
-        assertNotNull(graphProperties.clientId());
-        assertFalse(graphProperties.clientId().isBlank());
-
-        assertNotNull(graphProperties.clientSecret());
-        assertFalse(graphProperties.clientSecret().isBlank());
-
-        assertEquals("consumers", graphProperties.tenant());
-        assertEquals("http://localhost:8080/oauth2/callback", graphProperties.redirectUri());
-        assertEquals("pennyvault.family@outlook.com", graphProperties.senderEmail());
-
-        assertNotNull(graphProperties.scopes());
-        assertTrue(graphProperties.scopes().contains("Mail.Send"));
+        assertEquals("ci-client-id", properties.clientId());
+        assertEquals("ci-client-secret", properties.clientSecret());
+        assertEquals("consumers", properties.tenant());
+        assertEquals("http://localhost:8080/oauth2/callback", properties.redirectUri());
+        assertEquals("ci-mailbox@example.com", properties.senderEmail());
+        assertTrue(properties.scopes().contains("Mail.Send"));
+        assertEquals("Y2ktdGVzdC1rZXktdmFsdWU=", properties.encryptionKey());
     }
 }

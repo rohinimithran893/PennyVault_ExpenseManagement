@@ -292,7 +292,7 @@ function PeopleAccess() {
 
   const handleResend = (invitation) => runAction(
     async () => {
-      const response = await resendHouseholdInvitation(householdId, invitation.id);
+      await resendHouseholdInvitation(householdId, invitation.id);
       setNotice("Invitation resent successfully!");
     },
     "Invitation resent successfully!"

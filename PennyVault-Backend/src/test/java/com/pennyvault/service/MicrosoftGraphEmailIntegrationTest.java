@@ -1,6 +1,7 @@
 package com.pennyvault.service;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -8,7 +9,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * Opt-in live test. Set PENNYVAULT_MICROSOFT_GRAPH_INTEGRATION=true and provide
+ * valid Microsoft Graph OAuth configuration before running this test.
+ */
 @SpringBootTest
+@EnabledIfEnvironmentVariable(
+        named = "PENNYVAULT_MICROSOFT_GRAPH_INTEGRATION",
+        matches = "true"
+)
 class MicrosoftGraphEmailIntegrationTest {
 
     @Autowired
