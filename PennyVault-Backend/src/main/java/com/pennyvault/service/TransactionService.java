@@ -7,15 +7,20 @@ import com.pennyvault.entity.Category;
 import com.pennyvault.entity.Subcategory;
 import com.pennyvault.entity.Transaction;
 import com.pennyvault.entity.User;
+import com.pennyvault.entity.HouseholdMember;
 import com.pennyvault.repository.AccountRepository;
 import com.pennyvault.repository.CategoryRepository;
 import com.pennyvault.repository.SubcategoryRepository;
 import com.pennyvault.repository.TransactionRepository;
 import com.pennyvault.repository.UserRepository;
+import com.pennyvault.repository.HouseholdMemberRepository;
 
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +34,7 @@ private final AccountRepository accountRepository;
 private final CategoryRepository categoryRepository;
 private final SubcategoryRepository subcategoryRepository;
 private final UserRepository userRepository;
+private final HouseholdMemberRepository householdMemberRepository;
 
 
     public TransactionResponse createTransaction(TransactionRequest request, String userEmail) {
@@ -121,6 +127,8 @@ private final UserRepository userRepository;
             .amount(transaction.getAmount())
             .transactionType(transaction.getTransactionType())
             .transactionDate(transaction.getTransactionDate())
+            .ownerUserId(transaction.getAccount().getUser().getId())
+            .ownerName(transaction.getAccount().getUser().getFullName())
             .build();
     }
 
@@ -130,7 +138,10 @@ private final UserRepository userRepository;
             .findByEmail(userEmail)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Account> accounts = accountRepository.findByUser(user);
+        List<User> visibleUsers = getVisibleHouseholdUsers(user);
+        List<Account> accounts = visibleUsers.stream()
+            .flatMap(visibleUser -> accountRepository.findByUser(visibleUser).stream())
+            .toList();
 
         return accounts.stream()
             .flatMap(account -> transactionRepository.findByAccount(account).stream())
@@ -150,15 +161,25 @@ private final UserRepository userRepository;
                     new RuntimeException("Transaction not found")
             );
 
-        if (!transaction
-            .getAccount()
-            .getUser()
-            .getId()
-            .equals(user.getId())) {
-
-        throw new RuntimeException("You do not have permission to access this transaction");
+        boolean canView = getVisibleHouseholdUsers(user).stream()
+            .anyMatch(visibleUser -> visibleUser.getId().equals(transaction.getAccount().getUser().getId()));
+        if (!canView) {
+            throw new RuntimeException("You do not have permission to access this transaction");
+        }
+        return mapToResponse(transaction);
     }
-    return mapToResponse(transaction);
+
+    private List<User> getVisibleHouseholdUsers(User user) {
+        Map<Long, User> visibleUsers = new LinkedHashMap<>();
+        visibleUsers.put(user.getId(), user);
+        if (user.getHousehold() != null) {
+            List<HouseholdMember> activeMembers = householdMemberRepository
+                .findAllByHousehold_IdAndActiveTrue(user.getHousehold().getId());
+            for (HouseholdMember member : activeMembers) {
+                visibleUsers.put(member.getUser().getId(), member.getUser());
+            }
+        }
+        return new ArrayList<>(visibleUsers.values());
     }
 
     public TransactionResponse updateTransaction(Long transactionId, TransactionRequest request, String userEmail) {
