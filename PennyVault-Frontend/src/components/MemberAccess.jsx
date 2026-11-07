@@ -150,18 +150,20 @@ function PeopleAccess() {
       const ownMembership = safeMembers.find((member) => String(member.userId) === String(user?.id));
       setCurrentRole(ownMembership?.role || null);
 
-      try {
-        const statisticsData = await getHouseholdMemberStatistics(
-          householdId,
-          `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
-        );
-        const safeStatistics = Array.isArray(statisticsData) ? statisticsData : [];
-        setMemberStatistics(
-          Object.fromEntries(safeStatistics.map((item) => [String(item.userId), item]))
-        );
-      } catch {
+      if (ownMembership?.role === "OWNER") {
+        try {
+          const statisticsData = await getHouseholdMemberStatistics(
+            householdId,
+            `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
+          );
+          const safeStatistics = Array.isArray(statisticsData) ? statisticsData : [];
+          setMemberStatistics(Object.fromEntries(safeStatistics.map((item) => [String(item.userId), item])));
+        } catch {
+          setMemberStatistics({});
+          setError("Member details loaded, but monthly spending statistics could not be loaded.");
+        }
+      } else {
         setMemberStatistics({});
-        setError("Member details loaded, but monthly spending statistics could not be loaded.");
       }
 
       if (ownMembership?.role === "OWNER") {
@@ -406,6 +408,7 @@ function PeopleAccess() {
               key={member.userId}
               member={member}
               statistics={memberStatistics[String(member.userId)]}
+              canViewStatistics={canManage}
               canManage={canManage}
               isSelf={String(member.userId) === String(user?.id)}
               activeMenu={activeMenu}
@@ -519,7 +522,7 @@ function SummaryCard({ icon, title, value, subtitle, color }) {
   );
 }
 
-function MemberRow({ member, statistics, canManage, isSelf, activeMenu, setActiveMenu, onRoleChange, onToggleActive, onViewExpenses, onEditProfile, saving }) {
+function MemberRow({ member, statistics, canViewStatistics, canManage, isSelf, activeMenu, setActiveMenu, onRoleChange, onToggleActive, onViewExpenses, onEditProfile, saving }) {
   const isMenuOpen = activeMenu === member.userId;
   const roleLabel = ROLE_LABELS[member.role] || member.role || "Member";
   const color = colorFor(member.email);
@@ -543,13 +546,13 @@ function MemberRow({ member, statistics, canManage, isSelf, activeMenu, setActiv
       <div className="member-email-cell">{member.email || "—"}</div>
 
       <div className="member-insight">
-        <strong>{formatCurrency(statistics?.spentThisMonth)}</strong>
-        <small>Expenses this month</small>
+        <strong>{canViewStatistics ? formatCurrency(statistics?.spentThisMonth) : "Private"}</strong>
+        <small>{canViewStatistics ? "Expenses this month" : "Primary Owner only"}</small>
       </div>
 
       <div className="member-insight transaction-insight">
-        <strong>{Number(statistics?.transactionCount || 0).toLocaleString("en-IN")}</strong>
-        <small>{Number(statistics?.transactionCount || 0) === 1 ? "Transaction this month" : "Transactions this month"}</small>
+        <strong>{canViewStatistics ? Number(statistics?.transactionCount || 0).toLocaleString("en-IN") : "Private"}</strong>
+        <small>{canViewStatistics ? (Number(statistics?.transactionCount || 0) === 1 ? "Transaction this month" : "Transactions this month") : "Primary Owner only"}</small>
       </div>
 
       <div className="member-joined-date">{formatDate(member.joinedAt)}</div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { getToken } from "../utils/auth";
+import { getToken, getUser } from "../utils/auth";
 import API_BASE_URL from "../config/apiConfig";
 import { exportTransactionsCsv, exportTransactionsXlsx } from "../utils/transactionExport";
 import "../Styles/Transactions.css";
@@ -56,7 +56,8 @@ const mapApiTransactionToViewModel = (transaction) => ({
   category: transaction.category,
   categoryClass: getCategoryClass(transaction.category),
   subcategory: transaction.subcategory,
-  paidBy: "R",
+  paidBy: transaction.ownerName || "Member",
+  ownerUserId: transaction.ownerUserId,
   amount: Number(transaction.amount),
   type:
     transaction.transactionType?.toLowerCase() === "income"
@@ -1296,6 +1297,7 @@ function TransactionPage() {
         handleViewTransaction={handleViewTransaction}
         handleEditTransaction={handleEditTransaction}
         handleDeleteTransaction={handleDeleteTransaction}
+        currentUserId={getUser()?.id}
         loadTransactions={loadTransactions}
         emptyStateContent={
           <TransactionEmptyState
