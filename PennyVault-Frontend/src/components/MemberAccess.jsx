@@ -447,6 +447,11 @@ function PeopleAccess() {
               maxLength={254}
               value={inviteEmail}
               onChange={(event) => { setInviteEmail(event.target.value); if (error) setError(""); }}
+              onBlur={() => {
+                const email = inviteEmail.trim();
+                if (!email) setError("Email Address is required");
+                else if (!EMAIL_PATTERN.test(email)) setError("Please enter a valid email address");
+              }}
               placeholder="name@example.com"
               autoComplete="email"
               aria-invalid={Boolean(error)}
