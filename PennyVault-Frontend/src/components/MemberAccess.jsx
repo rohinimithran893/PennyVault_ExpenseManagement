@@ -59,6 +59,11 @@ const ROLE_OPTIONS = [
   { value: "MEMBER", label: "Member" },
   { value: "VIEWER", label: "Viewer" },
 ];
+const INVITE_ROLE_DESCRIPTIONS = {
+  CO_OWNER: "Can invite and manage invitations, but cannot manage household members.",
+  MEMBER: "Can access household features according to their assigned permissions.",
+  VIEWER: "Can view household information but cannot make changes.",
+};
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const formatDate = (value) => {
@@ -460,6 +465,10 @@ function PeopleAccess() {
             <select id="invite-role" value={inviteRole} onChange={(event) => setInviteRole(event.target.value)}>
               {inviteRoleOptions.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
             </select>
+            <div className="invite-role-description" role="status" aria-live="polite">
+              <span className="invite-role-description-label">Role information</span>
+              <p>{INVITE_ROLE_DESCRIPTIONS[inviteRole]}</p>
+            </div>
             <div className="people-modal-footer invite-modal-actions">
               <button type="button" className="filter-button" onClick={closeInviteForm}>Cancel</button>
               <button type="submit" className="invite-button" disabled={saving || !inviteEmail.trim() || !EMAIL_PATTERN.test(inviteEmail.trim())}>
