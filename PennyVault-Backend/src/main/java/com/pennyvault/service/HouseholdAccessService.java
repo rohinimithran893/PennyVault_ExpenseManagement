@@ -103,7 +103,7 @@ public class HouseholdAccessService {
 
     public List<HouseholdInvitationResponse> listInvitations(Long householdId) {
         User actor = currentUser();
-        membershipService.requirePrimaryOwner(householdId, actor.getId());
+        membershipService.requireRole(householdId, actor.getId(), HouseholdRole.OWNER, HouseholdRole.CO_OWNER);
         LocalDateTime now = LocalDateTime.now();
         List<HouseholdInvitation> invitations = invitationRepository.findAllByHousehold_IdOrderByCreatedAtDesc(householdId);
         invitations.stream()
@@ -119,7 +119,7 @@ public class HouseholdAccessService {
 
     public HouseholdInvitationResponse resendInvitation(Long householdId, Long invitationId) {
         User actor = currentUser();
-        membershipService.requirePrimaryOwner(householdId, actor.getId());
+        membershipService.requireRole(householdId, actor.getId(), HouseholdRole.OWNER, HouseholdRole.CO_OWNER);
         HouseholdInvitation invitation = findInvitation(householdId, invitationId);
         if (invitation.getStatus() != HouseholdInvitationStatus.PENDING
                 && invitation.getStatus() != HouseholdInvitationStatus.EXPIRED) {
@@ -143,7 +143,7 @@ public class HouseholdAccessService {
 
     public void cancelInvitation(Long householdId, Long invitationId) {
         User actor = currentUser();
-        membershipService.requirePrimaryOwner(householdId, actor.getId());
+        membershipService.requireRole(householdId, actor.getId(), HouseholdRole.OWNER, HouseholdRole.CO_OWNER);
         HouseholdInvitation invitation = findInvitation(householdId, invitationId);
         if (invitation.getStatus() != HouseholdInvitationStatus.PENDING) {
             throw new IllegalArgumentException("Only pending invitations can be cancelled");
