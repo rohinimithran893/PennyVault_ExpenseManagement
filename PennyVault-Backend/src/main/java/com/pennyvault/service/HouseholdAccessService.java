@@ -45,11 +45,18 @@ public class HouseholdAccessService {
 
     public HouseholdInvitationResponse createInvitation(Long householdId, CreateHouseholdInvitationRequest request) {
         User actor = currentUser();
-        membershipService.requirePrimaryOwner(householdId, actor.getId());
+        HouseholdMember inviterMembership = membershipService.requireRole(
+                householdId, actor.getId(), HouseholdRole.OWNER, HouseholdRole.CO_OWNER);
 
         HouseholdRole role = request.getRole();
-        if (role != HouseholdRole.MEMBER && role != HouseholdRole.VIEWER) {
-            throw new IllegalArgumentException("Only Member or Viewer roles can be invited");
+        boolean ownerCanInviteRole = inviterMembership.getMemberRole() == HouseholdRole.OWNER
+                && (role == HouseholdRole.CO_OWNER || role == HouseholdRole.MEMBER || role == HouseholdRole.VIEWER);
+        boolean coOwnerCanInviteRole = inviterMembership.getMemberRole() == HouseholdRole.CO_OWNER
+                && (role == HouseholdRole.MEMBER || role == HouseholdRole.VIEWER);
+        if (!ownerCanInviteRole && !coOwnerCanInviteRole) {
+            throw new IllegalArgumentException(inviterMembership.getMemberRole() == HouseholdRole.OWNER
+                    ? "Primary Owner can invite Co-owner, Member or Viewer roles"
+                    : "Co-owner can invite only Member or Viewer roles");
         }
 
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
