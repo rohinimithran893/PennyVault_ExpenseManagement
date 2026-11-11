@@ -169,16 +169,26 @@ private final HouseholdMemberRepository householdMemberRepository;
         return mapToResponse(transaction);
     }
 
-    private List<User> getVisibleHouseholdUsers(User user) {
+    List<User> getVisibleHouseholdUsers(User user) {
         Map<Long, User> visibleUsers = new LinkedHashMap<>();
         visibleUsers.put(user.getId(), user);
-        if (user.getHousehold() != null) {
+
+        // A user can join a household without changing their original User.household
+        // association. Use the membership table as the source of truth.
+        List<HouseholdMember> memberships = householdMemberRepository.findAllByUser_Id(user.getId());
+        for (HouseholdMember membership : memberships) {
+            if (!membership.isActive()) {
+                continue;
+            }
+
             List<HouseholdMember> activeMembers = householdMemberRepository
-                .findAllByHousehold_IdAndActiveTrue(user.getHousehold().getId());
-            for (HouseholdMember member : activeMembers) {
-                visibleUsers.put(member.getUser().getId(), member.getUser());
+                    .findAllByHousehold_IdAndActiveTrue(membership.getHousehold().getId());
+            for (HouseholdMember activeMember : activeMembers) {
+                User householdUser = activeMember.getUser();
+                visibleUsers.put(householdUser.getId(), householdUser);
             }
         }
+
         return new ArrayList<>(visibleUsers.values());
     }
 
