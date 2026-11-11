@@ -26,7 +26,7 @@ public class HouseholdMemberStatisticsService {
     private final TransactionRepository transactionRepository;
 
     public List<HouseholdMemberStatisticsResponse> getMonthlyStatistics(Long householdId, String monthValue) {
-        membershipService.requireCurrentUserMembership(householdId);
+        membershipService.requireCurrentUserRole(householdId, com.pennyvault.entity.HouseholdRole.OWNER);
         List<HouseholdMember> members =
                 householdMemberRepository.findAllByHousehold_IdOrderByJoinedAtAsc(householdId);
 

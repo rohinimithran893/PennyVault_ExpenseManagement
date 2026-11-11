@@ -13,6 +13,8 @@ public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember
 
     List<HouseholdMember> findAllByHousehold_IdOrderByJoinedAtAsc(Long householdId);
 
+    List<HouseholdMember> findAllByHousehold_IdAndActiveTrue(Long householdId);
+
     List<HouseholdMember> findAllByUser_Id(Long userId);
 
     boolean existsByHousehold_IdAndUser_Id(Long householdId, Long userId);

@@ -32,6 +32,10 @@ public class TransactionResponse {
 
     private LocalDate transactionDate;
 
+    private Long ownerUserId;
+
+    private String ownerName;
+
     
 
    

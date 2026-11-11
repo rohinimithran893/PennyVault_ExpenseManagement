@@ -20,6 +20,7 @@ function TransactionTable({
   handleViewTransaction,
   handleEditTransaction,
   handleDeleteTransaction,
+  currentUserId,
   loadTransactions,
   // Ready-made parts built by the page, so the table doesn't have to
   // carry props it never uses just to forward them.
@@ -311,27 +312,12 @@ function TransactionTable({
                         <IconEye size={19} />
                       </button>
 
-                      <button
-                        type="button"
-                        className="row-action edit-action"
-                        onClick={() =>
-                          handleEditTransaction(transaction.id)
-                        }
-                        title="Edit transaction"
-                      >
-                        <IconPencil size={19} />
-                      </button>
-
-                      <button
-                        type="button"
-                        className="row-action delete-action"
-                        onClick={() =>
-                          handleDeleteTransaction(transaction)
-                        }
-                        title="Delete transaction"
-                      >
-                        <IconTrash size={19} />
-                      </button>
+                      {String(transaction.ownerUserId) === String(currentUserId) ? (
+                        <>
+                          <button type="button" className="row-action edit-action" onClick={() => handleEditTransaction(transaction.id)} title="Edit transaction"><IconPencil size={19} /></button>
+                          <button type="button" className="row-action delete-action" onClick={() => handleDeleteTransaction(transaction)} title="Delete transaction"><IconTrash size={19} /></button>
+                        </>
+                      ) : <span className="transaction-view-only">View only</span>}
 
                     </div>
                   </td>
