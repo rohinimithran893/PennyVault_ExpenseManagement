@@ -6,6 +6,7 @@ import com.pennyvault.dto.response.LoginResponse;
 import com.pennyvault.dto.response.UserResponse;
 import com.pennyvault.entity.User;
 import com.pennyvault.entity.Household;
+import com.pennyvault.entity.HouseholdMember;
 import com.pennyvault.exception.EmailAlreadyExistsException;
 import com.pennyvault.exception.InvalidCredentialsException;
 import com.pennyvault.exception.UsernameAlreadyExistsException;
@@ -87,6 +88,7 @@ class UserServiceImplTest {
         assertEquals(77L, response.getHouseholdId());
         assertEquals("Alice Household", response.getHouseholdName());
         verify(householdRepository).save(any(Household.class));
+        verify(householdMemberRepository).save(any(HouseholdMember.class));
         verify(accountService).createDefaultAccounts(any(User.class));
     }
 

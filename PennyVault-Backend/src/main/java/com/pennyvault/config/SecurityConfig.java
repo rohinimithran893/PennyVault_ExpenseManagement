@@ -43,6 +43,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/actuator/health/**").permitAll()
+                // Microsoft must reach the OAuth callback without a PennyVault JWT.
+                .requestMatchers("/oauth2/callback").permitAll()
                 .anyRequest().authenticated()
             )
 
