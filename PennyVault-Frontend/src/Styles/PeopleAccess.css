@@ -1509,3 +1509,48 @@
 .people-toast { position: fixed; top: 24px; right: 24px; z-index: 1200; display: flex; align-items: center; gap: 10px; max-width: min(420px, calc(100vw - 32px)); padding: 13px 17px; border: 1px solid #b9e8ca; border-radius: 10px; background: #effaf3; color: #176b38; box-shadow: 0 10px 30px rgba(25, 70, 42, .16); font-size: 13px; font-weight: 600; animation: people-toast-in .2s ease-out; }
 .people-toast-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 22px; width: 22px; height: 22px; border-radius: 50%; background: #d4f2df; font-weight: 800; }
 @keyframes people-toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+
+/* Invite People modal */
+.invite-modal-backdrop {
+  z-index: 1100;
+  backdrop-filter: blur(2px);
+}
+.invite-modal {
+  width: min(100%, 460px);
+  max-height: min(85vh, 620px);
+}
+.invite-modal > label {
+  display: block;
+  margin: 14px 0 7px;
+  color: #4e4b66;
+  font-size: 12px;
+  font-weight: 650;
+}
+.invite-modal > input,
+.invite-modal > select {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #dedbe9;
+  border-radius: 8px;
+  background: #fff;
+  color: #25233a;
+  font: inherit;
+  font-size: 13px;
+}
+.invite-modal > input:focus,
+.invite-modal > select:focus {
+  outline: 2px solid rgba(101, 65, 239, .28);
+  border-color: #6541ef;
+}
+.invite-modal-error { margin: 0 0 12px; }
+.invite-modal-actions { margin-top: 22px; }
+.invite-modal-actions .invite-button {
+  justify-content: center;
+}
+.invite-modal-actions .invite-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
