@@ -1554,3 +1554,26 @@
   opacity: .55;
   cursor: not-allowed;
 }
+
+
+/* Dynamic role guidance in the Invite People modal */
+.invite-role-description {
+  margin-top: 10px;
+  padding: 11px 12px;
+  border: 1px solid #ebe8f4;
+  border-radius: 8px;
+  background: #f7f6fb;
+}
+.invite-role-description-label {
+  display: block;
+  margin-bottom: 4px;
+  color: #4e4b66;
+  font-size: 11px;
+  font-weight: 650;
+}
+.invite-role-description p {
+  margin: 0;
+  color: #66617d;
+  font-size: 12px;
+  line-height: 1.45;
+}
