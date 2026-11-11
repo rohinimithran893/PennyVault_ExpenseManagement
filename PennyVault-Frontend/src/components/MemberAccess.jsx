@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "../Styles/PeopleAccess.css";
 import {
   IconUsers,
@@ -45,11 +45,16 @@ const ROLE_CLASSES = {
   VIEWER: "viewer",
 };
 
-const ROLE_OPTIONS = [
+const OWNER_INVITE_ROLE_OPTIONS = [
   { value: "CO_OWNER", label: "Co-owner" },
   { value: "MEMBER", label: "Member" },
   { value: "VIEWER", label: "Viewer" },
 ];
+const CO_OWNER_INVITE_ROLE_OPTIONS = [
+  { value: "MEMBER", label: "Member" },
+  { value: "VIEWER", label: "Viewer" },
+];
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -106,6 +111,9 @@ function PeopleAccess() {
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("MEMBER");
+  const inviteDialogRef = useRef(null);
+  const inviteEmailRef = useRef(null);
+  const inviteButtonRef = useRef(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -118,6 +126,10 @@ function PeopleAccess() {
   const [profileFullName, setProfileFullName] = useState("");
 
   const canManage = currentRole === "OWNER";
+  const canInvite = currentRole === "OWNER" || currentRole === "CO_OWNER";
+  const inviteRoleOptions = currentRole === "OWNER"
+    ? OWNER_INVITE_ROLE_OPTIONS
+    : CO_OWNER_INVITE_ROLE_OPTIONS;
   const activeMembers = useMemo(
     () => members.filter((member) => member.active),
     [members]
@@ -166,7 +178,7 @@ function PeopleAccess() {
         setMemberStatistics({});
       }
 
-      if (ownMembership?.role === "OWNER") {
+      if (ownMembership?.role === "OWNER" || ownMembership?.role === "CO_OWNER") {
         const invitationData = await getHouseholdInvitations(householdId);
         setInvitations(Array.isArray(invitationData) ? invitationData : []);
       } else {
@@ -189,6 +201,58 @@ function PeopleAccess() {
     return () => window.clearTimeout(timeoutId);
   }, [notice]);
 
+  useEffect(() => {
+    if (!showInviteForm) return undefined;
+    const previouslyFocused = document.activeElement;
+    inviteEmailRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeInviteForm();
+        return;
+      }
+      if (event.key !== "Tab" || !inviteDialogRef.current) return;
+      const focusable = inviteDialogRef.current.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+        inviteButtonRef.current?.focus();
+      }
+    };
+  }, [showInviteForm]);
+
+  const openInviteForm = () => {
+    setInviteEmail("");
+    setInviteRole(currentRole === "OWNER" ? "CO_OWNER" : "MEMBER");
+    setError("");
+    setNotice("");
+    setShowInviteForm(true);
+  };
+
+  const closeInviteForm = () => {
+    if (saving) return;
+    setShowInviteForm(false);
+    setInviteEmail("");
+    setInviteRole(currentRole === "OWNER" ? "CO_OWNER" : "MEMBER");
+    setError("");
+  };
+
   const runAction = async (action, successMessage) => {
     setSaving(true);
     setError("");
@@ -207,25 +271,41 @@ function PeopleAccess() {
 
   const handleInvite = async (event) => {
     event.preventDefault();
-    if (!inviteEmail.trim()) {
-      setError("Enter an email address to invite.");
+    const email = inviteEmail.trim();
+    if (!email) {
+      setError("Email Address is required");
       return;
     }
+    if (!EMAIL_PATTERN.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (!canInvite || !inviteRoleOptions.some((option) => option.value === inviteRole)) {
+      setError("You do not have permission to send this invitation.");
+      return;
+    }
+
     setSaving(true);
     setError("");
     setNotice("");
     try {
-      await createHouseholdInvitation(
-        householdId,
-        inviteEmail.trim(),
-        inviteRole
-      );
-      setInviteEmail("");
+      await createHouseholdInvitation(householdId, email, inviteRole);
       setShowInviteForm(false);
-      setNotice("Invitation sent successfully!");
+      setInviteEmail("");
+      setInviteRole(currentRole === "OWNER" ? "CO_OWNER" : "MEMBER");
+      setNotice(`Invitation sent successfully to ${email}`);
       await loadData();
     } catch (requestError) {
-      setError(requestError?.message || "Unable to create invitation.");
+      const message = requestError?.message || "";
+      if (/already.*invitation|invitation.*already/i.test(message)) {
+        setError("An invitation has already been sent to this email");
+      } else if (/already a member/i.test(message)) {
+        setError("The user is already a member");
+      } else if (/cannot invite yourself/i.test(message)) {
+        setError("You cannot invite yourself");
+      } else {
+        setError("Failed to send invitation. Please try again");
+      }
     } finally {
       setSaving(false);
     }
@@ -324,8 +404,8 @@ function PeopleAccess() {
           <h1>People &amp; Access</h1>
           <p>Manage household members, invitations, roles and access.</p>
         </div>
-        {canManage && (
-          <button className="invite-button" onClick={() => { setShowInviteForm(true); setError(""); }}>
+        {canInvite && (
+          <button ref={inviteButtonRef} type="button" className="invite-button" onClick={openInviteForm}>
             <IconPlus size={16} stroke={2.5} /> Invite People
           </button>
         )}
@@ -335,28 +415,56 @@ function PeopleAccess() {
       {notice && <div className="people-toast success" role="status" aria-live="polite"><span className="people-toast-icon">✓</span>{notice}</div>}
 
       {showInviteForm && (
-        <form className="invite-form-panel" onSubmit={handleInvite}>
-          <div className="invite-form-heading">
-            <div><h2>Invite a household member</h2><p>Choose the role they should receive.</p></div>
-            <button type="button" className="token-dismiss" aria-label="Close invite form" onClick={() => setShowInviteForm(false)}><IconX size={18} /></button>
-          </div>
-          <label htmlFor="invite-email">Email address</label>
-          <input id="invite-email" type="email" required maxLength={254} value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} placeholder="name@example.com" />
-          <label htmlFor="invite-role">Role</label>
-          <select id="invite-role" value={inviteRole} onChange={(event) => setInviteRole(event.target.value)}>
-            {ROLE_OPTIONS.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
-          </select>
-          <div className="invite-form-actions">
-            <button type="button" className="filter-button" onClick={() => setShowInviteForm(false)}>Cancel</button>
-            <button type="submit" className="invite-button" disabled={saving}>{saving ? "Sending..." : "Create invitation"}</button>
-          </div>
-        </form>
+        <div className="people-modal-backdrop invite-modal-backdrop" role="presentation">
+          <form
+            ref={inviteDialogRef}
+            className="people-modal invite-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="invite-dialog-title"
+            aria-describedby="invite-dialog-description"
+            onSubmit={handleInvite}
+          >
+            <div className="people-modal-heading">
+              <div>
+                <h2 id="invite-dialog-title">Invite a household member</h2>
+                <p id="invite-dialog-description">Enter an email address and choose the access role.</p>
+              </div>
+              <button type="button" className="token-dismiss" aria-label="Close invitation dialog" onClick={closeInviteForm} disabled={saving}>
+                <IconX size={18} />
+              </button>
+            </div>
+            {error && <div className="people-alert error invite-modal-error" role="alert">{error}</div>}
+            <label htmlFor="invite-email">Email Address</label>
+            <input
+              ref={inviteEmailRef}
+              id="invite-email"
+              type="email"
+              maxLength={254}
+              value={inviteEmail}
+              onChange={(event) => { setInviteEmail(event.target.value); if (error) setError(""); }}
+              placeholder="name@example.com"
+              autoComplete="email"
+              aria-invalid={Boolean(error)}
+            />
+            <label htmlFor="invite-role">Invitation Role</label>
+            <select id="invite-role" value={inviteRole} onChange={(event) => setInviteRole(event.target.value)}>
+              {inviteRoleOptions.map((role) => <option key={role.value} value={role.value}>{role.label}</option>)}
+            </select>
+            <div className="people-modal-footer invite-modal-actions">
+              <button type="button" className="filter-button" onClick={closeInviteForm}>Cancel</button>
+              <button type="submit" className="invite-button" disabled={saving || !inviteEmail.trim() || !EMAIL_PATTERN.test(inviteEmail.trim())}>
+                {saving ? "Sending" : "Send Invite"}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       <div className="people-summary-grid">
         <SummaryCard icon={<IconUsers size={22} stroke={2} />} title="Total Members" value={String(members.length)} subtitle={`${activeMembers.length} active members`} color="purple" />
         <SummaryCard icon={<IconShield size={22} stroke={2} />} title="Owners" value={String(ownerCount)} subtitle="Primary & co-owners" color="green" />
-        {canManage && <SummaryCard icon={<IconMail size={22} stroke={2} />} title="Pending Invitations" value={String(pendingCount)} subtitle="Awaiting acceptance" color="orange" />}
+        {canInvite && <SummaryCard icon={<IconMail size={22} stroke={2} />} title="Pending Invitations" value={String(pendingCount)} subtitle="Awaiting acceptance" color="orange" />}
         <SummaryCard icon={<IconEye size={22} stroke={2} />} title="Viewers" value={String(viewerCount)} subtitle="Read-only access" color="blue" />
       </div>
 
