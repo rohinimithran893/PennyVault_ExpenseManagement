@@ -54,6 +54,11 @@ const CO_OWNER_INVITE_ROLE_OPTIONS = [
   { value: "MEMBER", label: "Member" },
   { value: "VIEWER", label: "Viewer" },
 ];
+const ROLE_OPTIONS = [
+  { value: "CO_OWNER", label: "Co-owner" },
+  { value: "MEMBER", label: "Member" },
+  { value: "VIEWER", label: "Viewer" },
+];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const formatDate = (value) => {
