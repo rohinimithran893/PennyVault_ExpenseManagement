@@ -246,7 +246,6 @@ function PeopleAccess() {
   };
 
   const closeInviteForm = () => {
-    if (saving) return;
     setShowInviteForm(false);
     setInviteEmail("");
     setInviteRole(currentRole === "OWNER" ? "CO_OWNER" : "MEMBER");
@@ -578,7 +577,7 @@ function PeopleAccess() {
         </div>
       )}
 
-      {canManage && (
+      {canInvite && (
         <section className="invitations-section">
           <div className="invitation-tabs" role="tablist" aria-label="Invitation status">
             <button
