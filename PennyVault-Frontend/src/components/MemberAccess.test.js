@@ -46,6 +46,10 @@ beforeEach(() => {
   window.confirm = jest.fn(() => true);
 });
 
+afterEach(() => {
+  jest.useRealTimers();
+});
+
 describe("Invite People modal", () => {
   test("Primary Owner can open the modal and invite all supported roles", async () => {
     await renderPage("OWNER");
@@ -89,7 +93,7 @@ describe("Invite People modal", () => {
     fireEvent.change(screen.getByLabelText("Email Address"), { target: { value: "not-an-email" } });
     fireEvent.submit(screen.getByRole("button", { name: /send invite/i }).closest("form"));
 
-    expect(await screen.findByText("Please enter a valid email address")).toBeInTheDocument();
+    expect(await screen.findAllByText("Please enter a valid email address")).toHaveLength(2);
     expect(createHouseholdInvitation).not.toHaveBeenCalled();
   });
 
