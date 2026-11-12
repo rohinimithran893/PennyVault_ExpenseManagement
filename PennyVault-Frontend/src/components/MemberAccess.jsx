@@ -211,9 +211,17 @@ function PeopleAccess() {
     return () => window.clearTimeout(timeoutId);
   }, [notice]);
 
+  const closeInviteForm = useCallback(() => {
+    setShowInviteForm(false);
+    setInviteEmail("");
+    setInviteRole(currentRole === "OWNER" ? "CO_OWNER" : "MEMBER");
+    setError("");
+  }, [currentRole]);
+
   useEffect(() => {
     if (!showInviteForm) return undefined;
     const previouslyFocused = document.activeElement;
+    const inviteButton = inviteButtonRef.current;
     inviteEmailRef.current?.focus();
 
     const handleKeyDown = (event) => {
@@ -242,10 +250,10 @@ function PeopleAccess() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       if (previouslyFocused && typeof previouslyFocused.focus === "function") {
-        inviteButtonRef.current?.focus();
+        inviteButton?.focus();
       }
     };
-  }, [showInviteForm]);
+  }, [showInviteForm, closeInviteForm]);
 
   const openInviteForm = () => {
     setInviteEmail("");
@@ -253,13 +261,6 @@ function PeopleAccess() {
     setError("");
     setNotice("");
     setShowInviteForm(true);
-  };
-
-  const closeInviteForm = () => {
-    setShowInviteForm(false);
-    setInviteEmail("");
-    setInviteRole(currentRole === "OWNER" ? "CO_OWNER" : "MEMBER");
-    setError("");
   };
 
   const runAction = async (action, successMessage) => {
