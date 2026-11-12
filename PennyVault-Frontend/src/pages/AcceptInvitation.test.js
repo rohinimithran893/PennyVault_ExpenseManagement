@@ -36,9 +36,9 @@ describe("Accept Invitation page", () => {
     isAuthenticated.mockReturnValue(false);
     renderPage("/accept-invitation?token=invite-token");
 
-    expect(await screen.findByTestId("current-location")).toHaveTextContent(
-      "/login"
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId("current-location")).toHaveTextContent("/login");
+    });
   });
 
   test("shows a helpful error when the invitation token is missing", async () => {
