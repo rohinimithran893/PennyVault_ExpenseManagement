@@ -107,8 +107,13 @@ class HouseholdAccessServicePermissionMatrixTest {
             verify(emailService).sendInvitation(
                     eq("invitee@example.com"), eq("Family"), anyString(), eq(testCase.invited()));
         } else {
-            assertThrows(AccessDeniedException.class,
-                    () -> service.createInvitation(HOUSEHOLD_ID, request));
+            if (testCase.caller() == HouseholdRole.OWNER || testCase.caller() == HouseholdRole.CO_OWNER) {
+                assertThrows(IllegalArgumentException.class,
+                        () -> service.createInvitation(HOUSEHOLD_ID, request));
+            } else {
+                assertThrows(AccessDeniedException.class,
+                        () -> service.createInvitation(HOUSEHOLD_ID, request));
+            }
             verify(invitationRepository, never()).save(any());
             verifyNoInteractions(emailService);
         }
@@ -123,8 +128,10 @@ class HouseholdAccessServicePermissionMatrixTest {
         when(invitationRepository.save(any(HouseholdInvitation.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        boolean allowed = testCase.allowed();
-        if (testCase.caller() == HouseholdRole.CO_OWNER && testCase.allowed()) {
+        boolean allowed = testCase.caller() == HouseholdRole.OWNER
+                || (testCase.caller() == HouseholdRole.CO_OWNER
+                    && (testCase.invited() == HouseholdRole.MEMBER || testCase.invited() == HouseholdRole.VIEWER));
+        if (testCase.caller() == HouseholdRole.CO_OWNER && allowed) {
             // Co-owners may only manage invitations they personally created.
             assertDoesNotThrow(() -> service.resendInvitation(HOUSEHOLD_ID, INVITATION_ID));
             verify(emailService).sendInvitation(eq("invitee@example.com"), eq("Family"), anyString(), eq(testCase.invited()));
@@ -146,7 +153,10 @@ class HouseholdAccessServicePermissionMatrixTest {
         HouseholdInvitation invitation = invitation(testCase.invited(), ACTOR_ID);
         when(invitationRepository.findById(INVITATION_ID)).thenReturn(Optional.of(invitation));
 
-        if (testCase.allowed()) {
+        boolean allowed = testCase.caller() == HouseholdRole.OWNER
+                || (testCase.caller() == HouseholdRole.CO_OWNER
+                    && (testCase.invited() == HouseholdRole.MEMBER || testCase.invited() == HouseholdRole.VIEWER));
+        if (allowed) {
             assertDoesNotThrow(() -> service.cancelInvitation(HOUSEHOLD_ID, INVITATION_ID));
             assertEquals(HouseholdInvitationStatus.CANCELLED, invitation.getStatus());
             verify(invitationRepository).save(invitation);
