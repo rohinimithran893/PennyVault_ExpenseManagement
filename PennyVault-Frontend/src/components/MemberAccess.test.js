@@ -1,15 +1,14 @@
 import React from "react";
+import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PeopleAccess from "./MemberAccess";
 import { getUser } from "../utils/auth";
 import {
-  cancelHouseholdInvitation,
   createHouseholdInvitation,
   getHouseholdInvitations,
   getHouseholdMembers,
   getHouseholdMemberStatistics,
-  resendHouseholdInvitation,
 } from "../services/householdAccessService";
 
 jest.mock("../utils/auth", () => ({ getUser: jest.fn() }));
