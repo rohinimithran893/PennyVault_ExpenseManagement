@@ -167,6 +167,23 @@ class HouseholdAccessServicePermissionMatrixTest {
         }
     }
 
+    @org.junit.jupiter.api.Test
+    void primaryOwnerCanManageInvitationsCreatedByOtherMembers() {
+        mockCallerRole(HouseholdRole.OWNER);
+        HouseholdInvitation invitation = invitation(HouseholdRole.CO_OWNER, 99L);
+        when(invitationRepository.findById(INVITATION_ID)).thenReturn(Optional.of(invitation));
+        when(invitationRepository.save(any(HouseholdInvitation.class)))
+                .thenAnswer(invocationCall -> invocationCall.getArgument(0));
+
+        assertDoesNotThrow(() -> service.resendInvitation(HOUSEHOLD_ID, INVITATION_ID));
+        invitation.setStatus(HouseholdInvitationStatus.PENDING);
+        assertDoesNotThrow(() -> service.cancelInvitation(HOUSEHOLD_ID, INVITATION_ID));
+
+        verify(emailService).sendInvitation(
+                eq("invitee@example.com"), eq("Family"), anyString(), eq(HouseholdRole.CO_OWNER));
+        verify(invitationRepository, times(2)).save(invitation);
+    }
+
     @ParameterizedTest(name = "co-owner cannot manage another creator's invitation: {0}")
     @MethodSource("coOwnerManageableRoles")
     void coOwnerCannotResendOrCancelInvitationCreatedBySomeoneElse(HouseholdRole invitedRole) {
