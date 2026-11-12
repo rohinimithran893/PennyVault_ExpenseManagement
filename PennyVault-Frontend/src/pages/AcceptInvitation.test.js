@@ -1,4 +1,5 @@
 import React from "react";
+import "@testing-library/jest-dom";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import AcceptInvitation from "./AcceptInvitation";
