@@ -48,13 +48,24 @@ describe("Accept Invitation page", () => {
   });
 
   test("accepts a valid invitation and shows success feedback", async () => {
+    jest.useFakeTimers();
     acceptHouseholdInvitation.mockResolvedValue({});
     renderPage("/accept-invitation?token=valid-token");
 
-    expect(await screen.findByText("Invitation accepted")).toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByText("Invitation accepted")).toBeInTheDocument();
     expect(screen.getByText(/Your invitation has been accepted/)).toBeInTheDocument();
     expect(acceptHouseholdInvitation).toHaveBeenCalledTimes(1);
     expect(acceptHouseholdInvitation).toHaveBeenCalledWith("valid-token");
+
+    await act(async () => {
+      jest.advanceTimersByTime(1800);
+    });
+    expect(screen.getByTestId("current-location")).toHaveTextContent("/");
+    jest.useRealTimers();
   });
 
   test("shows the API error and offers sign-in with the invited email", async () => {
