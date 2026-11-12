@@ -119,8 +119,7 @@ public class HouseholdAccessService {
 
     public HouseholdInvitationResponse resendInvitation(Long householdId, Long invitationId) {
         User actor = currentUser();
-        membershipService.requireRole(householdId, actor.getId(), HouseholdRole.OWNER, HouseholdRole.CO_OWNER);
-        HouseholdInvitation invitation = findInvitation(householdId, invitationId);
+        HouseholdInvitation invitation = requireManageableInvitation(householdId, invitationId, actor);
         if (invitation.getStatus() != HouseholdInvitationStatus.PENDING
                 && invitation.getStatus() != HouseholdInvitationStatus.EXPIRED) {
             throw new IllegalArgumentException("Only pending or expired invitations can be resent");
@@ -143,8 +142,7 @@ public class HouseholdAccessService {
 
     public void cancelInvitation(Long householdId, Long invitationId) {
         User actor = currentUser();
-        membershipService.requireRole(householdId, actor.getId(), HouseholdRole.OWNER, HouseholdRole.CO_OWNER);
-        HouseholdInvitation invitation = findInvitation(householdId, invitationId);
+        HouseholdInvitation invitation = requireManageableInvitation(householdId, invitationId, actor);
         if (invitation.getStatus() != HouseholdInvitationStatus.PENDING) {
             throw new IllegalArgumentException("Only pending invitations can be cancelled");
         }
@@ -271,6 +269,24 @@ public class HouseholdAccessService {
         }
         target.setMemberRole(role);
         return HouseholdMemberResponse.from(memberRepository.save(target));
+    }
+
+    private HouseholdInvitation requireManageableInvitation(Long householdId, Long invitationId, User actor) {
+        HouseholdMember actorMembership = membershipService.requireRole(
+                householdId, actor.getId(), HouseholdRole.OWNER, HouseholdRole.CO_OWNER);
+        HouseholdInvitation invitation = findInvitation(householdId, invitationId);
+
+        if (actorMembership.getMemberRole() == HouseholdRole.CO_OWNER) {
+            boolean allowedRole = invitation.getMemberRole() == HouseholdRole.MEMBER
+                    || invitation.getMemberRole() == HouseholdRole.VIEWER;
+            boolean sentByActor = invitation.getInvitedBy() != null
+                    && invitation.getInvitedBy().getId().equals(actor.getId());
+            if (!allowedRole || !sentByActor) {
+                throw new AccessDeniedException(
+                        "Co-owner can manage only Member or Viewer invitations they created");
+            }
+        }
+        return invitation;
     }
 
     private HouseholdInvitation findInvitation(Long householdId, Long invitationId) {
