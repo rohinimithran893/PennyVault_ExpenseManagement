@@ -74,7 +74,11 @@ class HouseholdAccessServicePermissionMatrixTest {
         actor = User.builder().id(ACTOR_ID).email("actor@example.com").build();
         household = Household.builder().id(HOUSEHOLD_ID).name("Family").build();
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("actor@example.com", "password")
+                UsernamePasswordAuthenticationToken.authenticated(
+                        "actor@example.com",
+                        "password",
+                        List.of()
+                )
         );
         when(userRepository.findByEmail("actor@example.com")).thenReturn(Optional.of(actor));
     }
